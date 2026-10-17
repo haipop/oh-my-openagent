@@ -134,5 +134,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   `dsh` block is read so another harness's same-named key cannot change DSH behavior; invalid files
   fall back to the row with a warning. Skill registration stays activation-time, so the file cannot
   toggle skills.
-- Remaining: model routing evaluation (DSH selects models per session, presets cannot carry routing),
-  and a read-only status surface for the adapter's effective config.
+- Batch 2 landed (PR #15): read-only `omo_status` tool reporting enabled modes and keywords, rule
+  loading/injection state, comment-check counters, the shared config layers and row overrides, and a
+  model-routing note. Model routing stays out of scope by design: DSH selects the session model and a
+  preset cannot carry routing, so the status surface reports that boundary instead of faking it.

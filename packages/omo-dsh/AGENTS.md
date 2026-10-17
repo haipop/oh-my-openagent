@@ -39,6 +39,7 @@ prevents a retried step from appending the pointer twice.
 | `lib/config-file.js` | Reads the shared OmO config (`~/.omo/omo.json[c]` and nearest project `.omo/omo.json[c]`), JSONC-tolerant, and merges its `dsh` block under the row config |
 | `lib/rules.js` | Reads `.omo/rules/*.md`, parses the frontmatter subset (`description`, `globs`, `alwaysApply`), selects matching rules, and renders the injected rules context |
 | `lib/comment-checker.js` | Detects comments that only restate the code in `write`/`edit` payloads and renders the bounded warning context |
+| `lib/status.js` | Builds the read-only `omo_status` payload and its tool definition |
 | `skills/ultrawork.md` | Ultrawork directive, adapted to the DeepSeek Harness tool surface |
 | `skills/hyperplan.md` | Hyperplan directive, adapted from the OmO adversarial planning skill to DSH Agent Teams |
 | `skills/git-master.md` | Git workflow directive, adapted from OmO's `git-master` skill |
@@ -146,8 +147,8 @@ session until the bundle is fixed.
   source: { kind, form, summary } }` with a non-empty string id.
 - The runtime is plain ESM JavaScript by design: the DSH bundle contract needs no build tool or
   dependency, and the tests exercise the same files the Host loads.
-- The plugin declares `inject = ["skills", "workingDirectory"]`; profiles without those services
-  leave it inactive instead of throwing. The working-directory dependency is not cosmetic: reading a
+- The plugin declares `inject = ["skills", "workingDirectory", "tools"]`; profiles without those
+  services leave it inactive instead of throwing. The working-directory dependency is not cosmetic: reading a
   Cordis service outside `inject` yields `undefined` in the mounted plugin context, so an optional
   access silently skipped rule loading until the dependency was declared.
 - The runtime skills are namespaced (`omo-ultrawork`, `omo-hyperplan`), never bare `ultrawork` or
@@ -193,6 +194,19 @@ warning instead of breaking the session.
 What the file cannot change is which runtime skills are registered: skills publish once at bundle
 activation, so `skills` in the file is part of the config surface but skill registration follows the
 row.
+
+## Status surface
+
+The bundle registers one read-only tool, `omo_status`, through `ctx.tools.register`. It reports what
+the adapter actually has in effect for the calling session: enabled modes and their keywords,
+`applyToSubagents`, library gate, rule roots and the rule files loaded and injected, comment-check
+settings and how many warnings were delivered, the shared config files that were read with the keys
+each layer contributes, which keys the plugin row sets, and a note that model routing belongs to the
+Harness session, not to this bundle or its presets.
+
+It reads the same session caches the listeners use and mutates nothing, so it is safe to call at any
+point. The Host requires every tool to carry a model-facing name, a JSON parameter schema, and an
+output renderer; the status module keeps that contract in one place.
 
 ## Rules and comment checks
 

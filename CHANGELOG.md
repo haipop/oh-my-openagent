@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**DeepSeek Harness gains a read-only OmO adapter status tool.** `omo_status` reports what the adapter has
+in effect for the calling session: enabled keyword modes and their keywords, the rule files loaded and
+injected, comment-check settings and delivered warning count, the shared OmO config layers that were
+read with the keys each contributes, and which keys the plugin row sets. It reads the same session state
+the listeners use and mutates nothing. Model routing is reported as a boundary rather than faked: DSH
+selects the session model, and neither this bundle nor its presets can carry routing. ([#15](https://github.com/haipop/oh-my-openagent/pull/15))
+
 **DeepSeek Harness team mode and parallel fan-out are verified end to end.** A headless session with the
 Agent Teams rows mounted created two shared tasks, spawned two fresh teammates, waited for both, and
 closed the board; the durable log shows `team_task_create` x2, `spawn_teammate` x2, `wait_agent` x2,
