@@ -3,11 +3,13 @@
  *
  * The pointer stays compact on purpose: it must fit a single injected message
  * (the Codex adapter keeps its equivalent under 4096 bytes) and it must not
- * duplicate the full directive, which is registered as the `ultrawork` skill and
- * loaded on demand through the `skill` tool.
+ * duplicate the full directive, which is registered as a uniquely named runtime
+ * skill and loaded on demand through the `skill` tool.
  *
  * @module @oh-my-opencode/omo-dsh/pointer
  */
+
+import { ULTRAWORK_SKILL_NAME } from "./skill.js"
 
 /** Source kind recorded on the synthetic message; it is how the harness log marks the injection. */
 export const ULTRAWORK_SOURCE_KIND = "omo-ultrawork"
@@ -18,16 +20,18 @@ export const ULTRAWORK_POINTER_MARKER = "<ultrawork-mode>"
 /**
  * Render the three-step bootstrap the model must finish before starting the task.
  *
+ * @param {{ skillName?: string }} [input] - name of the registered directive skill.
  * @returns {string} the pointer text, wrapped in its marker tags.
  */
-export function buildUltraworkPointer() {
+export function buildUltraworkPointer(input = {}) {
+  const skillName = input.skillName ?? ULTRAWORK_SKILL_NAME
   return [
     "<ultrawork-mode>",
     "**MANDATORY** - the user invoked ultrawork. Complete this bootstrap before any other work, in this order:",
     "",
     "1. Make the first user-visible line of this turn exactly: `ULTRAWORK MODE ENABLED!`",
     "2. Call `get_goal`. If an active goal already covers this task, continue it; otherwise call `create_goal` with only `objective` (no invented budgets, deadlines, or status).",
-    '3. Call the `skill` tool with `name: "ultrawork"` and follow the returned directive in full. If the skill tool fails, say so in one line and continue with steps 1-2.',
+    `3. Call the \`skill\` tool with \`name: "${skillName}"\` and follow the returned directive in full. If the skill tool fails, say so in one line and continue with steps 1-2.`,
     "",
     "Do not start the user's task before steps 1-3 are done. Do not ask whether to proceed: ultrawork means execute, verify on the real surface, and report evidence.",
     "</ultrawork-mode>",

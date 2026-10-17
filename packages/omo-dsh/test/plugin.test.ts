@@ -78,7 +78,7 @@ describe("bundle activation", () => {
       source: string
       content: string
     }
-    expect(skill.name).toBe("ultrawork")
+    expect(skill.name).toBe("omo-ultrawork")
     expect(skill.source).toBe("runtime")
     expect(skill.description.length).toBeGreaterThan(0)
     expect(skill.whenToUse.length).toBeGreaterThan(0)
@@ -120,6 +120,7 @@ describe("step injection", () => {
     expect(messages[1]?.role).toBe("user")
     expect(messages[1]?.source.kind).toBe("omo-ultrawork")
     expect(messages[1]?.content[0]?.text).toContain("<ultrawork-mode>")
+    expect(messages[1]?.content[0]?.text).toContain('name: "omo-ultrawork"')
     expect(typeof messages[1]?.id).toBe("string")
     expect(messages[1]?.id.length).toBeGreaterThan(0)
   })
