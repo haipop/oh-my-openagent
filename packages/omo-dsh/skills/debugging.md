@@ -1,36 +1,35 @@
 # Debugging
 
-You are a hypothesis-driven debugger. Two rules hold for every language and runtime:
+You are a hypothesis-driven debugger. Two rules hold across languages and runtimes:
 
 1. **Runtime truth beats code reading.** Every claim about the cause rests on an observed value, not a story built from reading code.
-2. **Leave no trace.** Journal every artifact (probes, temp logs, prints, flags, processes) before creating it, and remove it before you call the task done.
+2. **Leave no trace.** Journal every artifact (probes, logs, prints, flags) before creating it, and remove it before you call the task done.
 
 ## Tool map
 
 - `bash`: commands, compilers, tests, debuggers. `grep`, `glob`, `read`: code and owner tests. `write`, `edit`: test and fix. `todo_write`: phases and cleanup debt.
 - Background `bash` job: servers, log tails, repro loops; read with `job_output` (`wait: true` only when blocked), stop with `job_kill`.
 - `terminal_open` with `terminal_send` / `terminal_read`: interactive debugger REPL or TUI.
-- `subagent`: hypothesis lanes and oracle angles (there is no `task(...)` handoff). `workflow`: wide fan-out. `skill`: another procedure.
-- `web_fetch`, `read_page`, `x_search`: upstream reports, changelogs, docs.
+- `subagent`: hypothesis lanes and oracle angles (there is no `task(...)` handoff); `workflow` for wide fan-out; `skill` to load another procedure.
 
-No LSP tools exist here: use the compiler or type checker through `bash`, and `grep`/`glob` for references. No `background_output` or `background_cancel` either.
+No LSP tools exist: use the compiler via `bash` and `grep`/`glob` for references. No `background_output` or `background_cancel` either.
 
 ## Phase loop
 
-Keep the phases in `todo_write` so the loop cannot drift.
+Track phases in `todo_write`.
 
 ### Phase 0: frame and journal
 
-Record the symptom, exact trigger, expected behavior, last known good state, and surface. Capture `git rev-parse --short HEAD; git status --porcelain`. Keep a journal file with one row per artifact: `| artifact | why | created | revert |`.
+Record symptom, trigger, expected behavior, last known good state, and surface. Capture `git rev-parse --short HEAD; git status --porcelain`. Keep one journal row per artifact: `| artifact | why | created | revert |`.
 
 ### Phase 1: runtime assessment
 
 Answer before attaching: runtime version (`python3 -VV`, `bun -v`, `go version`), launch path and wrapper, env vars, cwd; process state (`pgrep -af <name>`, `lsof -p <pid> | head -50`); symbols and build profile, since release builds strip symbols; the config and fixture actually read; noise (watchers, caches, pools); tooling (`command -v gdb lldb pdb3 objdump strace dmesg`).
 
-For a binary, discriminate native from bundled before choosing tools:
+For a binary, check native vs bundled first:
 
 ```bash
-du -h ./target; strings -n 12 ./target | grep -iE 'bun|node_modules|webpack|esbuild|electron|pyinstaller|NODE_SEA_FUSE|tauri'
+du -h ./target; strings -n 12 ./target | grep -iE 'bun|node_modules|esbuild|electron|pyinstaller|NODE_SEA_FUSE|tauri'
 ```
 
 When `gdb`, `lldb`, or `pdb` is available, drive it through `terminal_open`. Use `objdump`, `strace`, and `dmesg` for disassembly, syscalls, and kernel failures, only when the host has them; otherwise say so and instrument.
@@ -48,11 +47,11 @@ Form at least three, across orthogonal axes. Three flavors of one axis are one h
 | Boundary | Is the wrong value produced, or produced and dropped? | Value captured on both sides of each hop |
 | Expectation | Is the test or client wrong rather than the system? | Spec contradicts the assertion |
 
-Each hypothesis states the claim, the predicted observation, the cheapest separating probe, and what would kill it. If two predict the same evidence, refine them until they differ.
+Each states the claim, predicted observation, cheapest separating probe, and what kills it. Refine any two that predict the same evidence.
 
 ### Phase 3: investigate
 
-Run the cheapest discriminating probe first, and read the failing output before the code.
+Cheapest discriminating probe first; read the failing output before the code.
 
 - Reproduce in the tightest loop available; a one-line CLI repro beats a full click path.
 - Capture exact command, exit code, stderr, and version output.
@@ -60,11 +59,11 @@ Run the cheapest discriminating probe first, and read the failing output before 
 - Make swallowed errors loud while debugging; restore the silence at cleanup.
 - One `subagent` per axis, returning observations plus the command that produced them. Keep lanes independent.
 
-For long work, start a background `bash` job, collect it with `job_output`, and kill it when it stops mattering.
+For long work, start a background `bash` job, collect with `job_output`, kill when it stops mattering.
 
 ### Phase 4: orthogonal oracle angles
 
-If two consecutive rounds fail to confirm a cause, spawn three fresh `subagent` calls in one message. Each gets an orthogonal framing: **mechanism** (how the observed state is produced, and which step has no evidence), **differential** (the smallest differences between one working and one failing case, ranked), **falsifier** (the strongest rival explanation and the probe that decides it). Give each the journal, observations, and failed hypotheses, and ask for observations, not advice. Keep only claims that come with a discriminating observation; a synthesis that keeps every oracle's story has synthesized nothing.
+If two consecutive rounds fail to confirm a cause, spawn three fresh `subagent` calls in one message. Each gets an orthogonal framing: **mechanism** (how the observed state is produced, and which step has no evidence), **differential** (the smallest differences between one working and one failing case, ranked), **falsifier** (the strongest rival explanation and the probe that decides it). Give each the journal, observations, and failed hypotheses, and ask for observations, not advice. Keep only claims with a discriminating observation; a synthesis that keeps every oracle's story has synthesized nothing.
 
 ### Phase 5: root cause confirmation
 
@@ -88,17 +87,16 @@ Types and unit tests are not QA. Drive the user's surface: `bash` or `terminal_o
 
 ### Phase 8: cleanup and gates
 
-Walk the journal and revert every artifact: temp logs, flags, prints, scripts, processes, terminal sessions. Then `git diff --stat`; only the fix and its test should appear. Done requires four gates: cause toggled both ways; RED before and GREEN after on the same case; real-surface run recorded; clean diff.
+Revert every journaled artifact: logs, flags, prints, scripts, processes, sessions. Then `git diff --stat`; only the fix and its test should appear. Done requires four gates: cause toggled both ways; RED before and GREEN after on the same case; real-surface run recorded; clean diff.
 
 ## When nothing reproduces
 
 Check, in this order:
 
-- Wrong build: `git rev-parse HEAD`, installed version, lockfile, generated artifacts.
+- Wrong build: `git rev-parse HEAD`, installed version, lockfile.
 - Wrong environment: env vars, config actually read, locale, timezone, architecture.
 - Wrong data: production fixture versus local.
 - Timing: concurrency, retries, ordering, cold start.
-- Swallowed errors: make them loud temporarily.
 - Incomplete path: instrument the boundary where the value disappears.
 - Unreachable operation: state the gap, gather partial runtime evidence, mark conclusions as inference.
 
@@ -114,15 +112,14 @@ Climb one rung at a time and name the rung in the message.
 4. External evidence: upstream tracker, changelog, docs via `web_fetch`, `read_page`, `x_search`.
 5. User decision: only when evidence is exhausted and the choice is policy, product behavior, or access you do not have.
 
-The escalation message carries what was tested, what was observed, the surviving hypotheses, what you need, and the options with consequences. Never ask a question runtime evidence can answer.
+The message carries what was tested and observed, the surviving hypotheses, what you need, and the options with consequences. Never ask a question runtime evidence can answer.
 
 ## Safety invariants
 
 1. Runtime state is the only source of truth.
 2. Journal before modifying anything, and revert every artifact before reporting.
 3. No fix without a reproduction that fails before and passes after.
-4. No "done" on compile or type check alone.
-5. Never swallow errors while debugging, and never commit unless the user asked.
+4. No "done" on compile or type check alone; never swallow errors while debugging; no commits unless the user asked.
 
 ## Anti-patterns
 
@@ -130,11 +127,8 @@ The escalation message carries what was tested, what was observed, the surviving
 |---|---|
 | Fixing the first plausible story | Unverified patch hides the real cause |
 | One hypothesis dressed as three | No discriminating probe, so it cannot converge |
-| Instrumenting everywhere | Noise hides the signal and cleanup grows |
-| Done on a green type check | Types catch declaration bugs, not the user scenario |
 | Test written after the fix | Can pass for the wrong reason and locks nothing |
 | Deleting a failing test | Erases the only proof the bug existed |
-| Polling a job in a tight loop | Wastes turns; read the job when blocked |
 | "Please debug this" handoff | A `subagent` needs symptom, evidence, and question |
 
 Adapted from OmO's debugging skill for DeepSeek Harness.
