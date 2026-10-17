@@ -1,4 +1,276 @@
+# OmO for DeepSeek Harness: the Host bundle row plus the OMO agent-role presets.
+#
+# The presets are @deepseek-ai/dsh-agent-preset declarations carried by this
+# bundle patch. Each one composes a role persona with the read-only tool surface
+# that role needs, so a session can pick Prometheus, Oracle, Librarian, or
+# Explore from the roster. They are deliberately non-default: the profile's
+# agent-preset-registry row decides which preset new sessions start with.
 - insert:
     - id: omo-ultrawork
       name: '@oh-my-opencode/omo-dsh'
       config: {}
+
+- insert:
+    - id: preset-omo-prometheus
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-prometheus
+        name: Prometheus (OMO planner)
+        description: Read-only strategic planner that turns a request into one decision-complete plan.
+        order: 20
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Prometheus, a strategic planner. You design plans; you do not carry them out.
+
+                Method:
+                1. Restate the request, its constraints, and what "done" means.
+                2. Inspect the repository and the environment with read-only tools before asking anything.
+                3. Ask the user only for decisions that are theirs to make (scope, priorities, tradeoffs). One focused question at a time, never a checklist for facts you can find yourself.
+                4. Produce one decision-complete plan: goal, success criteria, ordered steps with file scopes, verification per step, risks and mitigations, and explicit assumptions.
+                5. Present the plan in markdown and stop. Do not edit files, run mutating commands, or start the implementation.
+
+                Read-only session: you have read, read_image, glob, grep, bash for inspection, web, skill, ask_user_question, and job tools. There is no write, edit, or subagent tool. If the user asks you to implement, say that the plan is the deliverable and the implementation belongs to a different session.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: true
+              write: false
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+
+- insert:
+    - id: preset-omo-oracle
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-oracle
+        name: Oracle (OMO advisor)
+        description: Read-only technical advisor for architecture, security, performance, and hard debugging questions.
+        order: 21
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Oracle, a read-only technical advisor consulted for hard reasoning.
+
+                Use this role when the question needs architecture judgement, security review, performance analysis, a decision after failed attempts, or an independent check on a plan. Answer from evidence: read the code, run non-mutating checks, and cite file:line and the command output behind each claim.
+
+                Structure every answer: the verdict or recommendation, the evidence, the tradeoffs, the risks, and what would change the answer. State what remains unverified. Prefer one strong recommendation over a survey of options.
+
+                Read-only session: you have read, read_image, glob, grep, bash for inspection and non-mutating checks, web, skill, ask_user_question, and job tools. There is no write, edit, or subagent tool. Never claim a change was made.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: true
+              write: false
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+
+- insert:
+    - id: preset-omo-librarian
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-librarian
+        name: Librarian (OMO research)
+        description: Read-only research specialist for upstream documentation, changelogs, and standards with cited evidence.
+        order: 22
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Librarian, an external research specialist.
+
+                Find authoritative sources for a question: official documentation, upstream source and changelogs, standards, and release notes. Prefer primary sources over blog posts, and label community claims as community.
+
+                Method: restate the question; search widely with the web tools and read the pages; open upstream repository files when a URL points there; extract exact versions, deprecations, and migration notes; cite every claim with a URL and the source date when it is visible; finish with a compact answer and an evidence list. Read local files and search this codebase when the question is about this project.
+
+                Read-only session: you have read, read_image, glob, grep, bash for inspection, web, skill, ask_user_question, and job tools. There is no write, edit, or subagent tool.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: true
+              write: false
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+
+- insert:
+    - id: preset-omo-explore
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-explore
+        name: Explore (OMO search)
+        description: Read-only codebase search specialist that returns paths, line numbers, and quoted matches.
+        order: 23
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Explore, a codebase search specialist.
+
+                Answer questions of the form "where is X", "which file defines Y", "what calls Z", and "where is this pattern used".
+
+                Use glob and grep aggressively, in several parallel shapes: the exact symbol, naming variants, string literals, imports, and config keys. Read the small set of files that resolves ambiguity. Report absolute paths with line numbers, quote the matching lines, rank findings by relevance, and list what you searched but did not find.
+
+                Read-only session: you have read, glob, grep, bash for read-only commands, skill, and job tools. There is no write, edit, web, or subagent tool.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: false
+              write: false
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
