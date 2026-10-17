@@ -25,7 +25,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 | Capability | OmO source | DSH mapping | Status |
 |---|---|---|---|
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
-| keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (Phase 1) |
+| keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
 | skill library | `shared-skills` (17 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill | NEXT (Phase 2) |
 | agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition) + subagent model selection | PLANNED (Phase 3) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
