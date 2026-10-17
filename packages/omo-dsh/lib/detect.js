@@ -71,7 +71,17 @@ export function buildKeywordPattern(keywords) {
     const normalized = keyword.trim()
     return normalized.toLowerCase() === "ulw" ? "ulw(?!-\\w)" : escapeRegExp(normalized)
   })
-  return new RegExp(`(?<![\\w/.\\-])(?:${parts.join("|")})(?![\\w/\\-])`, "i")
+  return createGuardedPattern(parts.join("|"))
+}
+
+/**
+ * Wrap one pattern core in the URL, path, and identifier boundary guards.
+ *
+ * @param {string} core - regular-expression source without outer guards.
+ * @returns {RegExp} case-insensitive guarded pattern.
+ */
+export function createGuardedPattern(core) {
+  return new RegExp(`(?<![\\w/.\\-])(?:${core})(?![\\w/\\-])`, "i")
 }
 
 /**
