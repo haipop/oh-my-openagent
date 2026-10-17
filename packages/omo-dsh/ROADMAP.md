@@ -25,30 +25,36 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 | Capability | OmO source | DSH mapping | Status |
 |---|---|---|---|
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
-| keyword mode routing | OpenCode `keyword-detector` (search / analyze / hyperplan / team) | same injection seam, one runtime skill per mode, shared mode config | NEXT (Phase 1) |
+| keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
 | skill library | `shared-skills` (17 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill | NEXT (Phase 2) |
 | agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition) + subagent model selection | PLANNED (Phase 3) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
 | LSP tools | `lsp-tools-mcp` (8 tool aliases) | MCP server row in the profile bundle | PLANNED (Phase 4) |
 | hashline edit | `hashline-core` + patched edit tool | DSH edit tool has its own protocol | EVALUATE |
-| team mode | OpenCode 12 `team_*` tools + mailbox/lockstep engine | DSH Agent Teams is native; port prompts/skills only | EVALUATE (Phase 5) |
+| team mode | OpenCode 12 `team_*` tools + mailbox/lockstep engine | DSH Agent Teams is native; keyword pointer lands in Phase 1, prompts/skills in Phase 5 | PARTIAL (Phase 1) |
 | task delegation, background agents | `delegate-core`, background-agent feature | native `subagent`, `workflow`, `bash` jobs | NATIVE (guidance only) |
 | todo + goal | OpenCode tools | native `todo_write`, `create_goal`/`update_goal`/`get_goal` | NATIVE |
 | config | `omo-config-core` (`~/.omo/omo.json[c]`) | adapter reads its own keys from the same file | PLANNED (Phase 6) |
 | model routing / fallback | `model-core`, category requirements, two fallback systems | DSH model selection + retry policy; evaluate per-preset models | EVALUATE (Phase 6) |
 | OpenClaw gateway, TUI/tmux visualisation, telemetry | OpenCode/TUI only | no DSH equivalent (web UI, terminal tools) | NOT PLANNED |
 
-## Phase 1 (next): search / analyze keyword modes
+## Phase 1 (landed): keyword mode routing
 
-- Extract the search and analyze directives from `prompts-core` variants, adapt each to the DSH tool
-  surface, register as `omo-search` / `omo-analyze` runtime skills with their own pointers.
-- One detector pipeline shared with ultrawork; per-mode enable/config; negation, URL, identifier and
-  retry guards reused.
-- Acceptance: unit matrix per mode, live runs for each keyword (injection count, skill loaded, final
-  answer shape), control runs, catalog delta, PR merged.
+- One mode registry in priority order: `hyperplan-ultrawork` (suppresses its single modes),
+  `hyperplan` (`hyperplan` and `hpp`, with C++ `.hpp` and identifier suffixes excluded), `team mode`
+  (`team mode`, `team-mode`, `team_mode`, `teammode`), and `ultrawork`.
+- Per-mode pointers and source kinds; namespaced runtime skills (`omo-ultrawork`, `omo-hyperplan`);
+  the team pointer maps the mode onto native DSH Agent Teams.
+- Shared scrub pipeline: code spans, URLs, negated mentions (English and Chinese), URL/path/identifier
+  boundary guards, child-session silence, and per-mode retry dedupe.
+- `search` and `analyze` are not ported: the OpenCode adapter removed those modes, leaving only a
+  removed-wording test.
+- Acceptance met: unit matrix per mode (47 tests), live runs for team, hyperplan, `.hpp` negative,
+  combined invocation, and an ultrawork regression, catalog delta proving only namespaced additions,
+  and a merged PR.
 
-## Phase 2: skill library
+## Phase 2 (next): skill library
 
 - Batch 1: skills with no harness-specific tools (methodology and review skills); copy the body,
   adapt tool names, register in one bundle, namespace collisions checked against the live catalog.

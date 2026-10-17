@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**DeepSeek Harness gains OmO's remaining keyword modes.** The adapter now routes `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined `hyperplan + ultrawork` invocation beside `ultrawork`, one mode per step in priority order with its own sourced injection and namespaced runtime skill: the combo suppresses its single modes, C++ `.hpp` headers and identifier suffixes stay inert, and hyperplan ships as an adapted five-member adversarial-planning directive that ends in a fresh planner-subagent handoff. `search` and `analyze` were removed from OmO upstream, so they are not ported. ([#5](https://github.com/haipop/oh-my-openagent/pull/5))
+
 **DeepSeek Harness ultrawork detection ignores negated mentions, links, and retried steps.** A prompt that says not to use the mode ("do not use ultrawork", "不要用 ultrawork"), a URL or path that happens to contain `ulw`, and an identifier such as `my-ulw-feature` no longer arm it, and a step retried after a pre-commit failure cannot append a second bootstrap pointer because the claimed message ids are remembered for the live session. ([#3](https://github.com/haipop/oh-my-openagent/pull/3))
 
 **The DeepSeek Harness ultrawork directive registers under its own skill name.** OmO's directive is published as `omo-ultrawork` instead of `ultrawork`, because user and project skill layers outrank runtime registrations and an existing `ultrawork` skill (for example the OMX one) would have taken the bootstrap pointer to a different directive. The injected pointer now names the registered skill explicitly. ([#2](https://github.com/haipop/oh-my-openagent/pull/2))

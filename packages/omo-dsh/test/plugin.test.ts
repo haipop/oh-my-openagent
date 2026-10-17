@@ -60,29 +60,46 @@ async function runStep(state: FakeState, payload: unknown, decision: unknown) {
 }
 
 describe("bundle activation", () => {
-  test("#given a host context #when applied #then it registers the runtime skill and one prepended step listener", () => {
+  test("#given a host context #when applied #then it registers both runtime skills and one prepended step listener", () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
 
     expect(name).toBe("omo-ultrawork")
     expect(inject).toEqual(["skills"])
-    expect(state.registeredSkills).toHaveLength(1)
+    expect(state.registeredSkills).toHaveLength(2)
     expect(state.handlers).toHaveLength(1)
     expect(state.handlers[0]?.event).toBe("agent/pre-step")
     expect(state.handlers[0]?.options).toEqual({ prepend: true })
 
-    const skill = state.registeredSkills[0] as {
+    const skills = state.registeredSkills as {
       name: string
       description: string
       whenToUse: string
       source: string
       content: string
-    }
-    expect(skill.name).toBe("omo-ultrawork")
-    expect(skill.source).toBe("runtime")
-    expect(skill.description.length).toBeGreaterThan(0)
-    expect(skill.whenToUse.length).toBeGreaterThan(0)
-    expect(skill.content).toBe(readFileSync(new URL("../skills/ultrawork.md", import.meta.url), "utf8").trim())
+    }[]
+    const ultrawork = skills.find((skill) => skill.name === "omo-ultrawork")
+    const hyperplan = skills.find((skill) => skill.name === "omo-hyperplan")
+    expect(ultrawork?.source).toBe("runtime")
+    expect(hyperplan?.source).toBe("runtime")
+    expect(ultrawork?.description.length).toBeGreaterThan(0)
+    expect(hyperplan?.description.length).toBeGreaterThan(0)
+    expect(ultrawork?.whenToUse.length).toBeGreaterThan(0)
+    expect(hyperplan?.whenToUse.length).toBeGreaterThan(0)
+    expect(ultrawork?.content).toBe(readFileSync(new URL("../skills/ultrawork.md", import.meta.url), "utf8").trim())
+    expect(hyperplan?.content).toBe(readFileSync(new URL("../skills/hyperplan.md", import.meta.url), "utf8").trim())
+  })
+
+  test("#given modes disabled #when applied #then only the remaining skills register", () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, { modes: { team: false, hyperplan: false, hyperplanUltrawork: false } })
+    const skills = state.registeredSkills as { name: string }[]
+    expect(skills.map((skill) => skill.name)).toEqual(["omo-ultrawork"])
+  })
+
+  test("#given an unknown modes key #when applied #then activation fails loudly", () => {
+    const { ctx } = createFakeContext()
+    expect(() => apply(ctx, { modes: { search: true } })).toThrow(/unknown config\.modes key/)
   })
 
   test("#given enabled false #when applied #then nothing is registered", () => {
@@ -250,6 +267,59 @@ describe("step injection", () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
     const hosted = humanMessage("read https://example.com/ulw and report")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given a team-mode prompt #when the step enters #then the team pointer is injected", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("team mode: split this work across members")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    const messages = result.messages as { source: { kind: string }; content: { text: string }[] }[]
+    expect(messages).toHaveLength(2)
+    expect(messages[1]?.source.kind).toBe("omo-team")
+    expect(messages[1]?.content[0]?.text).toContain("spawn_teammate")
+    expect(messages[1]?.content[0]?.text).toContain("TEAM MODE ENABLED!")
+  })
+
+  test("#given a hyperplan prompt #when the step enters #then the hyperplan pointer is injected", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("hyperplan this migration")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    const messages = result.messages as { source: { kind: string }; content: { text: string }[] }[]
+    expect(messages).toHaveLength(2)
+    expect(messages[1]?.source.kind).toBe("omo-hyperplan")
+    expect(messages[1]?.content[0]?.text).toContain('name: "omo-hyperplan"')
+  })
+
+  test("#given a C++ header name #when the step enters #then hyperplan does not arm", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("include the interface.hpp header")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given hyperplan and ultrawork together #when the step enters #then only the combined pointer is injected", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("hyperplan ultrawork the migration")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    const messages = result.messages as { source: { kind: string }; content: { text: string }[] }[]
+    expect(messages).toHaveLength(2)
+    expect(messages[1]?.source.kind).toBe("omo-hyperplan-ultrawork")
+    const pointer = messages[1]?.content[0]?.text ?? ""
+    expect(pointer).toContain("HYPERPLAN ULTRAWORK MODE ENABLED!")
+    expect(pointer).toContain('name: "omo-hyperplan"')
+    expect(pointer).toContain('name: "omo-ultrawork"')
+  })
+
+  test("#given team mode disabled #when the step enters #then nothing is injected", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, { modes: { team: false } })
+    const hosted = humanMessage("team mode: split this work")
     const decision = { kind: "enter", messages: [hosted] }
     expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
   })

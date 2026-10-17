@@ -1,13 +1,13 @@
 /**
- * The runtime skill definition served to the DeepSeek Harness skill registry.
+ * Runtime skill definitions served to the DeepSeek Harness skill registry.
  *
- * The registered name is `omo-ultrawork` on purpose. User and project skill
- * layers outrank runtime registrations, and `ultrawork` often exists in the
- * user's own skill set, so a shared name would make the injected pointer load
- * someone else's directive.
+ * Registered names are namespaced (`omo-<capability>`) on purpose: user and
+ * project skill layers outrank runtime registrations, and bare names such as
+ * `ultrawork` often exist in the user's own skill set, so a shared name would
+ * make an injected pointer load someone else's directive.
  *
- * The body lives in `skills/ultrawork.md` so it stays reviewable as prose; the
- * plugin reads it from the bundle directory at activation. Local directory
+ * Bodies live in `skills/*.md` so they stay reviewable as prose; the plugin
+ * reads them from the bundle directory at activation. Local directory
  * installation links the checkout, and a packed install ships `skills/` through
  * the package `files` list, so the read works in both shapes.
  *
@@ -16,35 +16,64 @@
 
 import { readFileSync } from "node:fs"
 
-const SKILL_BODY_URL = new URL("../skills/ultrawork.md", import.meta.url)
-
-/** Unique skill name the pointer tells the model to load. */
+/** Unique ultrawork skill name the pointer tells the model to load. */
 export const ULTRAWORK_SKILL_NAME = "omo-ultrawork"
 
-/** One-line routing description shown in the model's skill catalog. */
-export const ULTRAWORK_SKILL_DESCRIPTION =
-  "OmO ultrawork-mode directive for DeepSeek Harness: tier triage, goal registration, durable notepad, READ/CHANGE/RUN/CLEAN loop, real-surface verification, and completion discipline."
+/** Unique hyperplan skill name the pointer tells the model to load. */
+export const HYPERPLAN_SKILL_NAME = "omo-hyperplan"
 
-/** When the catalog should route to this skill. */
-export const ULTRAWORK_SKILL_WHEN_TO_USE =
-  "When the injected <ultrawork-mode> bootstrap names it, or when the user asks for OmO's ultrawork mode on DeepSeek Harness."
+const ULTRAWORK_SKILL_BODY_URL = new URL("../skills/ultrawork.md", import.meta.url)
+const HYPERPLAN_SKILL_BODY_URL = new URL("../skills/hyperplan.md", import.meta.url)
 
 /**
- * Load the directive body and build the runtime skill registration.
+ * Read one shipped directive and build the runtime skill registration.
  *
+ * @param {{ name: string, url: URL, description: string, whenToUse: string }} input - skill identity and location.
  * @throws {Error} when the shipped directive is missing or empty.
  * @returns {Readonly<{ name: string, description: string, whenToUse: string, source: "runtime", content: string }>} skill definition.
  */
-export function loadUltraworkSkill() {
-  const content = readFileSync(SKILL_BODY_URL, "utf8").trim()
+function loadRuntimeSkill(input) {
+  const content = readFileSync(input.url, "utf8").trim()
   if (content.length === 0) {
-    throw new Error("omo-dsh: skills/ultrawork.md is empty")
+    throw new Error(`omo-dsh: ${input.url.pathname.split("/").at(-1)} is empty`)
   }
   return Object.freeze({
-    name: ULTRAWORK_SKILL_NAME,
-    description: ULTRAWORK_SKILL_DESCRIPTION,
-    whenToUse: ULTRAWORK_SKILL_WHEN_TO_USE,
+    name: input.name,
+    description: input.description,
+    whenToUse: input.whenToUse,
     source: "runtime",
     content,
+  })
+}
+
+/**
+ * Load the ultrawork directive as the `omo-ultrawork` runtime skill.
+ *
+ * @returns {Readonly<{ name: string, description: string, whenToUse: string, source: "runtime", content: string }>} skill definition.
+ */
+export function loadUltraworkSkill() {
+  return loadRuntimeSkill({
+    name: ULTRAWORK_SKILL_NAME,
+    url: ULTRAWORK_SKILL_BODY_URL,
+    description:
+      "OmO ultrawork-mode directive for DeepSeek Harness: tier triage, goal registration, durable notepad, READ/CHANGE/RUN/CLEAN loop, real-surface verification, and completion discipline.",
+    whenToUse:
+      "When the injected <ultrawork-mode> bootstrap names it, or when the user asks for OmO's ultrawork mode on DeepSeek Harness.",
+  })
+}
+
+/**
+ * Load the hyperplan directive as the `omo-hyperplan` runtime skill.
+ *
+ * @returns {Readonly<{ name: string, description: string, whenToUse: string, source: "runtime", content: string }>} skill definition.
+ */
+export function loadHyperplanSkill() {
+  return loadRuntimeSkill({
+    name: HYPERPLAN_SKILL_NAME,
+    url: HYPERPLAN_SKILL_BODY_URL,
+    description:
+      "OmO hyperplan mode for DeepSeek Harness: a five-member adversarial team (skeptic, validator, researcher, architect, creative) runs independent analysis, cross-attack, and defense rounds, then a fresh subagent formalizes only the surviving insights into an executable plan.",
+    whenToUse:
+      "When the injected <hyperplan-mode> or <hyperplan-ultrawork-mode> bootstrap names it, or when the user asks for adversarial planning on DeepSeek Harness.",
   })
 }
