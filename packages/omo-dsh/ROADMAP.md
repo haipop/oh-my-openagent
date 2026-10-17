@@ -26,7 +26,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 |---|---|---|---|
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
-| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-2 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`) landed | PARTIAL (batches 1-2) |
+| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-2 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`) landed | PARTIAL (batches 1-2, PR #6, #7) |
 | agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition) + subagent model selection | PLANNED (Phase 3) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
@@ -57,7 +57,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 ## Phase 2 (partial): skill library
 
 - Batch 1 landed (PR #6): `omo-git-master`, `omo-debugging`, `omo-remove-ai-slops`.
-- Batch 2 landed: `omo-data-scientist`, `omo-review-work`, `omo-init-deep`, all adapted from
+- Batch 2 landed (PR #7): `omo-data-scientist`, `omo-review-work`, `omo-init-deep`, all adapted from
   `shared-skills` to the DSH tool surface (no `task`, `lsp_*`, `background_output`, ast-grep, or
   OpenCode-only config). Registered through the same seam as the mode skills; config gate
   `skills: { library: false }`.
