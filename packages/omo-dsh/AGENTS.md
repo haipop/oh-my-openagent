@@ -231,6 +231,23 @@ that opens with `ULTRAWORK MODE ENABLED!`, a `user/message` event whose source k
 modes follow the same shape with their own banner, source kind, and skill name (`hyperplan` also
 ships `hpp` and the combined invocation).
 
+Team mode and parallel execution can be exercised in the headless profile without touching the
+Desktop profile: mount the Agent Teams rows through a `--patch` overlay (the same rows the Desktop
+profile bundle carries), then run a task that creates tasks, spawns two members, waits, and closes
+the board. A parallel `workflow` run needs no overlay: the headless profile already mounts
+`workflow-ptc` and `tool-workflow`.
+
+```yaml
+# /tmp/team.patch.yml, applied with: dsh --profile headless --patch /tmp/team.patch.yml ...
+- insert:
+    - id: agent-team
+      name: '@deepseek-ai/dsh-experimental-agent-team'
+      config: { maxMembers: 3, maxTasks: 16, maxMessageBytes: 65536, disposalTimeoutMs: 5000 }
+    - id: tool-agent-team
+      name: '@deepseek-ai/dsh-experimental-tool-agent-team'
+      config: { freshProvider: spawn, forkProvider: fork }
+```
+
 QA evidence for changes here follows the repository rules: write artifacts under
 `.omo/evidence/<YYYYMMDD>-<short-slug>/`, keep them out of git, and summarize them in the PR body.
 
