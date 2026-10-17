@@ -2,10 +2,11 @@
 
 Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships OmO's keyword modes:
 `ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
-`hyperplan + ultrawork` invocation, plus two batches of OmO's harness-neutral skill library
-(`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`). The
-package is private and is not published to npm; users install the bundle into a DSH profile. The
-phased plan for the remaining capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
+`hyperplan + ultrawork` invocation, two batches of OmO's harness-neutral skill library
+(`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`), and
+four OMO agent-role presets (Prometheus, Oracle, Librarian, Explore). The package is private and is
+not published to npm; users install the bundle into a DSH profile. The phased plan for the remaining
+capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
 
@@ -41,7 +42,7 @@ prevents a retried step from appending the pointer twice.
 | `skills/data-scientist.md` | Hybrid-engine data analysis directive, adapted from OmO's `data-scientist` skill |
 | `skills/review-work.md` | Post-implementation gate review directive, adapted from OmO's `review-work` skill |
 | `skills/init-deep.md` | Hierarchical AGENTS.md generation directive, adapted from OmO's `init-deep` skill |
-| `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row |
+| `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row and the four OMO agent-preset declarations |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
 
@@ -69,6 +70,30 @@ groups: the OMO workflow skills (`ulw-plan`, `ulw-execute`, `ulw-research`, `pro
 `refactor`, `frontend`) wait for the agent-role mapping in Phase 3, and the tool-bound skills
 (`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`, `coding-agent-sessions`) wait
 for the tool mapping in Phase 4.
+
+## Agent presets
+
+The bundle patch also carries four `@deepseek-ai/dsh-agent-preset` declarations, so installing the
+bundle puts OMO's specialist roles on the Harness roster next to the shipped presets:
+
+| Preset id | Roster name | Role | Tool surface |
+|---|---|---|---|
+| `omo-prometheus` | Prometheus (OMO planner) | Turns a request into one decision-complete plan | read-only: fs read/image, search, bash inspection, web, skill, ask-user, jobs |
+| `omo-oracle` | Oracle (OMO advisor) | Read-only architecture, security, performance, and hard-debugging advice | read-only, same surface as Prometheus |
+| `omo-librarian` | Librarian (OMO research) | Upstream docs, changelogs, and standards with cited evidence | read-only plus web |
+| `omo-explore` | Explore (OMO search) | Codebase search: paths, line numbers, quoted matches | fs read, search, bash inspection, skill, jobs |
+
+Each declaration composes a `@deepseek-ai/dsh-persona` prefix (`complete: true`), the
+`@deepseek-ai/dsh-agent-instructions` row with `maxBytes: 131072` so a large repository AGENTS.md is
+not truncated, the role's tool rows (no write, edit, or subagent tools), and the compaction group.
+The presets are not selected by default: a session picks one from the Desktop roster, or the profile
+overrides the `agent-preset-registry` row.
+
+The `headless` profile mounts `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-headless`, not the Web
+app bundle, so it has no `agent-preset-registry` service and ignores the declarations; live preset QA
+therefore runs through the Desktop roster. The declarations still load and activate in profiles that
+mount the registry: a broken declaration stays on the roster with its diagnostic and cannot compose a
+session until the bundle is fixed.
 
 ## Runtime constraints
 
