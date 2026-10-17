@@ -1,5 +1,7 @@
-import { describe, expect, test } from "bun:test"
-import { readFileSync } from "node:fs"
+import { afterAll, describe, expect, test } from "bun:test"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import { apply, inject, name } from "../index.js"
 
@@ -11,7 +13,10 @@ type FakeState = {
   readonly warnings: string[]
 }
 
-function createFakeContext(): { ctx: unknown; state: FakeState } {
+function createFakeContext(services: { workingDirectory?: { ensure(agent: unknown): Promise<string> } } = {}): {
+  ctx: unknown
+  state: FakeState
+} {
   const state: FakeState = { registeredSkills: [], handlers: [], warnings: [] }
   const ctx = {
     skills: {
@@ -28,6 +33,7 @@ function createFakeContext(): { ctx: unknown; state: FakeState } {
         state.warnings.push(args.map((value) => String(value)).join(" "))
       },
     },
+    ...(services.workingDirectory === undefined ? {} : { workingDirectory: services.workingDirectory }),
   }
   return { ctx, state }
 }
@@ -54,9 +60,20 @@ function childAgent() {
 }
 
 async function runStep(state: FakeState, payload: unknown, decision: unknown) {
-  const registered = state.handlers[0]
+  const registered = state.handlers.find((handler) => handler.event === "agent/pre-step")
   if (registered === undefined) throw new Error("no agent/pre-step handler registered")
   return (await registered.handler(payload, async () => decision)) as Record<string, unknown>
+}
+
+async function runPostExecute(
+  state: FakeState,
+  exec: unknown,
+  result: unknown,
+  downstream: unknown,
+) {
+  const registered = state.handlers.find((handler) => handler.event === "tools/post-execute")
+  if (registered === undefined) throw new Error("no tools/post-execute handler registered")
+  return (await registered.handler(exec, result, async () => downstream)) as Record<string, unknown>
 }
 
 describe("bundle activation", () => {
@@ -65,11 +82,12 @@ describe("bundle activation", () => {
     apply(ctx, {})
 
     expect(name).toBe("omo-ultrawork")
-    expect(inject).toEqual(["skills"])
+    expect(inject).toEqual(["skills", "workingDirectory"])
     expect(state.registeredSkills).toHaveLength(14)
-    expect(state.handlers).toHaveLength(1)
-    expect(state.handlers[0]?.event).toBe("agent/pre-step")
+    expect(state.handlers).toHaveLength(2)
+    expect(state.handlers.map((handler) => handler.event)).toEqual(["agent/pre-step", "tools/post-execute"])
     expect(state.handlers[0]?.options).toEqual({ prepend: true })
+    expect(state.handlers[1]?.options).toBeUndefined()
 
     const skills = state.registeredSkills as {
       name: string
@@ -355,5 +373,131 @@ describe("step injection", () => {
     const hosted = humanMessage("team mode: split this work")
     const decision = { kind: "enter", messages: [hosted] }
     expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+})
+
+const tempDirectories: string[] = []
+
+afterAll(() => {
+  for (const directory of tempDirectories) rmSync(directory, { recursive: true, force: true })
+})
+
+describe("project rules", () => {
+  function createRuleDirectory(files: Record<string, string>): string {
+    const cwd = mkdtempSync(join(tmpdir(), "omo-dsh-plugin-rules-"))
+    tempDirectories.push(cwd)
+    const directory = join(cwd, ".omo", "rules")
+    mkdirSync(directory, { recursive: true })
+    for (const [name, content] of Object.entries(files)) writeFileSync(join(directory, name), content)
+    return cwd
+  }
+
+  test("#given an always-on rule and a session directory #when the step enters #then the rule context is appended once", async () => {
+    const cwd = createRuleDirectory({ "alpha.md": "---\ndescription: alpha\n---\n\n# Alpha\nStay careful.\n" })
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, { rules: { roots: [".omo/rules"] } })
+
+    const agent = rootAgent()
+    const hosted = humanMessage("fix the parser")
+    const first = await runStep(state, stepPayload(agent, [hosted]), { kind: "enter", messages: [hosted] })
+    const messages = first.messages as { source: { kind: string }; content: { text: string }[] }[]
+    expect(messages).toHaveLength(2)
+    expect(messages[1]?.source.kind).toBe("omo-rules")
+    expect(messages[1]?.content[0]?.text).toContain("Stay careful")
+
+    const second = await runStep(state, stepPayload(agent, [hosted]), { kind: "enter", messages })
+    expect(second.messages).toBe(messages)
+  })
+
+  test("#given a glob rule and a prompt naming a matching path #when the step enters #then the rule is injected", async () => {
+    const cwd = createRuleDirectory({ "tests.md": '---\nglobs:\n  - "**/*.test.ts"\n---\n\nTest rule body.\n' })
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, { rules: { roots: [".omo/rules"] } })
+
+    const hosted = humanMessage("fix packages/x/src/a.test.ts")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    const messages = result.messages as { source: { kind: string }; content: { text: string }[] }[]
+    expect(messages[1]?.source.kind).toBe("omo-rules")
+    expect(messages[1]?.content[0]?.text).toContain("tests.md")
+  })
+
+  test("#given no working directory service #when the step enters #then rules are skipped quietly", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("fix the parser")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given rules disabled #when the step enters #then only mode injection can happen", async () => {
+    const cwd = createRuleDirectory({ "alpha.md": "Alpha body\n" })
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, { rules: { enabled: false } })
+    const hosted = humanMessage("fix the parser")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given an unknown rules key #when applied #then activation fails loudly", () => {
+    const { ctx } = createFakeContext()
+    expect(() => apply(ctx, { rules: { extra: true } })).toThrow(/unknown config\.rules key/)
+  })
+
+  test("#given an invalid rule budget #when applied #then activation fails loudly", () => {
+    const { ctx } = createFakeContext()
+    expect(() => apply(ctx, { rules: { maxBytes: 10 } })).toThrow(/rules\.maxBytes/)
+  })
+})
+
+describe("comment checker", () => {
+  test("#given a write with a restating comment #when post-execute runs #then a warning context is attached", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// increment the counter\ncounter += 1\n" }, agent: rootAgent() }
+    const result = await runPostExecute(state, exec, { isError: false }, { kind: "accept" })
+    expect(result.kind).toBe("accept")
+    const contexts = result.additionalContexts as { source: { kind: string }; content: { text: string }[] }[]
+    expect(contexts).toHaveLength(1)
+    expect(contexts[0]?.source.kind).toBe("omo-comments")
+    expect(contexts[0]?.content[0]?.text).toContain("line 1")
+  })
+
+  test("#given a comment that explains why #when post-execute runs #then the decision is untouched", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// Retries once because the backend drops idle connections.\n" }, agent: rootAgent() }
+    const downstream = { kind: "accept" }
+    expect(await runPostExecute(state, exec, { isError: false }, downstream)).toBe(downstream)
+  })
+
+  test("#given a failed tool result #when post-execute runs #then nothing is attached", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// loop through rows\n" }, agent: rootAgent() }
+    const downstream = { kind: "accept" }
+    expect(await runPostExecute(state, exec, { isError: true }, downstream)).toBe(downstream)
+  })
+
+  test("#given the warning cap reached #when another slop write lands #then no further context is attached", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, { commentChecker: { maxWarnings: 1 } })
+    const agent = rootAgent()
+    const slop = { name: "write", arguments: { file_path: "src/a.ts", content: "// loop through rows\n" }, agent }
+    await runPostExecute(state, slop, { isError: false }, { kind: "accept" })
+    const downstream = { kind: "accept" }
+    expect(await runPostExecute(state, slop, { isError: false }, downstream)).toBe(downstream)
+  })
+
+  test("#given the checker disabled #when a slop write lands #then nothing is attached", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, { commentChecker: { enabled: false } })
+    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// loop through rows\n" }, agent: rootAgent() }
+    const downstream = { kind: "accept" }
+    expect(await runPostExecute(state, exec, { isError: false }, downstream)).toBe(downstream)
+  })
+
+  test("#given an unknown commentChecker key #when applied #then activation fails loudly", () => {
+    const { ctx } = createFakeContext()
+    expect(() => apply(ctx, { commentChecker: { extra: true } })).toThrow(/unknown config\.commentChecker key/)
   })
 })

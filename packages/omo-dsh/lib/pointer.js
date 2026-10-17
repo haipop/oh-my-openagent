@@ -120,13 +120,27 @@ export function buildHyperplanUltraworkPointer(input = {}) {
  * @returns {Readonly<{ id: string, role: "user", content: readonly { type: "text", text: string }[], source: Readonly<{ kind: string, form: "notice", summary: string }> }>} frozen message.
  */
 export function createModeMessage(input) {
+  return createSourcedMessage({ id: input.id, text: input.pointer, kind: input.kind, summary: input.summary })
+}
+
+/**
+ * Build one identified, frozen synthetic user message.
+ *
+ * Shared by every injection this bundle appends: the mode pointers, the rule
+ * context, and the comment-check warning. The harness validates the shape
+ * structurally, so all three producers go through this one factory.
+ *
+ * @param {{ id: string, text: string, kind: string, summary: string, form?: string }} input - identity, text, and source metadata.
+ * @returns {Readonly<object>} frozen synthetic message.
+ */
+export function createSourcedMessage(input) {
   return Object.freeze({
     id: input.id,
     role: "user",
-    content: Object.freeze([Object.freeze({ type: "text", text: input.pointer })]),
+    content: Object.freeze([Object.freeze({ type: "text", text: input.text })]),
     source: Object.freeze({
       kind: input.kind,
-      form: "notice",
+      form: input.form ?? "notice",
       summary: input.summary,
     }),
   })

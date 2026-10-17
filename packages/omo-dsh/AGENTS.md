@@ -6,8 +6,8 @@ Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships Om
 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`,
 `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`), and nine OMO
 agent-role presets (Prometheus, Oracle, Librarian, Explore, Metis, Momus, Multimodal-Looker,
-Sisyphus, Atlas). The package is private and is not published to npm; users install the bundle into
-a DSH profile. The phased plan for the remaining
+Sisyphus, Atlas), plus two hook-level checks: `.omo/rules` injection and a write/edit comment check.
+The package is private and is not published to npm; users install the bundle into a DSH profile. The phased plan for the remaining
 capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
@@ -36,6 +36,8 @@ prevents a retried step from appending the pointer twice.
 | `lib/pointer.js` | Per-mode bootstrap pointers and the synthetic message factory |
 | `lib/skill.js` | Loads a shipped markdown body into a runtime skill definition |
 | `lib/library.js` | Registry of the ported OmO skill library and its loader |
+| `lib/rules.js` | Reads `.omo/rules/*.md`, parses the frontmatter subset (`description`, `globs`, `alwaysApply`), selects matching rules, and renders the injected rules context |
+| `lib/comment-checker.js` | Detects comments that only restate the code in `write`/`edit` payloads and renders the bounded warning context |
 | `skills/ultrawork.md` | Ultrawork directive, adapted to the DeepSeek Harness tool surface |
 | `skills/hyperplan.md` | Hyperplan directive, adapted from the OmO adversarial planning skill to DSH Agent Teams |
 | `skills/git-master.md` | Git workflow directive, adapted from OmO's `git-master` skill |
@@ -128,8 +130,10 @@ session until the bundle is fixed.
   source: { kind, form, summary } }` with a non-empty string id.
 - The runtime is plain ESM JavaScript by design: the DSH bundle contract needs no build tool or
   dependency, and the tests exercise the same files the Host loads.
-- The plugin declares `inject = ["skills"]`; profiles without the skill registry leave it inactive
-  instead of throwing.
+- The plugin declares `inject = ["skills", "workingDirectory"]`; profiles without those services
+  leave it inactive instead of throwing. The working-directory dependency is not cosmetic: reading a
+  Cordis service outside `inject` yields `undefined` in the mounted plugin context, so an optional
+  access silently skipped rule loading until the dependency was declared.
 - The runtime skills are namespaced (`omo-ultrawork`, `omo-hyperplan`), never bare `ultrawork` or
   `hyperplan`: user and project skill layers outrank runtime registrations, and those bare names
   commonly exist in a user's own skill set. A shared name would make the injected pointer load that
@@ -137,8 +141,10 @@ session until the bundle is fixed.
 - Config keys: `enabled` (default `true`), `keywords` (ultrawork keywords, default
   `["ultrawork", "ulw"]`), `applyToSubagents` (default `false`), `modes`
   (`{ ultrawork, team, hyperplan, hyperplanUltrawork }`, all default `true`; disabling `hyperplan`
-  also disables the combo), and `skills` (`{ library }`, default `true`). Unknown keys fail
-  activation so a typo cannot silently disable a mode or a skill.
+  also disables the combo), `skills` (`{ library }`, default `true`), `rules`
+  (`{ enabled, roots, maxRules, maxBytes }`, default on with `.omo/rules` and `~/.omo/rules`), and
+  `commentChecker` (`{ enabled, tools, maxWarnings }`, default on for `write` and `edit`). Unknown
+  keys fail activation so a typo cannot silently disable a mode, a skill, or a check.
 
 ## Detection contract
 
@@ -155,6 +161,29 @@ Arming is remembered per live session and keyed by the mode and the claimed mess
 retried after a pre-commit failure cannot append a second pointer for the same human message. The
 ledger is in memory only, bounded per session, and disappears with the session; replay and resume
 rebuild model state from the durable log, which still holds the original injection.
+
+## Rules and comment checks
+
+OmO's `rules-injector` and `comment-checker` hooks do not exist as plugin seams in DeepSeek Harness,
+so this bundle uses the two waterfalls the Host does expose.
+
+**Rules.** `agent/pre-step` reads `.omo/rules/*.md` under the session directory (then
+`~/.omo/rules`), parses the frontmatter subset OmO rule files use, and appends one sourced
+`user/message` (kind `omo-rules`) per session listing the rules that apply. A rule with no `globs`,
+or with `alwaysApply: true`, applies to the whole session; a glob-scoped rule joins only when the
+prompt names a matching path. Rules use the declared `workingDirectory` dependency to resolve the session
+directory; a profile without that service leaves the whole bundle inactive. Per-rule injection is
+remembered per live session so a later prompt cannot duplicate a rule.
+
+**Comment check.** `tools/post-execute` inspects the text a `write` or `edit` call added, flags
+comments that only restate the code (obvious narration, filler wording, banners, commented-out code,
+em dashes), and attaches a bounded warning context (kind `omo-comments`) to the accepted result. The
+tool has already run, so the decision stays `accept`; the model sees the warning on its next step.
+Warnings are capped per session. The check is deliberately conservative: a noisy checker trains the
+model to ignore it.
+
+Both checks are config-gated (`rules`, `commentChecker`) and both fail open: a read error or an
+unexpected payload skips the injection and logs a warning instead of breaking the step.
 
 ## Install and QA
 
