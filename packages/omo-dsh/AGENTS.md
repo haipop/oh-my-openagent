@@ -2,10 +2,10 @@
 
 Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships OmO's keyword modes:
 `ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
-`hyperplan + ultrawork` invocation, plus the first batch of OmO's harness-neutral skill library
-(`git-master`, `debugging`, `remove-ai-slops`). The package is private and is not published to npm;
-users install the bundle into a DSH profile. The phased plan for the remaining capabilities lives in
-[`ROADMAP.md`](./ROADMAP.md).
+`hyperplan + ultrawork` invocation, plus two batches of OmO's harness-neutral skill library
+(`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`). The
+package is private and is not published to npm; users install the bundle into a DSH profile. The
+phased plan for the remaining capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
 
@@ -38,6 +38,9 @@ prevents a retried step from appending the pointer twice.
 | `skills/git-master.md` | Git workflow directive, adapted from OmO's `git-master` skill |
 | `skills/debugging.md` | Hypothesis-driven debugging directive, adapted from OmO's `debugging` skill |
 | `skills/remove-ai-slops.md` | AI-slop cleanup directive, adapted from OmO's `remove-ai-slops` skill |
+| `skills/data-scientist.md` | Hybrid-engine data analysis directive, adapted from OmO's `data-scientist` skill |
+| `skills/review-work.md` | Post-implementation gate review directive, adapted from OmO's `review-work` skill |
+| `skills/init-deep.md` | Hierarchical AGENTS.md generation directive, adapted from OmO's `init-deep` skill |
 | `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
@@ -54,15 +57,18 @@ were removed from OmO and are not ported.
 
 ## Skill library
 
-Batch 1 ports the harness-neutral OmO workflows that need no OpenCode-only tool. Each one is adapted
-to the DSH tool surface (`bash`, `read`, `write`, `edit`, `grep`, `glob`, `subagent`, `workflow`,
-`todo_write`, background jobs, `terminal_*`) instead of OmO's OpenCode tools (`task`, `lsp_*`,
-`background_output`). Registered names stay namespaced: `omo-git-master`, `omo-debugging`,
-`omo-remove-ai-slops`.
+Batches 1 and 2 port the harness-neutral OmO workflows that need no OpenCode-only tool. Each one is
+adapted to the DSH tool surface (`bash`, `read`, `write`, `edit`, `grep`, `glob`, `subagent`,
+`workflow`, `todo_write`, background jobs, `terminal_*`) instead of OmO's OpenCode tools (`task`,
+`lsp_*`, `background_output`). Registered names stay namespaced: `omo-git-master`, `omo-debugging`,
+`omo-remove-ai-slops`, `omo-data-scientist`, `omo-review-work`, `omo-init-deep`.
 
 The library registers through the same `ctx.skills.register` seam as the mode skills; disable the
-whole batch with `skills: { library: false }`. Batch 2 (skills that depend on absent tools, for
-example LSP, ast-grep, browser automation) waits for the corresponding tool mapping in Phase 4.
+whole library with `skills: { library: false }`. The remaining `shared-skills` entries split into two
+groups: the OMO workflow skills (`ulw-plan`, `ulw-execute`, `ulw-research`, `programming`,
+`refactor`, `frontend`) wait for the agent-role mapping in Phase 3, and the tool-bound skills
+(`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`, `coding-agent-sessions`) wait
+for the tool mapping in Phase 4.
 
 ## Runtime constraints
 
