@@ -9,6 +9,7 @@ type StepHandler = (payload: unknown, next: () => Promise<unknown>) => Promise<u
 
 type FakeState = {
   readonly registeredSkills: unknown[]
+  readonly registeredTools: unknown[]
   readonly handlers: { event: string; handler: StepHandler; options: unknown }[]
   readonly warnings: string[]
 }
@@ -17,7 +18,7 @@ function createFakeContext(services: { workingDirectory?: { ensure(agent: unknow
   ctx: unknown
   state: FakeState
 } {
-  const state: FakeState = { registeredSkills: [], handlers: [], warnings: [] }
+  const state: FakeState = { registeredSkills: [], registeredTools: [], handlers: [], warnings: [] }
   const ctx = {
     skills: {
       register(skill: unknown) {
@@ -27,6 +28,12 @@ function createFakeContext(services: { workingDirectory?: { ensure(agent: unknow
     },
     on(event: string, handler: StepHandler, options?: unknown) {
       state.handlers.push({ event, handler, options })
+    },
+    tools: {
+      register(definition: unknown) {
+        state.registeredTools.push(definition)
+        return () => {}
+      },
     },
     logger: {
       warn(...args: unknown[]) {
@@ -82,12 +89,18 @@ describe("bundle activation", () => {
     apply(ctx, {})
 
     expect(name).toBe("omo-ultrawork")
-    expect(inject).toEqual(["skills", "workingDirectory"])
+    expect(inject).toEqual(["skills", "workingDirectory", "tools"])
     expect(state.registeredSkills).toHaveLength(17)
+    expect(state.registeredTools).toHaveLength(1)
     expect(state.handlers).toHaveLength(2)
     expect(state.handlers.map((handler) => handler.event)).toEqual(["agent/pre-step", "tools/post-execute"])
     expect(state.handlers[0]?.options).toEqual({ prepend: true })
     expect(state.handlers[1]?.options).toBeUndefined()
+
+    const statusTool = state.registeredTools[0] as { name: string; description: string; output: { render(args: unknown, value: unknown): unknown[] } }
+    expect(statusTool.name).toBe("omo_status")
+    expect(statusTool.description.length).toBeGreaterThan(0)
+    expect(statusTool.output.render({}, { ok: true })).toEqual([{ type: "text", text: JSON.stringify({ ok: true }, null, 2) }])
 
     const skills = state.registeredSkills as {
       name: string
@@ -559,5 +572,53 @@ describe("shared config file", () => {
     const hosted = humanMessage("ulw fix the parser")
     const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
     expect((result.messages as unknown[]).length).toBe(2)
+  })
+})
+
+describe("status tool", () => {
+  async function runStatus(state: FakeState, agent: unknown) {
+    const tool = state.registeredTools[0] as { execute(args: unknown, exec: unknown): Promise<Record<string, unknown>> }
+    return await tool.execute({}, { agent })
+  }
+
+  test("#given a session directory with config and rules #when omo_status runs #then it reports the effective layers and empty rule state", async () => {
+    const root = mkdtempSync(join(tmpdir(), "omo-dsh-status-"))
+    tempDirectories.push(root)
+    mkdirSync(join(root, ".omo", "rules"), { recursive: true })
+    writeFileSync(join(root, ".omo", "omo.json"), '{"dsh":{"keywords":["shipit"]}}')
+    writeFileSync(join(root, ".omo", "rules", "alpha.md"), "Always be careful.\n")
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => root } })
+    apply(ctx, {})
+
+    const status = await runStatus(state, rootAgent())
+    expect(status.plugin).toBe("omo-ultrawork")
+    expect(status.keywords).toEqual(["shipit"])
+    expect((status.config as { files: string[] }).files.some((file) => file.endsWith("omo.json"))).toBe(true)
+    expect((status.rules as { loaded: string[] }).loaded).toEqual([])
+    expect(status.modelRouting).toBeDefined()
+  })
+
+  test("#given rules were injected #when omo_status runs #then the injected rule names are reported", async () => {
+    const root = mkdtempSync(join(tmpdir(), "omo-dsh-status-"))
+    tempDirectories.push(root)
+    mkdirSync(join(root, ".omo", "rules"), { recursive: true })
+    writeFileSync(join(root, ".omo", "rules", "alpha.md"), "Always be careful.\n")
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => root } })
+    apply(ctx, {})
+
+    const agent = rootAgent()
+    const hosted = humanMessage("fix the parser")
+    await runStep(state, stepPayload(agent, [hosted]), { kind: "enter", messages: [hosted] })
+    const status = await runStatus(state, agent)
+    expect((status.rules as { loaded: string[] }).loaded).toEqual(["alpha.md"])
+    expect((status.rules as { injected: string[] }).injected).toEqual(["alpha.md"])
+  })
+
+  test("#given no working directory #when omo_status runs #then it still reports row config", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, { keywords: ["yolo"] })
+    const status = await runStatus(state, rootAgent())
+    expect(status.keywords).toEqual(["yolo"])
+    expect((status.config as { files: string[] }).files).toEqual([])
   })
 })

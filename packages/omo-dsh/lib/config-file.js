@@ -201,11 +201,43 @@ function isPlainObject(value) {
  * @returns {Record<string, unknown>} merged raw config, row winning.
  */
 export function loadMergedConfig(cwd, rowConfig) {
+  return mergeConfigLayers(readLayerConfigs(cwd), rowConfig)
+}
+
+/**
+ * Describe the config layers that apply to one session directory.
+ *
+ * Used by the read-only status surface: it reports which files were found, what
+ * each contributed, and which keys the plugin row sets.
+ *
+ * @param {string} cwd - session working directory.
+ * @param {Record<string, unknown>} rowConfig - plugin row config.
+ * @returns {{ files: string[], layers: Array<{ file: string, config: Record<string, unknown> }>, merged: Record<string, unknown>, rowKeys: string[] }} layer report.
+ */
+export function describeConfig(cwd, rowConfig) {
+  const layers = []
+  for (const file of configFilesFor(cwd)) {
+    const config = readConfigFile(file)
+    if (config === undefined) continue
+    layers.push({ file, config })
+  }
+  return {
+    files: layers.map((layer) => layer.file),
+    layers,
+    merged: mergeConfigLayers(
+      layers.map((layer) => layer.config),
+      rowConfig,
+    ),
+    rowKeys: Object.keys(rowConfig).sort(),
+  }
+}
+
+function readLayerConfigs(cwd) {
   const layers = []
   for (const file of configFilesFor(cwd)) {
     const layer = readConfigFile(file)
     if (layer === undefined) continue
     layers.push(layer)
   }
-  return mergeConfigLayers(layers, rowConfig)
+  return layers
 }

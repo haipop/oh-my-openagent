@@ -21,7 +21,7 @@ import { randomUUID } from "node:crypto"
 import { buildKeywordPattern, DEFAULT_KEYWORDS, isChildAgent } from "./lib/detect.js"
 import { loadLibrarySkills } from "./lib/library.js"
 import { buildModes, findModeMatch } from "./lib/modes.js"
-import { loadMergedConfig } from "./lib/config-file.js"
+import { describeConfig, loadMergedConfig } from "./lib/config-file.js"
 import {
   buildCommentWarning,
   COMMENTS_SOURCE_KIND,
@@ -32,6 +32,7 @@ import {
   isCheckedTool,
 } from "./lib/comment-checker.js"
 import { createModeMessage, createSourcedMessage, isModeMessage } from "./lib/pointer.js"
+import { buildStatus, createStatusTool } from "./lib/status.js"
 import {
   buildRulesPointer,
   DEFAULT_MAX_BYTES,
@@ -52,7 +53,7 @@ export const name = "omo-ultrawork"
  * former registers the directives, the latter locates `.omo/rules`. A profile
  * without them leaves the plugin inactive instead of throwing.
  */
-export const inject = ["skills", "workingDirectory"]
+export const inject = ["skills", "workingDirectory", "tools"]
 
 const KNOWN_CONFIG_KEYS = new Set(["enabled", "keywords", "applyToSubagents", "modes", "skills", "rules", "commentChecker"])
 const KNOWN_MODE_KEYS = new Set(["ultrawork", "team", "hyperplan", "hyperplanUltrawork"])
@@ -349,6 +350,32 @@ async function warnAboutComments(options, exec, result, downstream) {
 }
 
 /**
+ * Resolve the read-only status for the calling session.
+ *
+ * Reads the same session caches the listeners use; it never mutates them.
+ */
+async function readSessionStatus(ctx, agent, rowConfig, baseOptions) {
+  const session = agent?.session
+  const options = await effectiveOptions(ctx, agent, rowConfig, baseOptions)
+  const cwd = await resolveSessionDirectory(ctx, agent)
+  const config =
+    cwd === undefined
+      ? { files: [], layers: [], merged: {}, rowKeys: Object.keys(rowConfig).sort() }
+      : describeConfig(cwd, rowConfig)
+  const rulesState = session === undefined || session === null ? undefined : rulesStateBySession.get(session)
+  return buildStatus({
+    options,
+    rowConfig,
+    config,
+    rules:
+      rulesState === undefined
+        ? undefined
+        : { loaded: rulesState.rules.map((rule) => rule.name), injected: [...rulesState.injected] },
+    commentWarnings: session === undefined || session === null ? 0 : (commentWarningsBySession.get(session) ?? 0),
+  })
+}
+
+/**
  * Activate the bundle in the current Host composition.
  *
  * @param {object} ctx - Cordis context of the mounted plugin row.
@@ -360,6 +387,10 @@ export function apply(ctx, config) {
   const rowConfig = config ?? {}
 
   registerSkills(ctx, baseOptions.enabledModes, baseOptions.skills)
+
+  if (ctx.tools !== undefined && typeof ctx.tools.register === "function") {
+    ctx.tools.register(createStatusTool((exec) => readSessionStatus(ctx, exec.agent, rowConfig, baseOptions)))
+  }
 
   ctx.on(
     "agent/pre-step",
