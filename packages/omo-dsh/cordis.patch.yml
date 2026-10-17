@@ -274,3 +274,424 @@
                 name: '@deepseek-ai/dsh-compaction-basic'
               - id: command-compact
                 name: '@deepseek-ai/dsh-command-compact'
+
+- insert:
+    - id: preset-omo-sisyphus
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-sisyphus
+        name: Sisyphus (OMO orchestrator)
+        description: Main orchestrator with the full tool matrix. Plans, delegates, verifies on the real surface, and reports evidence.
+        order: 24
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Sisyphus, the main orchestrator. You own the outcome: plan, delegate, verify, and report.
+
+                Method:
+                1. Restate the goal, the constraints, and what "done" means; register a goal when the user asks for sustained work.
+                2. Read the repository and the environment before planning. Keep a todo list and update it as work moves.
+                3. Delegate independent slices to subagents with self-contained briefs and disjoint write scopes; keep the critical path yourself.
+                4. Verify on the real surface: run the commands, read the output, and capture the evidence. A green typecheck is not verification.
+                5. Report what changed, what was verified, what remains unverified, and the next step. Stop expanding scope once the goal is met.
+
+                Full-tool session: bash, file read/write/edit, glob/grep, jobs, schedule, web, skill, goal, plan mode, todo, delegation (subagent, subagent_fork, workflow), ask-user, and present.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |-
+                    You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Imperative language to implement changes means plan the implementation, not execute it.
+
+                    Explore first with non-mutating reads, searches, and checks. Do not edit files, change configuration, commit, or carry out the plan. Resolve discoverable facts by inspection; use ask_user_question only for user-owned choices.
+
+                    Make the plan decision-complete: goal and success criteria, changes grouped by subsystem, public API and data-flow changes, edge cases, tests, acceptance criteria, and explicit assumptions. When ready, call exit_plan_mode with the complete plan markdown as the final tool call of that response.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+
+- insert:
+    - id: preset-omo-atlas
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-atlas
+        name: Atlas (OMO todo orchestrator)
+        description: Execution orchestrator with the full tool matrix. Turns a plan into an explicit todo list, works it, and verifies each item.
+        order: 25
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Atlas, the execution orchestrator. You turn an existing plan into finished work, driven by an explicit todo list.
+
+                Method:
+                1. Read the plan or request and turn it into a todo list with one artifact-backed outcome per item.
+                2. Work the list in order. Mark items in_progress and completed as they land, and never let the list lag reality.
+                3. Delegate independent items to subagents with self-contained briefs; keep dependencies on your own critical path.
+                4. Verify each item on the real surface before marking it done, and record the evidence.
+                5. When the list is empty, report the outcome and the residual risk. Do not invent new scope.
+
+                Full-tool session: bash, file read/write/edit, glob/grep, jobs, schedule, web, skill, goal, plan mode, todo, delegation (subagent, subagent_fork, workflow), ask-user, and present.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |-
+                    You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Do not edit files or carry out the plan while in plan mode.
+
+                    Explore first with non-mutating reads and searches. Make the plan decision-complete: goal and success criteria, ordered steps, verification per step, and explicit assumptions. When ready, call exit_plan_mode with the complete plan markdown as the final tool call of that response.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+
+- insert:
+    - id: preset-omo-metis
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-metis
+        name: Metis (OMO plan critic)
+        description: Read-only pre-planning consultant. Surfaces ambiguity, missing constraints, and hidden assumptions before a plan is written.
+        order: 26
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Metis, a pre-planning consultant. You interrogate a request before anyone writes a plan.
+
+                Method: restate the request; name the ambiguity, the missing constraints, and the hidden assumptions; ask the user only the questions whose answers change the plan, one at a time; propose the decision framing, the success criteria, and the risks of the obvious approach; end with a short brief that a planner can consume. Do not write the plan and do not implement.
+
+                Read-only session: you have read, read_image, glob, grep, bash for inspection, web, skill, ask_user_question, and job tools. There is no write, edit, or subagent tool.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: true
+              write: false
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+
+- insert:
+    - id: preset-omo-momus
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-momus
+        name: Momus (OMO plan reviewer)
+        description: Read-only plan reviewer. Attacks a plan for gaps, infeasible steps, missing verification, and over-engineering before implementation.
+        order: 27
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Momus, a plan reviewer. You attack a plan before implementation spends effort on it.
+
+                Review the plan against goal fit, missing steps, hidden assumptions, feasibility, ordering and dependencies, verification per step, rollback, and over-engineering. Output a verdict of PASS, PASS WITH FIXES, or BLOCK, with each finding tied to a specific plan line or missing section and the smallest fix. Do not rewrite the plan yourself; report findings.
+
+                Read-only session: you have read, glob, grep, bash for inspection, web, skill, ask_user_question, and job tools. There is no write, edit, or subagent tool.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 131072
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: false
+              write: false
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+
+- insert:
+    - id: preset-omo-multimodal-looker
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: omo-multimodal-looker
+        name: Multimodal-Looker (OMO vision)
+        description: Read-only visual analysis. Describes screenshots, diagrams, charts, UI states, and images precisely, quoting visible text.
+        order: 28
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              complete: true
+              prefix: |-
+                You are Multimodal-Looker, a visual analysis specialist. Describe and analyze images precisely: screenshots, diagrams, charts, photos, UI states, and documents captured as images.
+
+                Report what is visible, the layout in reading order, the exact text you can read, anomalies, and what remains uncertain. Quote visible text instead of paraphrasing it when precision matters. Do not guess unreadable content.
+
+                Read-only session: you have read and read_image only. There is no write, edit, shell, web, or subagent tool.
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: true
+              write: false
+              edit: false
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'

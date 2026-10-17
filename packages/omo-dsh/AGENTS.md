@@ -4,7 +4,7 @@ Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships Om
 `ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
 `hyperplan + ultrawork` invocation, two batches of OmO's harness-neutral skill library
 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`), and
-four OMO agent-role presets (Prometheus, Oracle, Librarian, Explore). The package is private and is
+nine OMO agent-role presets (Prometheus, Oracle, Librarian, Explore, Metis, Momus, Multimodal-Looker, Sisyphus, Atlas). The package is private and is
 not published to npm; users install the bundle into a DSH profile. The phased plan for the remaining
 capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
 
@@ -42,7 +42,7 @@ prevents a retried step from appending the pointer twice.
 | `skills/data-scientist.md` | Hybrid-engine data analysis directive, adapted from OmO's `data-scientist` skill |
 | `skills/review-work.md` | Post-implementation gate review directive, adapted from OmO's `review-work` skill |
 | `skills/init-deep.md` | Hierarchical AGENTS.md generation directive, adapted from OmO's `init-deep` skill |
-| `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row and the four OMO agent-preset declarations |
+| `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row and the nine OMO agent-preset declarations |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
 
@@ -73,8 +73,9 @@ for the tool mapping in Phase 4.
 
 ## Agent presets
 
-The bundle patch also carries four `@deepseek-ai/dsh-agent-preset` declarations, so installing the
-bundle puts OMO's specialist roles on the Harness roster next to the shipped presets:
+The bundle patch also carries nine `@deepseek-ai/dsh-agent-preset` declarations, so installing the
+bundle puts OMO's roles on the Harness roster next to the shipped presets. Two groups: read-only
+specialists and full-tool orchestrators.
 
 | Preset id | Roster name | Role | Tool surface |
 |---|---|---|---|
@@ -82,12 +83,22 @@ bundle puts OMO's specialist roles on the Harness roster next to the shipped pre
 | `omo-oracle` | Oracle (OMO advisor) | Read-only architecture, security, performance, and hard-debugging advice | read-only, same surface as Prometheus |
 | `omo-librarian` | Librarian (OMO research) | Upstream docs, changelogs, and standards with cited evidence | read-only plus web |
 | `omo-explore` | Explore (OMO search) | Codebase search: paths, line numbers, quoted matches | fs read, search, bash inspection, skill, jobs |
+| `omo-metis` | Metis (OMO plan critic) | Pre-planning interrogation: ambiguity, constraints, hidden assumptions | read-only plus ask-user |
+| `omo-momus` | Momus (OMO plan reviewer) | Attacks a plan for gaps, feasibility, verification, over-engineering | read-only plus ask-user |
+| `omo-multimodal-looker` | Multimodal-Looker (OMO vision) | Precise visual analysis of screenshots, diagrams, charts, images | `read` and `read_image` only |
+| `omo-sisyphus` | Sisyphus (OMO orchestrator) | Main orchestrator: plan, delegate, verify on the real surface, report evidence | full matrix: bash, fs read/write/edit, search, jobs, schedule, web, skill, goal, plan mode, todo, delegation, ask-user, present |
+| `omo-atlas` | Atlas (OMO todo orchestrator) | Turns a plan into an explicit todo list, works it, verifies each item | full matrix, same as Sisyphus |
 
 Each declaration composes a `@deepseek-ai/dsh-persona` prefix (`complete: true`), the
 `@deepseek-ai/dsh-agent-instructions` row with `maxBytes: 131072` so a large repository AGENTS.md is
-not truncated, the role's tool rows (no write, edit, or subagent tools), and the compaction group.
-The presets are not selected by default: a session picks one from the Desktop roster, or the profile
-overrides the `agent-preset-registry` row.
+not truncated, the role's tool rows, and the compaction group. The presets are not selected by
+default: a session picks one from the Desktop roster, or the profile overrides the
+`agent-preset-registry` row.
+
+A child plugin with required config must get it. The `@deepseek-ai/dsh-plan-mode` row requires a
+`section`; omitting it leaves the declaration loaded and active at the Loader level, but the preset is
+absent from the roster with no visible error. Verify every preset appears in the Desktop roster, not
+only that the Loader rows report `active`.
 
 The `headless` profile mounts `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-headless`, not the Web
 app bundle, so it has no `agent-preset-registry` service and ignores the declarations; live preset QA
