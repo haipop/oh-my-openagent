@@ -26,11 +26,11 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 |---|---|---|---|
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
-| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-3 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`, `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`) landed; tool-bound skills stay in Phase 4 | LANDED for harness-neutral workflows (PR #6, #7, #10) |
+| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-4 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`, `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`, `ast-grep`, `lsp-setup`, `coding-agent-sessions`) landed; `browser`/`ultimate-browsing`/`visual-qa` documented as not portable | LANDED except the three browser-bound skills (PR #6, #7, #10, #12) |
 | agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); nine presets landed (four read-only specialists plus Sisyphus, Atlas, Metis, Momus, Multimodal-Looker); `hephaestus` and `sisyphus-junior` need category routing and are documented as not portable at the preset seam | LANDED at the DSH boundary (PR #8, #9) |
 | rules injection | `rules-engine` + `rules-injector` hook | `.omo/rules/*.md` read once per session and injected as sourced context through `agent/pre-step`, with frontmatter globs matched against prompt paths | LANDED (Phase 4 batch 1, PR #11) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` scans added `write`/`edit` text for slop comments and attaches a bounded warning context; the bundled binary is not ported (no external-checker seam) | LANDED (Phase 4 batch 1, PR #11) |
-| LSP tools | `lsp-tools-mcp` (8 tool aliases) | MCP server row in the profile bundle | PLANNED (Phase 4) |
+| LSP tools | `lsp-tools-mcp` (8 tool aliases) | built `dist/cli.js` registered through `@deepseek-ai/dsh-mcp-client` on the profile (not a bundle row: the path is machine-specific); `omo-lsp-setup` carries the tested recipe | LANDED as an on-demand recipe (PR #12) |
 | hashline edit | `hashline-core` + patched edit tool | DSH's `write`/`edit` already carry a file-version guard and the `fs/write-intent` + `fs/edit-intent` waterfalls, so a second hash protocol would fight the Host's own guard | NATIVE (no port) |
 | team mode | OpenCode 12 `team_*` tools + mailbox/lockstep engine | DSH Agent Teams is native; keyword pointer lands in Phase 1, prompts/skills in Phase 5 | PARTIAL (Phase 1) |
 | task delegation, background agents | `delegate-core`, background-agent feature | native `subagent`, `workflow`, `bash` jobs | NATIVE (guidance only) |
@@ -102,9 +102,12 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   comment check flags restating narration, filler, banners, commented-out code, and em dashes in
   added `write`/`edit` text, then attaches a capped warning context instead of blocking a tool that
   already ran.
-- Batch 2 (planned): register the LSP MCP (`packages/lsp-tools-mcp`) in the bundle patch; port the
-  tool-bound skills (`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`,
-  `coding-agent-sessions`) once their tools exist in the target profile.
+- Batch 2 landed (PR #12): `omo-ast-grep` (structural search and codemods through `sg`), `omo-lsp-setup`
+  (build the repository's `lsp-tools-mcp`, verify the stdio handshake, register the MCP client row, and
+  confirm `mcp__lsp__*` tools), and `omo-coding-agent-sessions` (read local agent transcripts across
+  harnesses). The LSP row stays profile-level on purpose: a bundle patch cannot carry a portable
+  absolute path to the built server. `browser`, `ultimate-browsing`, and `visual-qa` are documented as
+  not portable because they bind to OmO's own browser engine, which DSH does not ship.
 - Hashline: not ported. DSH's filesystem tools already carry a version guard and expose
   `fs/write-intent` / `fs/edit-intent` waterfalls, so a parallel hash protocol would conflict with
   the Host's own edit safety.

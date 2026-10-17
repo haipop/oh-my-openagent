@@ -128,6 +128,33 @@ export const SKILL_LIBRARY = Object.freeze([
     whenToUse:
       "When the task involves a page, component, layout, styling, animation, or visual quality on DeepSeek Harness.",
   }),
+  Object.freeze({
+    id: "ast-grep",
+    name: "omo-ast-grep",
+    file: "ast-grep.md",
+    description:
+      "OmO ast-grep workflow for DeepSeek Harness: structural search and codemods through the sg CLI with a presence gate, pattern capture rules, YAML rules for repeated judgment, preview-before-rewrite discipline, and post-rewrite verification.",
+    whenToUse:
+      "When the target is a syntax shape (every call, class, import, or attribute shaped like X), a codemod, or a structural rule on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "lsp-setup",
+    name: "omo-lsp-setup",
+    file: "lsp-setup.md",
+    description:
+      "OmO lsp-setup workflow for DeepSeek Harness: build the repository's lsp-tools-mcp server, verify its stdio tools/list handshake, register it as a @deepseek-ai/dsh-mcp-client row on a profile, and confirm the mcp__lsp__* tools end to end.",
+    whenToUse:
+      "When the user wants language-server capabilities (diagnostics, definitions, references, rename) in DeepSeek Harness, or hits a no-LSP gap.",
+  }),
+  Object.freeze({
+    id: "coding-agent-sessions",
+    name: "omo-coding-agent-sessions",
+    file: "coding-agent-sessions.md",
+    description:
+      "OmO coding-agent-sessions workflow for DeepSeek Harness: locate, decompress, and read past sessions from DSH, Codex, Claude Code, OpenCode, and OMO/Senpi without mutating their stores, reconstruct what actually happened, and cite session ids with sequence numbers.",
+    whenToUse:
+      "When asked to find, read, reconstruct, or compare past coding-agent sessions or transcripts on DeepSeek Harness.",
+  }),
 ])
 
 /**

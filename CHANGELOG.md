@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**DeepSeek Harness gains OmO's tool-bound skills.** The adapter now publishes `omo-ast-grep` (structural
+search and codemods through the `sg` CLI, with a presence gate and preview-before-rewrite discipline),
+`omo-lsp-setup` (build `packages/lsp-tools-mcp`, verify its stdio `tools/list` handshake, register a
+`@deepseek-ai/dsh-mcp-client` row on the profile, and confirm the `mcp__lsp__*` tools end to end), and
+`omo-coding-agent-sessions` (locate, decompress, and read past sessions across DSH, Codex, Claude Code,
+OpenCode, and OMO/Senpi without mutating their stores). The LSP row is deliberately profile-level
+rather than a bundle row because the built server path is machine-specific. `browser`,
+`ultimate-browsing`, and `visual-qa` are documented as not portable: they bind to OmO's own browser
+engine, which DSH does not ship. ([#12](https://github.com/haipop/oh-my-openagent/pull/12))
+
 **DeepSeek Harness gains OmO's rules injection and a write/edit comment check.** The adapter now reads
 `.omo/rules/*.md` (and `~/.omo/rules`) through the `agent/pre-step` waterfall, parses the frontmatter
 subset OmO rule files use, and injects one sourced context message listing the rules that apply, once
