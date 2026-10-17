@@ -2,9 +2,11 @@
  * The OmO skill library ported to DeepSeek Harness.
  *
  * Batch 1 ships the harness-neutral workflows that do not need an OpenCode-only
- * tool: `git-master`, `debugging`, and `remove-ai-slops`. Each body is adapted to
- * the DSH tool surface (bash, read, write, edit, grep, glob, subagent, jobs)
- * instead of the OpenCode tools (`task`, `lsp_*`, `background_output`).
+ * tool: `git-master`, `debugging`, and `remove-ai-slops`. Batch 2 adds the
+ * documentation, review, and data workflows: `init-deep`, `review-work`, and
+ * `data-scientist`. Each body is adapted to the DSH tool surface (bash, read,
+ * write, edit, grep, glob, subagent, jobs, terminal) instead of the OpenCode
+ * tools (`task`, `lsp_*`, `background_output`).
  *
  * Names are namespaced (`omo-*`) for the same reason the mode skills are: user
  * and project skill layers outrank runtime registrations.
@@ -42,6 +44,33 @@ export const SKILL_LIBRARY = Object.freeze([
       "OmO remove-ai-slops workflow for DeepSeek Harness: audit recent branch changes for AI-generated code smells behind regression tests, with a slop taxonomy, detection heuristics, and atomic cleanup discipline.",
     whenToUse:
       "When the user asks to clean up, deslop, or remove AI-generated code smells from recent changes on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "data-scientist",
+    name: "omo-data-scientist",
+    file: "data-scientist.md",
+    description:
+      "OmO data-scientist workflow for DeepSeek Harness: hybrid-engine discipline (DuckDB, Polars, pandas, or plain shell), schema and quality checks first, one command per reported number, reproducible analysis notes, and caveats in every report.",
+    whenToUse:
+      "When the user asks to analyze CSV/parquet/JSON data, run group-by, join, aggregation, or time-series work, clean a dataset, or plot it on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "review-work",
+    name: "omo-review-work",
+    file: "review-work.md",
+    description:
+      "OmO review-work gate for DeepSeek Harness: the orchestrator runs manual QA on the real surface first, then one gate reviewer subagent audits goal fit, constraints, code quality, security, missed context, and the QA evidence before a BLOCK, PASS WITH FIXES, or PASS verdict.",
+    whenToUse:
+      "When the user asks to review completed work, or before a PR handoff, on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "init-deep",
+    name: "omo-init-deep",
+    file: "init-deep.md",
+    description:
+      "OmO init-deep workflow for DeepSeek Harness: scan a repository, complexity-score directories, and write hierarchical AGENTS.md files whose commands, conventions, and where-to-look sections were verified against the real tree.",
+    whenToUse:
+      "When a repository needs agent-facing documentation (root and per-directory AGENTS.md) on DeepSeek Harness.",
   }),
 ])
 
