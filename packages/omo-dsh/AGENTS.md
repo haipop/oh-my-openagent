@@ -2,8 +2,9 @@
 
 Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships OmO's keyword modes:
 `ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
-`hyperplan + ultrawork` invocation. The package is private and is not published to npm; users install
-the bundle into a DSH profile. The phased plan for the remaining capabilities lives in
+`hyperplan + ultrawork` invocation, plus the first batch of OmO's harness-neutral skill library
+(`git-master`, `debugging`, `remove-ai-slops`). The package is private and is not published to npm;
+users install the bundle into a DSH profile. The phased plan for the remaining capabilities lives in
 [`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
@@ -30,9 +31,13 @@ prevents a retried step from appending the pointer twice.
 | `lib/modes.js` | Mode registry in priority order (combo, hyperplan, team, ultrawork), per-mode patterns, negation keywords, and pointers |
 | `lib/detect.js` | Shared scrub pipeline (code spans, URLs, negated mentions, boundary guards), message text, child-session guard |
 | `lib/pointer.js` | Per-mode bootstrap pointers and the synthetic message factory |
-| `lib/skill.js` | Loads `skills/ultrawork.md` and `skills/hyperplan.md` into runtime skill definitions |
+| `lib/skill.js` | Loads a shipped markdown body into a runtime skill definition |
+| `lib/library.js` | Registry of the ported OmO skill library and its loader |
 | `skills/ultrawork.md` | Ultrawork directive, adapted to the DeepSeek Harness tool surface |
 | `skills/hyperplan.md` | Hyperplan directive, adapted from the OmO adversarial planning skill to DSH Agent Teams |
+| `skills/git-master.md` | Git workflow directive, adapted from OmO's `git-master` skill |
+| `skills/debugging.md` | Hypothesis-driven debugging directive, adapted from OmO's `debugging` skill |
+| `skills/remove-ai-slops.md` | AI-slop cleanup directive, adapted from OmO's `remove-ai-slops` skill |
 | `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
@@ -46,6 +51,18 @@ file extension or identifier suffix, `interface.hpp` stays inert); then `team mo
 has its own source kind (`omo-ultrawork`, `omo-team`, `omo-hyperplan`,
 `omo-hyperplan-ultrawork`) so the session log and dedupe stay mode-specific. `search` and `analyze`
 were removed from OmO and are not ported.
+
+## Skill library
+
+Batch 1 ports the harness-neutral OmO workflows that need no OpenCode-only tool. Each one is adapted
+to the DSH tool surface (`bash`, `read`, `write`, `edit`, `grep`, `glob`, `subagent`, `workflow`,
+`todo_write`, background jobs, `terminal_*`) instead of OmO's OpenCode tools (`task`, `lsp_*`,
+`background_output`). Registered names stay namespaced: `omo-git-master`, `omo-debugging`,
+`omo-remove-ai-slops`.
+
+The library registers through the same `ctx.skills.register` seam as the mode skills; disable the
+whole batch with `skills: { library: false }`. Batch 2 (skills that depend on absent tools, for
+example LSP, ast-grep, browser automation) waits for the corresponding tool mapping in Phase 4.
 
 ## Runtime constraints
 
@@ -62,9 +79,10 @@ were removed from OmO and are not ported.
   commonly exist in a user's own skill set. A shared name would make the injected pointer load that
   other directive, so each pointer names its skill explicitly.
 - Config keys: `enabled` (default `true`), `keywords` (ultrawork keywords, default
-  `["ultrawork", "ulw"]`), `applyToSubagents` (default `false`), and `modes`
+  `["ultrawork", "ulw"]`), `applyToSubagents` (default `false`), `modes`
   (`{ ultrawork, team, hyperplan, hyperplanUltrawork }`, all default `true`; disabling `hyperplan`
-  also disables the combo). Unknown keys fail activation so a typo cannot silently disable a mode.
+  also disables the combo), and `skills` (`{ library }`, default `true`). Unknown keys fail
+  activation so a typo cannot silently disable a mode or a skill.
 
 ## Detection contract
 

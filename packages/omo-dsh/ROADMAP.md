@@ -26,7 +26,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 |---|---|---|---|
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
-| skill library | `shared-skills` (17 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill | NEXT (Phase 2) |
+| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batch 1 (`git-master`, `debugging`, `remove-ai-slops`) landed | PARTIAL (batch 1, PR #6) |
 | agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition) + subagent model selection | PLANNED (Phase 3) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
@@ -54,13 +54,19 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   combined invocation, and an ultrawork regression, catalog delta proving only namespaced additions,
   and a merged PR.
 
-## Phase 2 (next): skill library
+## Phase 2 (partial): skill library
 
-- Batch 1: skills with no harness-specific tools (methodology and review skills); copy the body,
-  adapt tool names, register in one bundle, namespace collisions checked against the live catalog.
-- Batch 2: skills that depend on file/search/terminal tools; adapt per DSH tool surface.
-- Acceptance: every shipped skill loads through the `skill` tool in a live session; a catalog diff
-  proves only namespaced additions; per-skill smoke prompt.
+- Batch 1 landed: `omo-git-master`, `omo-debugging`, and `omo-remove-ai-slops`, adapted from
+  `shared-skills` to the DSH tool surface (no `task`, `lsp_*`, `background_output`, or ast-grep
+  dependencies). Registered through the same seam as the mode skills; config gate
+  `skills: { library: false }`.
+- Batch 2 (remaining): `programming`, `refactor`, `review-work`, `frontend`, `init-deep`, `ulw-plan`,
+  `ulw-execute`, `ulw-research`, `data-scientist`, plus the tool-bound skills (`ast-grep`,
+  `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`, `coding-agent-sessions`) which wait for
+  the Phase 4 tool mapping.
+- Acceptance for every batch: the skill loads through the `skill` tool in a live session, the
+  catalog diff shows only namespaced additions, and no shipped body references a tool the target
+  profile lacks.
 
 ## Phase 3: agent roles as DSH presets
 
