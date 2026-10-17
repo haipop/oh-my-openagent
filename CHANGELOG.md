@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**DeepSeek Harness team mode and parallel fan-out are verified end to end.** A headless session with the
+Agent Teams rows mounted created two shared tasks, spawned two fresh teammates, waited for both, and
+closed the board; the durable log shows `team_task_create` x2, `spawn_teammate` x2, `wait_agent` x2,
+`team_task_get` x2, and `team_task_update` x6, with both member answers in the final reply. A parallel
+`workflow` run in the same profile returned `PAR-A|PAR-B` from two concurrent agent calls. The package
+docs now carry the overlay recipe, so the team path is reproducible without a Desktop session.
+([#14](https://github.com/haipop/oh-my-openagent/pull/14))
+
 **DeepSeek Harness honors the shared OmO configuration file.** The adapter now reads `~/.omo/omo.json[c]`
 and the nearest `<project>/.omo/omo.json[c]` (JSONC, comments and trailing commas allowed) and applies
 the file's `dsh` block as runtime defaults for keyword modes, rule loading, and the write/edit comment

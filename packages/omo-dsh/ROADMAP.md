@@ -113,15 +113,19 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   the Host's own edit safety.
 - Acceptance: each hook/tool is proven by a live event or tool call, not by unit tests alone.
 
-## Phase 5 (partial): team mode and parallel execution
+## Phase 5 (landed): team mode and parallel execution
 
-- The `team mode` keyword already injects a pointer that maps the mode onto native DSH Agent Teams
+- The `team mode` keyword injects a pointer that maps the mode onto native DSH Agent Teams
   (`team_task_create`, `spawn_teammate`, `send_message`, `wait_agent`, `team_task_update`), and the
   hyperplan directive drives a five-member adversarial team through the same tools.
-- Remaining: a real multi-member run with evidence (board state, member replies, final aggregation)
-  and a parallel `workflow` run, both recorded under `.omo/evidence/`.
-- Acceptance: a live session creates tasks, spawns members, collects their work, and closes the board;
-  no duplicated work and no orphaned members.
+- Verified live (PR #14): a headless session with the Agent Teams rows mounted through a `--patch`
+  overlay created two tasks, spawned two `fresh`/`spawn` members, waited for both, and closed the
+  board; the durable log records `team_task_create` x2, `spawn_teammate` x2, `wait_agent` x2,
+  `team_task_get` x2, `team_task_update` x6, and the final reply carried both member answers.
+- A parallel `workflow` run in the same profile returned `PAR-A|PAR-B` from two concurrent `agent()`
+  calls, proving the fan-out and aggregation path the hyperplan directive relies on.
+- Acceptance met: a live session creates tasks, spawns members, collects their work, and closes the
+  board; the parallel workflow fan-out returns aggregated results.
 
 ## Phase 6 (in progress): configuration and routing
 
