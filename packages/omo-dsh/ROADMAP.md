@@ -27,7 +27,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
 | skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-2 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`) landed | PARTIAL (batches 1-2, PR #6, #7) |
-| agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); batch 1 (`omo-prometheus`, `omo-oracle`, `omo-librarian`, `omo-explore`) landed | PARTIAL (Phase 3 batch 1) |
+| agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); batch 1 (`omo-prometheus`, `omo-oracle`, `omo-librarian`, `omo-explore`) landed | PARTIAL (Phase 3 batch 1, PR #8) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
 | LSP tools | `lsp-tools-mcp` (8 tool aliases) | MCP server row in the profile bundle | PLANNED (Phase 4) |
@@ -71,7 +71,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 
 ## Phase 3 (partial): agent roles as DSH presets
 
-- Batch 1 landed: `omo-prometheus` (planner), `omo-oracle` (advisor), `omo-librarian` (research),
+- Batch 1 landed (PR #8): `omo-prometheus` (planner), `omo-oracle` (advisor), `omo-librarian` (research),
   and `omo-explore` (codebase search) as bundle-carried `@deepseek-ai/dsh-agent-preset` declarations.
   Each composes a complete persona prefix with the read-only tool surface for the role; all four are
   non-default and selectable from the Desktop roster.
