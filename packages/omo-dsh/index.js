@@ -19,6 +19,7 @@
 import { randomUUID } from "node:crypto"
 
 import { buildKeywordPattern, DEFAULT_KEYWORDS, isChildAgent } from "./lib/detect.js"
+import { loadLibrarySkills } from "./lib/library.js"
 import { buildModes, findModeMatch } from "./lib/modes.js"
 import { createModeMessage, isModeMessage } from "./lib/pointer.js"
 import { loadHyperplanSkill, loadUltraworkSkill } from "./lib/skill.js"
@@ -29,8 +30,9 @@ export const name = "omo-ultrawork"
 /** The bundle needs the skill registry; without it the plugin stays inactive. */
 export const inject = ["skills"]
 
-const KNOWN_CONFIG_KEYS = new Set(["enabled", "keywords", "applyToSubagents", "modes"])
+const KNOWN_CONFIG_KEYS = new Set(["enabled", "keywords", "applyToSubagents", "modes", "skills"])
 const KNOWN_MODE_KEYS = new Set(["ultrawork", "team", "hyperplan", "hyperplanUltrawork"])
+const KNOWN_SKILL_KEYS = new Set(["library"])
 
 /** Upper bound on remembered arming keys per live session; a live session rarely exceeds it. */
 const ARMED_MESSAGES_LIMIT = 1024
@@ -74,6 +76,24 @@ function resolveModes(raw) {
   return modes
 }
 
+function resolveSkills(raw) {
+  const skills = { library: true }
+  if (raw === undefined) return skills
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new TypeError("omo-ultrawork: config.skills must be an object")
+  }
+  for (const key of Object.keys(raw)) {
+    if (!KNOWN_SKILL_KEYS.has(key)) {
+      throw new TypeError(`omo-ultrawork: unknown config.skills key "${key}"`)
+    }
+    if (typeof raw[key] !== "boolean") {
+      throw new TypeError(`omo-ultrawork: config.skills.${key} must be a boolean`)
+    }
+    skills[key] = raw[key]
+  }
+  return skills
+}
+
 function resolveOptions(config) {
   const raw = config ?? {}
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
@@ -105,15 +125,19 @@ function resolveOptions(config) {
     keywords,
     ultraworkPattern: buildKeywordPattern(keywords),
     enabledModes: resolveModes(raw.modes),
+    skills: resolveSkills(raw.skills),
   }
 }
 
-function registerSkills(ctx, enabledModes) {
+function registerSkills(ctx, enabledModes, skills) {
   if (enabledModes.ultrawork || enabledModes.hyperplanUltrawork) {
     ctx.skills.register(loadUltraworkSkill())
   }
   if (enabledModes.hyperplan || enabledModes.hyperplanUltrawork) {
     ctx.skills.register(loadHyperplanSkill())
+  }
+  if (skills.library) {
+    for (const skill of loadLibrarySkills()) ctx.skills.register(skill)
   }
 }
 
@@ -127,7 +151,7 @@ export function apply(ctx, config) {
   const options = resolveOptions(config)
   if (!options.enabled) return
 
-  registerSkills(ctx, options.enabledModes)
+  registerSkills(ctx, options.enabledModes, options.skills)
   const modes = buildModes(options)
 
   ctx.on(

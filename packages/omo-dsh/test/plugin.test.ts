@@ -60,13 +60,13 @@ async function runStep(state: FakeState, payload: unknown, decision: unknown) {
 }
 
 describe("bundle activation", () => {
-  test("#given a host context #when applied #then it registers both runtime skills and one prepended step listener", () => {
+  test("#given a host context #when applied #then it registers the mode and library skills plus one prepended step listener", () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
 
     expect(name).toBe("omo-ultrawork")
     expect(inject).toEqual(["skills"])
-    expect(state.registeredSkills).toHaveLength(2)
+    expect(state.registeredSkills).toHaveLength(5)
     expect(state.handlers).toHaveLength(1)
     expect(state.handlers[0]?.event).toBe("agent/pre-step")
     expect(state.handlers[0]?.options).toEqual({ prepend: true })
@@ -78,6 +78,13 @@ describe("bundle activation", () => {
       source: string
       content: string
     }[]
+    expect(skills.map((skill) => skill.name)).toEqual([
+      "omo-ultrawork",
+      "omo-hyperplan",
+      "omo-git-master",
+      "omo-debugging",
+      "omo-remove-ai-slops",
+    ])
     const ultrawork = skills.find((skill) => skill.name === "omo-ultrawork")
     const hyperplan = skills.find((skill) => skill.name === "omo-hyperplan")
     expect(ultrawork?.source).toBe("runtime")
@@ -90,11 +97,28 @@ describe("bundle activation", () => {
     expect(hyperplan?.content).toBe(readFileSync(new URL("../skills/hyperplan.md", import.meta.url), "utf8").trim())
   })
 
-  test("#given modes disabled #when applied #then only the remaining skills register", () => {
+  test("#given modes disabled #when applied #then only the remaining mode skills register", () => {
     const { ctx, state } = createFakeContext()
-    apply(ctx, { modes: { team: false, hyperplan: false, hyperplanUltrawork: false } })
+    apply(ctx, { modes: { team: false, hyperplan: false, hyperplanUltrawork: false }, skills: { library: false } })
     const skills = state.registeredSkills as { name: string }[]
     expect(skills.map((skill) => skill.name)).toEqual(["omo-ultrawork"])
+  })
+
+  test("#given the library disabled #when applied #then only mode skills register", () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, { skills: { library: false } })
+    const skills = state.registeredSkills as { name: string }[]
+    expect(skills.map((skill) => skill.name)).toEqual(["omo-ultrawork", "omo-hyperplan"])
+  })
+
+  test("#given an unknown skills key #when applied #then activation fails loudly", () => {
+    const { ctx } = createFakeContext()
+    expect(() => apply(ctx, { skills: { extras: true } })).toThrow(/unknown config\.skills key/)
+  })
+
+  test("#given a non-boolean skills flag #when applied #then activation fails loudly", () => {
+    const { ctx } = createFakeContext()
+    expect(() => apply(ctx, { skills: { library: "yes" } })).toThrow(/skills\.library must be a boolean/)
   })
 
   test("#given an unknown modes key #when applied #then activation fails loudly", () => {

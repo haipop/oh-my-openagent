@@ -22,20 +22,20 @@ export const ULTRAWORK_SKILL_NAME = "omo-ultrawork"
 /** Unique hyperplan skill name the pointer tells the model to load. */
 export const HYPERPLAN_SKILL_NAME = "omo-hyperplan"
 
-const ULTRAWORK_SKILL_BODY_URL = new URL("../skills/ultrawork.md", import.meta.url)
-const HYPERPLAN_SKILL_BODY_URL = new URL("../skills/hyperplan.md", import.meta.url)
+const SKILLS_ROOT_URL = new URL("../skills/", import.meta.url)
 
 /**
- * Read one shipped directive and build the runtime skill registration.
+ * Load one shipped directive by file name and build the runtime skill registration.
  *
- * @param {{ name: string, url: URL, description: string, whenToUse: string }} input - skill identity and location.
+ * @param {{ name: string, file: string, description: string, whenToUse: string }} input - skill identity and location.
  * @throws {Error} when the shipped directive is missing or empty.
  * @returns {Readonly<{ name: string, description: string, whenToUse: string, source: "runtime", content: string }>} skill definition.
  */
-function loadRuntimeSkill(input) {
-  const content = readFileSync(input.url, "utf8").trim()
+export function loadSkillFromFile(input) {
+  const url = new URL(input.file, SKILLS_ROOT_URL)
+  const content = readFileSync(url, "utf8").trim()
   if (content.length === 0) {
-    throw new Error(`omo-dsh: ${input.url.pathname.split("/").at(-1)} is empty`)
+    throw new Error(`omo-dsh: ${input.file} is empty`)
   }
   return Object.freeze({
     name: input.name,
@@ -52,9 +52,9 @@ function loadRuntimeSkill(input) {
  * @returns {Readonly<{ name: string, description: string, whenToUse: string, source: "runtime", content: string }>} skill definition.
  */
 export function loadUltraworkSkill() {
-  return loadRuntimeSkill({
+  return loadSkillFromFile({
     name: ULTRAWORK_SKILL_NAME,
-    url: ULTRAWORK_SKILL_BODY_URL,
+    file: "ultrawork.md",
     description:
       "OmO ultrawork-mode directive for DeepSeek Harness: tier triage, goal registration, durable notepad, READ/CHANGE/RUN/CLEAN loop, real-surface verification, and completion discipline.",
     whenToUse:
@@ -68,9 +68,9 @@ export function loadUltraworkSkill() {
  * @returns {Readonly<{ name: string, description: string, whenToUse: string, source: "runtime", content: string }>} skill definition.
  */
 export function loadHyperplanSkill() {
-  return loadRuntimeSkill({
+  return loadSkillFromFile({
     name: HYPERPLAN_SKILL_NAME,
-    url: HYPERPLAN_SKILL_BODY_URL,
+    file: "hyperplan.md",
     description:
       "OmO hyperplan mode for DeepSeek Harness: a five-member adversarial team (skeptic, validator, researcher, architect, creative) runs independent analysis, cross-attack, and defense rounds, then a fresh subagent formalizes only the surviving insights into an executable plan.",
     whenToUse:
