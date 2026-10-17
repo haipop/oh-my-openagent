@@ -17,14 +17,15 @@ Senpi Pi extension API do not exist there, so the adapter uses two documented DS
   the full directive with the `skill` tool.
 
 The injected message is durable session history, so replay, fork, and resume see exactly what the
-model saw. No plugin-private state is needed.
+model saw. No durable plugin-private state is needed: a bounded in-memory arming ledger only
+prevents a retried step from appending the pointer twice.
 
 ## Layout
 
 | Path | Role |
 |------|------|
 | `index.js` | Host plugin `omo-ultrawork`: skill registration plus the prepended `agent/pre-step` injection |
-| `lib/detect.js` | Keyword detection (code spans stripped, `ulw-*` excluded), message text, child-session guard |
+| `lib/detect.js` | Keyword detection (code spans, URLs, negated mentions and identifier/path continuations excluded), message text, child-session guard |
 | `lib/pointer.js` | Compact three-step bootstrap pointer and the synthetic message factory |
 | `lib/skill.js` | Loads `skills/ultrawork.md` into the runtime skill definition |
 | `skills/ultrawork.md` | Full directive, adapted to the DeepSeek Harness tool surface |
@@ -52,10 +53,19 @@ model saw. No plugin-private state is needed.
 
 ## Detection contract
 
-Same semantics as the OpenCode detector: case-insensitive, whole word, `ulw` followed by `-` and a
-word character is a skill name and never triggers. Code fences and inline code are stripped before
-matching. Only human-authored messages (`role: "user"`, `source.kind: "user"`) arm the mode, and a
-delegated child session never arms it unless `applyToSubagents` is set.
+Case-insensitive, whole word, `ulw` followed by `-` and a word character is a skill name and never
+triggers. Before matching, the prompt is scrubbed in this order: code fences and inline code are
+removed, URLs are removed, negated mentions are blanked out (English `do not use` / `don't` /
+`never` / `without` / `avoid` / `disable` / `stop` and the Chinese equivalents), then the keyword
+must sit on a word boundary that is not a URL, path, or identifier continuation (`docs/ulw/…`,
+`my-ulw-feature`, `ulw_shard` stay inert). Only human-authored messages (`role: "user"`,
+`source.kind: "user"`) arm the mode, and a delegated child session never arms it unless
+`applyToSubagents` is set.
+
+Arming is remembered per live session and keyed by the claimed message ids: a step retried after a
+pre-commit failure cannot append a second pointer for the same human message. The ledger is in
+memory only, bounded per session, and disappears with the session; replay and resume rebuild model
+state from the durable log, which still holds the original injection.
 
 ## Install and QA
 

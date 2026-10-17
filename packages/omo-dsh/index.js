@@ -10,12 +10,15 @@
  *   invokes the mode. The injection is durable session history, so replay, fork,
  *   and resume see exactly what the model saw.
  *
+ * A message that already armed the mode is remembered for its live session, so a
+ * step retried after a pre-commit failure cannot append a second pointer.
+ *
  * @module @oh-my-opencode/omo-dsh
  */
 
 import { randomUUID } from "node:crypto"
 
-import { DEFAULT_KEYWORDS, buildKeywordPattern, findKeywordMessage, isChildAgent } from "./lib/detect.js"
+import { DEFAULT_KEYWORDS, buildKeywordPattern, findKeywordMessages, isChildAgent } from "./lib/detect.js"
 import { buildUltraworkPointer, createUltraworkMessage, isUltraworkMessage } from "./lib/pointer.js"
 import { ULTRAWORK_SKILL_NAME, loadUltraworkSkill } from "./lib/skill.js"
 
@@ -26,6 +29,39 @@ export const name = "omo-ultrawork"
 export const inject = ["skills"]
 
 const KNOWN_CONFIG_KEYS = new Set(["enabled", "keywords", "applyToSubagents"])
+
+/** Upper bound on remembered arming ids per live session; a live session rarely exceeds it. */
+const ARMED_MESSAGES_LIMIT = 1024
+
+/** One arming ledger per live session object; the entry disappears with the session. */
+const armedMessagesBySession = new WeakMap()
+
+function messageIds(messages) {
+  const ids = []
+  for (const message of messages) {
+    const id = message?.id
+    if (typeof id === "string" && id.length > 0) ids.push(id)
+  }
+  return ids
+}
+
+function alreadyArmed(session, ids) {
+  if (session === undefined || session === null || ids.length === 0) return false
+  const armed = armedMessagesBySession.get(session)
+  if (armed === undefined) return false
+  return ids.some((id) => armed.has(id))
+}
+
+function armMessages(session, ids) {
+  if (session === undefined || session === null || ids.length === 0) return
+  let armed = armedMessagesBySession.get(session)
+  if (armed === undefined) {
+    armed = new Set()
+    armedMessagesBySession.set(session, armed)
+  }
+  if (armed.size > ARMED_MESSAGES_LIMIT) armed.clear()
+  for (const id of ids) armed.add(id)
+}
 
 function resolveOptions(config) {
   const raw = config ?? {}
@@ -52,7 +88,7 @@ function resolveOptions(config) {
       throw new TypeError("omo-ultrawork: config.keywords must be a non-empty array of strings")
     }
   }
-  return { enabled, applyToSubagents, pattern: buildKeywordPattern(keywords) }
+  return { enabled, applyToSubagents, keywords, pattern: buildKeywordPattern(keywords) }
 }
 
 /**
@@ -76,17 +112,17 @@ export function apply(ctx, config) {
       try {
         if (!options.applyToSubagents && isChildAgent(payload.agent)) return decision
         if (decision.messages.some(isUltraworkMessage)) return decision
-        if (findKeywordMessage(decision.messages, options.pattern) === undefined) return decision
-        return {
-          ...decision,
-          messages: [
-            ...decision.messages,
-            createUltraworkMessage({
-              id: randomUUID(),
-              pointer: buildUltraworkPointer({ skillName: ULTRAWORK_SKILL_NAME }),
-            }),
-          ],
-        }
+        const matched = findKeywordMessages(decision.messages, options.pattern, options.keywords)
+        if (matched.length === 0) return decision
+        const session = payload.agent?.session
+        const ids = messageIds(matched)
+        if (alreadyArmed(session, ids)) return decision
+        const injected = createUltraworkMessage({
+          id: randomUUID(),
+          pointer: buildUltraworkPointer({ skillName: ULTRAWORK_SKILL_NAME }),
+        })
+        armMessages(session, ids)
+        return { ...decision, messages: [...decision.messages, injected] }
       } catch (error) {
         ctx.logger?.warn?.("omo-ultrawork: skill pointer injection skipped: %o", error)
         return decision

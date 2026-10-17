@@ -3,11 +3,14 @@ import { describe, expect, test } from "bun:test"
 import {
   buildKeywordPattern,
   findKeywordMessage,
+  findKeywordMessages,
   hasKeyword,
   isChildAgent,
   isUserAuthoredMessage,
+  maskNegatedInvocations,
   messageText,
   stripCodeSpans,
+  stripUrls,
 } from "../lib/detect.js"
 
 function userMessage(text: string) {
@@ -53,6 +56,34 @@ describe("ultrawork keyword detection", () => {
     expect(hasKeyword("yolo this", custom)).toBe(true)
     expect(hasKeyword("ulw this", custom)).toBe(false)
   })
+
+  test("#given a negated mention #when matched #then the mode is not invoked", () => {
+    expect(hasKeyword("do not use ultrawork, just fix it", pattern)).toBe(false)
+    expect(hasKeyword("don't ulw this", pattern)).toBe(false)
+    expect(hasKeyword("never ultrawork here", pattern)).toBe(false)
+    expect(hasKeyword("without ultrawork", pattern)).toBe(false)
+    expect(hasKeyword("不要用 ultrawork，直接修", pattern)).toBe(false)
+    expect(hasKeyword("禁止使用ulw", pattern)).toBe(false)
+  })
+
+  test("#given a URL, path, or identifier containing the word #when matched #then the mode is not invoked", () => {
+    expect(hasKeyword("see https://example.com/ulw?a=1", pattern)).toBe(false)
+    expect(hasKeyword("docs/ulw/readme.md", pattern)).toBe(false)
+    expect(hasKeyword("my-ulw-feature branch", pattern)).toBe(false)
+    expect(hasKeyword("ulw_shard bucket", pattern)).toBe(false)
+  })
+
+  test("#given a negated custom keyword #when masked #then only live mentions remain", () => {
+    const custom = buildKeywordPattern(["yolo"])
+    expect(hasKeyword("do not use yolo", custom, ["yolo"])).toBe(false)
+    expect(hasKeyword("yolo now", custom, ["yolo"])).toBe(true)
+  })
+
+  test("#given text with URLs and negations #when scrubbed #then only live prose survives", () => {
+    expect(stripUrls("a https://x/ulw b")).not.toContain("https")
+    expect(maskNegatedInvocations("do not use ultrawork, use ulw", ["ultrawork", "ulw"])).not.toContain("do not")
+    expect(hasKeyword("do not use ultrawork; ulw instead", pattern)).toBe(true)
+  })
 })
 
 describe("message inspection", () => {
@@ -88,5 +119,6 @@ describe("message inspection", () => {
     const second = userMessage("now ulw")
     expect(findKeywordMessage([first, second], pattern)).toBe(second)
     expect(findKeywordMessage([first], pattern)).toBeUndefined()
+    expect(findKeywordMessages([first, second], pattern)).toEqual([second])
   })
 })
