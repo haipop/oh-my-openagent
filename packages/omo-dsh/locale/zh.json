@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "OmO Ultrawork（DeepSeek Harness）",
+    "description": "当提示词包含 ultrawork 或 ulw 时激活 OmO 的 ultrawork 模式：注册目标、持久化 notepad、真实界面验证，并把完整指令作为可加载 skill 提供。"
+  }
+}

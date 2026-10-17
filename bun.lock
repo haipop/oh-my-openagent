@@ -29,6 +29,7 @@
         "@oh-my-opencode/model-core": "workspace:*",
         "@oh-my-opencode/omo-codex": "workspace:*",
         "@oh-my-opencode/omo-config-core": "workspace:*",
+        "@oh-my-opencode/omo-dsh": "workspace:*",
         "@oh-my-opencode/omo-opencode": "workspace:*",
         "@oh-my-opencode/omo-senpi": "workspace:*",
         "@oh-my-opencode/openclaw-core": "workspace:*",
@@ -216,6 +217,10 @@
         "jsonc-parser": "^3.3.1",
         "zod": "^4.6.5",
       },
+    },
+    "packages/omo-dsh": {
+      "name": "@oh-my-opencode/omo-dsh",
+      "version": "0.1.0",
     },
     "packages/omo-native": {
       "name": "omo-ai",

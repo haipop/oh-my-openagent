@@ -1,0 +1,4 @@
+- insert:
+    - id: omo-ultrawork
+      name: '@oh-my-opencode/omo-dsh'
+      config: {}

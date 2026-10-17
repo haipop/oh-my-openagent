@@ -17,6 +17,7 @@ const mcpPackagePaths: readonly string[] = [
 ] as const
 const adapterPackagePaths: readonly string[] = [
   "packages/omo-codex",
+  "packages/omo-dsh",
   "packages/omo-senpi",
   "packages/senpi-task",
   "packages/senpi-desktop-engine",
