@@ -36,6 +36,7 @@ prevents a retried step from appending the pointer twice.
 | `lib/pointer.js` | Per-mode bootstrap pointers and the synthetic message factory |
 | `lib/skill.js` | Loads a shipped markdown body into a runtime skill definition |
 | `lib/library.js` | Registry of the ported OmO skill library and its loader |
+| `lib/config-file.js` | Reads the shared OmO config (`~/.omo/omo.json[c]` and nearest project `.omo/omo.json[c]`), JSONC-tolerant, and merges its `dsh` block under the row config |
 | `lib/rules.js` | Reads `.omo/rules/*.md`, parses the frontmatter subset (`description`, `globs`, `alwaysApply`), selects matching rules, and renders the injected rules context |
 | `lib/comment-checker.js` | Detects comments that only restate the code in `write`/`edit` payloads and renders the bounded warning context |
 | `skills/ultrawork.md` | Ultrawork directive, adapted to the DeepSeek Harness tool surface |
@@ -176,6 +177,22 @@ Arming is remembered per live session and keyed by the mode and the claimed mess
 retried after a pre-commit failure cannot append a second pointer for the same human message. The
 ledger is in memory only, bounded per session, and disappears with the session; replay and resume
 rebuild model state from the durable log, which still holds the original injection.
+
+## Shared config file
+
+The adapter reads the repository-wide OmO config for runtime defaults: `~/.omo/omo.json[c]` for
+the user layer and the nearest `<project>/.omo/omo.json[c]` up the tree for project layers. Only the
+`dsh` block is read, because the same file configures other harnesses and a same-named top-level key
+must not silently change DSH behavior. JSONC is accepted (comments and trailing commas).
+
+Precedence: the plugin row config wins over every file; the nearest project layer wins over outer
+project layers; the user layer is the lowest level. Keys: `enabled`, `keywords`, `applyToSubagents`,
+`modes`, `skills`, `rules`, `commentChecker`. An invalid file falls back to the row config with a
+warning instead of breaking the session.
+
+What the file cannot change is which runtime skills are registered: skills publish once at bundle
+activation, so `skills` in the file is part of the config surface but skill registration follows the
+row.
 
 ## Rules and comment checks
 

@@ -35,7 +35,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 | team mode | OpenCode 12 `team_*` tools + mailbox/lockstep engine | DSH Agent Teams is native; keyword pointer lands in Phase 1, prompts/skills in Phase 5 | PARTIAL (Phase 1) |
 | task delegation, background agents | `delegate-core`, background-agent feature | native `subagent`, `workflow`, `bash` jobs | NATIVE (guidance only) |
 | todo + goal | OpenCode tools | native `todo_write`, `create_goal`/`update_goal`/`get_goal` | NATIVE |
-| config | `omo-config-core` (`~/.omo/omo.json[c]`) | adapter reads its own keys from the same file | PLANNED (Phase 6) |
+| config | `omo-config-core` (`~/.omo/omo.json[c]`) | adapter reads the `dsh` block from the user layer and the nearest project layer (JSONC), merged under the row config | LANDED (Phase 6 batch 1, PR #13) |
 | model routing / fallback | `model-core`, category requirements, two fallback systems | DSH model selection + retry policy; evaluate per-preset models | EVALUATE (Phase 6) |
 | OpenClaw gateway, TUI/tmux visualisation, telemetry | OpenCode/TUI only | no DSH equivalent (web UI, terminal tools) | NOT PLANNED |
 
@@ -112,3 +112,23 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   `fs/write-intent` / `fs/edit-intent` waterfalls, so a parallel hash protocol would conflict with
   the Host's own edit safety.
 - Acceptance: each hook/tool is proven by a live event or tool call, not by unit tests alone.
+
+## Phase 5 (partial): team mode and parallel execution
+
+- The `team mode` keyword already injects a pointer that maps the mode onto native DSH Agent Teams
+  (`team_task_create`, `spawn_teammate`, `send_message`, `wait_agent`, `team_task_update`), and the
+  hyperplan directive drives a five-member adversarial team through the same tools.
+- Remaining: a real multi-member run with evidence (board state, member replies, final aggregation)
+  and a parallel `workflow` run, both recorded under `.omo/evidence/`.
+- Acceptance: a live session creates tasks, spawns members, collects their work, and closes the board;
+  no duplicated work and no orphaned members.
+
+## Phase 6 (in progress): configuration and routing
+
+- Batch 1 landed (PR #13): the adapter reads the shared OmO config (`~/.omo/omo.json[c]` plus the
+  nearest project `.omo/omo.json[c]`, JSONC) and merges its `dsh` block under the row config. Only the
+  `dsh` block is read so another harness's same-named key cannot change DSH behavior; invalid files
+  fall back to the row with a warning. Skill registration stays activation-time, so the file cannot
+  toggle skills.
+- Remaining: model routing evaluation (DSH selects models per session, presets cannot carry routing),
+  and a read-only status surface for the adapter's effective config.

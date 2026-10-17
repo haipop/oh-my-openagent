@@ -21,6 +21,7 @@ import { randomUUID } from "node:crypto"
 import { buildKeywordPattern, DEFAULT_KEYWORDS, isChildAgent } from "./lib/detect.js"
 import { loadLibrarySkills } from "./lib/library.js"
 import { buildModes, findModeMatch } from "./lib/modes.js"
+import { loadMergedConfig } from "./lib/config-file.js"
 import {
   buildCommentWarning,
   COMMENTS_SOURCE_KIND,
@@ -236,6 +237,35 @@ const rulesStateBySession = new WeakMap()
 /** Per-session count of delivered comment-check warnings. */
 const commentWarningsBySession = new WeakMap()
 
+/** Per-session effective options: row config merged over the shared OmO config file. */
+const sessionOptions = new WeakMap()
+
+/**
+ * Resolve the options that apply to this session.
+ *
+ * The row config is authoritative; the shared OmO config file contributes only
+ * the keys the row leaves unset. A file that fails validation falls back to the
+ * row config with a warning instead of breaking the session.
+ */
+async function effectiveOptions(ctx, agent, rowConfig, baseOptions) {
+  const session = agent?.session
+  if (session === undefined || session === null) return baseOptions
+  const cached = sessionOptions.get(session)
+  if (cached !== undefined) return cached
+  let options = baseOptions
+  const cwd = await resolveSessionDirectory(ctx, agent)
+  if (cwd !== undefined) {
+    try {
+      options = resolveOptions(loadMergedConfig(cwd, rowConfig))
+    } catch (error) {
+      ctx.logger?.warn?.("omo-ultrawork: shared config ignored: %o", error)
+      options = baseOptions
+    }
+  }
+  sessionOptions.set(session, options)
+  return options
+}
+
 async function resolveSessionDirectory(ctx, agent) {
   try {
     const workingDirectory = ctx.workingDirectory
@@ -325,11 +355,11 @@ async function warnAboutComments(options, exec, result, downstream) {
  * @param {unknown} config - row config from `cordis.patch.yml`.
  */
 export function apply(ctx, config) {
-  const options = resolveOptions(config)
-  if (!options.enabled) return
+  const baseOptions = resolveOptions(config)
+  if (!baseOptions.enabled) return
+  const rowConfig = config ?? {}
 
-  registerSkills(ctx, options.enabledModes, options.skills)
-  const modes = buildModes(options)
+  registerSkills(ctx, baseOptions.enabledModes, baseOptions.skills)
 
   ctx.on(
     "agent/pre-step",
@@ -338,7 +368,8 @@ export function apply(ctx, config) {
       if (decision.kind !== "enter") return decision
       if (payload.signal?.aborted === true) return decision
       try {
-        const withMode = injectMode(options, modes, payload, decision)
+        const options = await effectiveOptions(ctx, payload.agent, rowConfig, baseOptions)
+        const withMode = injectMode(options, payload, decision)
         return await injectRules(ctx, options, payload, withMode)
       } catch (error) {
         ctx.logger?.warn?.("omo-ultrawork: context injection skipped: %o", error)
@@ -351,6 +382,7 @@ export function apply(ctx, config) {
   ctx.on("tools/post-execute", async (exec, result, next) => {
     const downstream = await next()
     try {
+      const options = await effectiveOptions(ctx, exec.agent, rowConfig, baseOptions)
       return await warnAboutComments(options, exec, result, downstream)
     } catch (error) {
       ctx.logger?.warn?.("omo-ultrawork: comment check skipped: %o", error)
@@ -360,10 +392,10 @@ export function apply(ctx, config) {
 }
 
 /** Inject the mode pointer for a human prompt, deduped per claimed message. */
-function injectMode(options, modes, payload, decision) {
+function injectMode(options, payload, decision) {
   if (!options.applyToSubagents && isChildAgent(payload.agent)) return decision
   if (decision.messages.some(isModeMessage)) return decision
-  const match = findModeMatch(decision.messages, modes)
+  const match = findModeMatch(decision.messages, buildModes(options))
   if (match === undefined) return decision
   const messageId = match.message?.id
   if (typeof messageId !== "string" || messageId.length === 0) return decision
