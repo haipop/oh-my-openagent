@@ -27,7 +27,7 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
 | skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-2 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`) landed | PARTIAL (batches 1-2, PR #6, #7) |
-| agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); batch 1 (`omo-prometheus`, `omo-oracle`, `omo-librarian`, `omo-explore`) landed | PARTIAL (Phase 3 batch 1, PR #8) |
+| agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); nine presets landed (four read-only specialists plus Sisyphus, Atlas, Metis, Momus, Multimodal-Looker) | PARTIAL (Phase 3 batches 1-2, PR #8, #9) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
 | LSP tools | `lsp-tools-mcp` (8 tool aliases) | MCP server row in the profile bundle | PLANNED (Phase 4) |
@@ -75,13 +75,15 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   and `omo-explore` (codebase search) as bundle-carried `@deepseek-ai/dsh-agent-preset` declarations.
   Each composes a complete persona prefix with the read-only tool surface for the role; all four are
   non-default and selectable from the Desktop roster.
-- Batch 2 (remaining): `sisyphus`/`atlas` main-orchestrator presets with the full tool surface,
-  `hephaestus` deep worker, `metis`/`momus` plan critique, `multimodal-looker`, and `sisyphus-junior`.
-  These need category-style model routing and a larger tool matrix, and they unblock the OMO workflow
-  skills (`ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`).
-- Acceptance: preset mounts and activates in a registry-mounting profile, a live session selects it
-  and shows the role behavior with the restricted tool surface, and the unmodified default preset
-  still works.
+- Batch 2 landed (PR #9): `omo-sisyphus` and `omo-atlas` full-tool orchestrators, plus the read-only
+  `omo-metis` (pre-planning critic), `omo-momus` (plan reviewer), and `omo-multimodal-looker`
+  (visual analysis). All nine OMO presets are non-default and selectable from the Desktop roster.
+- Batch 3 (remaining): `hephaestus` (provider-specific deep worker) and `sisyphus-junior` (category
+  executor) need category-style model routing that DSH does not expose as a preset concern; decide
+  between a provider-agnostic worker preset and a documented non-port before implementing.
+- Acceptance: preset mounts and activates in a registry-mounting profile, appears in the roster, a
+  live session selects it and shows the role behavior with the intended tool surface, and the
+  unmodified default preset still works.
 
 ## Phase 4: hooks and tools
 
