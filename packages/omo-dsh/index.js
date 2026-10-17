@@ -2,8 +2,9 @@
  * DeepSeek Harness Host bundle for OmO's ultrawork mode (`ulw` / `ultrawork`).
  *
  * Two registrations, both on documented Harness seams:
- * - `ctx.skills.register` publishes the full directive as the runtime `ultrawork`
- *   skill, so the model can load the body on demand with the `skill` tool.
+ * - `ctx.skills.register` publishes the full directive as the uniquely named
+ *   `omo-ultrawork` runtime skill, so the model can load the body on demand with
+ *   the `skill` tool without colliding with a user's own `ultrawork` skill.
  * - a prepended `agent/pre-step` waterfall listener appends a synthetic sourced
  *   `user/message` carrying the compact bootstrap pointer when a human prompt
  *   invokes the mode. The injection is durable session history, so replay, fork,
@@ -16,7 +17,7 @@ import { randomUUID } from "node:crypto"
 
 import { DEFAULT_KEYWORDS, buildKeywordPattern, findKeywordMessage, isChildAgent } from "./lib/detect.js"
 import { buildUltraworkPointer, createUltraworkMessage, isUltraworkMessage } from "./lib/pointer.js"
-import { loadUltraworkSkill } from "./lib/skill.js"
+import { ULTRAWORK_SKILL_NAME, loadUltraworkSkill } from "./lib/skill.js"
 
 /** Cordis plugin name; matches the `omo-ultrawork` row in `cordis.patch.yml`. */
 export const name = "omo-ultrawork"
@@ -80,7 +81,10 @@ export function apply(ctx, config) {
           ...decision,
           messages: [
             ...decision.messages,
-            createUltraworkMessage({ id: randomUUID(), pointer: buildUltraworkPointer() }),
+            createUltraworkMessage({
+              id: randomUUID(),
+              pointer: buildUltraworkPointer({ skillName: ULTRAWORK_SKILL_NAME }),
+            }),
           ],
         }
       } catch (error) {

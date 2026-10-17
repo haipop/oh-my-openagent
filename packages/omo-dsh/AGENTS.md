@@ -13,8 +13,8 @@ Senpi Pi extension API do not exist there, so the adapter uses two documented DS
   `{ kind: "reject" } | { kind: "enter", messages, startsRequestSeries? }`. Appending a synthetic
   sourced `user/message` here is the same mechanism first-party plugins use for time context,
   repeat-tool reminders, and workspace instructions.
-- `ctx.skills.register(...)`: publishes the runtime `ultrawork` skill so the model can load the
-  full directive with the `skill` tool.
+- `ctx.skills.register(...)`: publishes the runtime `omo-ultrawork` skill so the model can load
+  the full directive with the `skill` tool.
 
 The injected message is durable session history, so replay, fork, and resume see exactly what the
 model saw. No plugin-private state is needed.
@@ -42,6 +42,10 @@ model saw. No plugin-private state is needed.
   dependency, and the tests exercise the same files the Host loads.
 - The plugin declares `inject = ["skills"]`; profiles without the skill registry leave it inactive
   instead of throwing.
+- The runtime skill is named `omo-ultrawork`, not `ultrawork`: user and project skill layers
+  outrank runtime registrations, and `ultrawork` commonly exists in a user's own skill set (for
+  example the OMX one). A shared name would make the injected pointer load that other directive,
+  so the pointer names this skill explicitly.
 - Config keys: `enabled` (default `true`), `keywords` (default `["ultrawork", "ulw"]`),
   `applyToSubagents` (default `false`). Unknown keys fail activation so a typo cannot silently
   disable the mode.
@@ -63,7 +67,7 @@ dsh plugin --profile <profile> add "$(pwd)/packages/omo-dsh"
 Inside a running Harness the Plugin Manager installs the same directory. Verify activation through
 the Plugin Manager row and a live session: a prompt containing `ulw` must produce an assistant reply
 that opens with `ULTRAWORK MODE ENABLED!`, a `user/message` event whose source kind is
-`omo-ultrawork` in the session log, and a `skill` tool call with `name: "ultrawork"`.
+`omo-ultrawork` in the session log, and a `skill` tool call with `name: "omo-ultrawork"`.
 
 QA evidence for changes here follows the repository rules: write artifacts under
 `.omo/evidence/<YYYYMMDD>-<short-slug>/`, keep them out of git, and summarize them in the PR body.

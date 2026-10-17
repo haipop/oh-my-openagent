@@ -17,7 +17,11 @@ describe("ultrawork bootstrap pointer", () => {
     expect(pointer).toContain("get_goal")
     expect(pointer).toContain("create_goal")
     expect(pointer).toContain("`skill`")
-    expect(pointer).toContain('name: "ultrawork"')
+    expect(pointer).toContain('name: "omo-ultrawork"')
+  })
+
+  test("#given an explicit skill name #when the pointer is rendered #then it names that skill", () => {
+    expect(buildUltraworkPointer({ skillName: "my-directive" })).toContain('name: "my-directive"')
   })
 })
 
