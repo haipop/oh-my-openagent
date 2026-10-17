@@ -1,8 +1,9 @@
 # omo-dsh - DeepSeek Harness adapter
 
-Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). Version one ships the
-ultrawork keyword mode. The package is private and is not published to npm; users install the bundle
-into a DSH profile. The phased plan for the remaining capabilities lives in
+Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships OmO's keyword modes:
+`ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
+`hyperplan + ultrawork` invocation. The package is private and is not published to npm; users install
+the bundle into a DSH profile. The phased plan for the remaining capabilities lives in
 [`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
@@ -14,8 +15,8 @@ Senpi Pi extension API do not exist there, so the adapter uses two documented DS
   `{ kind: "reject" } | { kind: "enter", messages, startsRequestSeries? }`. Appending a synthetic
   sourced `user/message` here is the same mechanism first-party plugins use for time context,
   repeat-tool reminders, and workspace instructions.
-- `ctx.skills.register(...)`: publishes the runtime `omo-ultrawork` skill so the model can load
-  the full directive with the `skill` tool.
+- `ctx.skills.register(...)`: publishes each directive as a namespaced runtime skill (`omo-ultrawork`,
+  `omo-hyperplan`), so the model can load a body with the `skill` tool.
 
 The injected message is durable session history, so replay, fork, and resume see exactly what the
 model saw. No durable plugin-private state is needed: a bounded in-memory arming ledger only
@@ -26,13 +27,25 @@ prevents a retried step from appending the pointer twice.
 | Path | Role |
 |------|------|
 | `index.js` | Host plugin `omo-ultrawork`: skill registration plus the prepended `agent/pre-step` injection |
-| `lib/detect.js` | Keyword detection (code spans, URLs, negated mentions and identifier/path continuations excluded), message text, child-session guard |
-| `lib/pointer.js` | Compact three-step bootstrap pointer and the synthetic message factory |
-| `lib/skill.js` | Loads `skills/ultrawork.md` into the runtime skill definition |
-| `skills/ultrawork.md` | Full directive, adapted to the DeepSeek Harness tool surface |
+| `lib/modes.js` | Mode registry in priority order (combo, hyperplan, team, ultrawork), per-mode patterns, negation keywords, and pointers |
+| `lib/detect.js` | Shared scrub pipeline (code spans, URLs, negated mentions, boundary guards), message text, child-session guard |
+| `lib/pointer.js` | Per-mode bootstrap pointers and the synthetic message factory |
+| `lib/skill.js` | Loads `skills/ultrawork.md` and `skills/hyperplan.md` into runtime skill definitions |
+| `skills/ultrawork.md` | Ultrawork directive, adapted to the DeepSeek Harness tool surface |
+| `skills/hyperplan.md` | Hyperplan directive, adapted from the OmO adversarial planning skill to DSH Agent Teams |
 | `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
+
+## Mode routing
+
+One mode injects per step, highest priority first: `hyperplan-ultrawork` (strict adjacency, both word
+orders) suppresses `hyperplan` and `ultrawork`; then `hyperplan` (`hyperplan`, or `hpp` that is not a
+file extension or identifier suffix, `interface.hpp` stays inert); then `team mode`
+(`team mode`, `team-mode`, `team_mode`, `teammode`); then `ultrawork` (configured keywords). Each mode
+has its own source kind (`omo-ultrawork`, `omo-team`, `omo-hyperplan`,
+`omo-hyperplan-ultrawork`) so the session log and dedupe stay mode-specific. `search` and `analyze`
+were removed from OmO and are not ported.
 
 ## Runtime constraints
 
@@ -44,13 +57,14 @@ prevents a retried step from appending the pointer twice.
   dependency, and the tests exercise the same files the Host loads.
 - The plugin declares `inject = ["skills"]`; profiles without the skill registry leave it inactive
   instead of throwing.
-- The runtime skill is named `omo-ultrawork`, not `ultrawork`: user and project skill layers
-  outrank runtime registrations, and `ultrawork` commonly exists in a user's own skill set (for
-  example the OMX one). A shared name would make the injected pointer load that other directive,
-  so the pointer names this skill explicitly.
-- Config keys: `enabled` (default `true`), `keywords` (default `["ultrawork", "ulw"]`),
-  `applyToSubagents` (default `false`). Unknown keys fail activation so a typo cannot silently
-  disable the mode.
+- The runtime skills are namespaced (`omo-ultrawork`, `omo-hyperplan`), never bare `ultrawork` or
+  `hyperplan`: user and project skill layers outrank runtime registrations, and those bare names
+  commonly exist in a user's own skill set. A shared name would make the injected pointer load that
+  other directive, so each pointer names its skill explicitly.
+- Config keys: `enabled` (default `true`), `keywords` (ultrawork keywords, default
+  `["ultrawork", "ulw"]`), `applyToSubagents` (default `false`), and `modes`
+  (`{ ultrawork, team, hyperplan, hyperplanUltrawork }`, all default `true`; disabling `hyperplan`
+  also disables the combo). Unknown keys fail activation so a typo cannot silently disable a mode.
 
 ## Detection contract
 
@@ -63,10 +77,10 @@ must sit on a word boundary that is not a URL, path, or identifier continuation 
 `source.kind: "user"`) arm the mode, and a delegated child session never arms it unless
 `applyToSubagents` is set.
 
-Arming is remembered per live session and keyed by the claimed message ids: a step retried after a
-pre-commit failure cannot append a second pointer for the same human message. The ledger is in
-memory only, bounded per session, and disappears with the session; replay and resume rebuild model
-state from the durable log, which still holds the original injection.
+Arming is remembered per live session and keyed by the mode and the claimed message id: a step
+retried after a pre-commit failure cannot append a second pointer for the same human message. The
+ledger is in memory only, bounded per session, and disappears with the session; replay and resume
+rebuild model state from the durable log, which still holds the original injection.
 
 ## Install and QA
 
@@ -78,7 +92,9 @@ dsh plugin --profile <profile> add "$(pwd)/packages/omo-dsh"
 Inside a running Harness the Plugin Manager installs the same directory. Verify activation through
 the Plugin Manager row and a live session: a prompt containing `ulw` must produce an assistant reply
 that opens with `ULTRAWORK MODE ENABLED!`, a `user/message` event whose source kind is
-`omo-ultrawork` in the session log, and a `skill` tool call with `name: "omo-ultrawork"`.
+`omo-ultrawork` in the session log, and a `skill` tool call with `name: "omo-ultrawork"`. The other
+modes follow the same shape with their own banner, source kind, and skill name (`hyperplan` also
+ships `hpp` and the combined invocation).
 
 QA evidence for changes here follows the repository rules: write artifacts under
 `.omo/evidence/<YYYYMMDD>-<short-slug>/`, keep them out of git, and summarize them in the PR body.
