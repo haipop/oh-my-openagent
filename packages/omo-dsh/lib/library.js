@@ -4,8 +4,10 @@
  * Batch 1 ships the harness-neutral workflows that do not need an OpenCode-only
  * tool: `git-master`, `debugging`, and `remove-ai-slops`. Batch 2 adds the
  * documentation, review, and data workflows: `init-deep`, `review-work`, and
- * `data-scientist`. Each body is adapted to the DSH tool surface (bash, read,
- * write, edit, grep, glob, subagent, jobs, terminal) instead of the OpenCode
+ * `data-scientist`. Batch 3 adds the OMO workflow set the agent roles unblocked:
+ * `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, and
+ * `frontend`. Each body is adapted to the DSH tool surface (bash, read, write,
+ * edit, grep, glob, subagent, workflow, jobs, todo_write) instead of the OpenCode
  * tools (`task`, `lsp_*`, `background_output`).
  *
  * Names are namespaced (`omo-*`) for the same reason the mode skills are: user
@@ -71,6 +73,60 @@ export const SKILL_LIBRARY = Object.freeze([
       "OmO init-deep workflow for DeepSeek Harness: scan a repository, complexity-score directories, and write hierarchical AGENTS.md files whose commands, conventions, and where-to-look sections were verified against the real tree.",
     whenToUse:
       "When a repository needs agent-facing documentation (root and per-directory AGENTS.md) on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "ulw-plan",
+    name: "omo-ulw-plan",
+    file: "ulw-plan.md",
+    description:
+      "OmO ulw-plan workflow for DeepSeek Harness: explore-first planning consultant that writes one decision-complete plan with per-step verification, non-goals, risks, and a handoff block, and never implements.",
+    whenToUse:
+      "When the user asks for a plan, design, or work breakdown before implementation, or invokes ulw-plan, on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "ulw-execute",
+    name: "omo-ulw-execute",
+    file: "ulw-execute.md",
+    description:
+      "OmO ulw-execute workflow for DeepSeek Harness: orchestrator-only execution of a written plan with worktree discipline, unit decomposition, parallel subagents or workflows, per-unit evidence, and integration verification.",
+    whenToUse:
+      "When the user asks to execute a written plan or invokes ulw-execute on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "ulw-research",
+    name: "omo-ulw-research",
+    file: "ulw-research.md",
+    description:
+      "OmO ulw-research workflow for DeepSeek Harness: maximum-saturation research with parallel lanes, a claim graph that separates evidence from inference, source-tier gating, and a cited deliverable that names what stays unknown.",
+    whenToUse:
+      "When the user asks for research, a deep investigation, or a state-of-the-art survey on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "programming",
+    name: "omo-programming",
+    file: "programming.md",
+    description:
+      "OmO programming workflow for DeepSeek Harness: a language gate plus strict per-language practice for Python, Rust, TypeScript, and Go, with typed errors, exhaustive matching, tests that can fail, and honest sizing.",
+    whenToUse:
+      "When the work touches Python, Rust, TypeScript, or Go source and the user expects production-quality code on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "refactor",
+    name: "omo-refactor",
+    file: "refactor.md",
+    description:
+      "OmO refactor workflow for DeepSeek Harness: behavior-locked refactors with a contract, decomposition strategy, atomic green steps, before-and-after measurement, and cleanup rules that ban mixed-scope diffs.",
+    whenToUse:
+      "When the user asks to refactor, simplify, extract, restructure, or modernize code on DeepSeek Harness.",
+  }),
+  Object.freeze({
+    id: "frontend",
+    name: "omo-frontend",
+    file: "frontend.md",
+    description:
+      "OmO frontend workflow for DeepSeek Harness: route the design concerns before writing code, hold the senior-designer bar with token foundations, component states, motion discipline, accessibility, and an anti-slop list.",
+    whenToUse:
+      "When the task involves a page, component, layout, styling, animation, or visual quality on DeepSeek Harness.",
   }),
 ])
 

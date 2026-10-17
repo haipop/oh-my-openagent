@@ -26,8 +26,8 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 |---|---|---|---|
 | ultrawork mode + directive | `prompts-core/prompts/ultrawork/*`, OpenCode keyword detector | `agent/pre-step` injection + runtime `omo-ultrawork` skill | LANDED (PR #1, #2, #3) |
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
-| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-2 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`) landed | PARTIAL (batches 1-2, PR #6, #7) |
-| agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); nine presets landed (four read-only specialists plus Sisyphus, Atlas, Metis, Momus, Multimodal-Looker) | PARTIAL (Phase 3 batches 1-2, PR #8, #9) |
+| skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-3 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`, `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`) landed; tool-bound skills stay in Phase 4 | LANDED for harness-neutral workflows (PR #6, #7, #10) |
+| agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); nine presets landed (four read-only specialists plus Sisyphus, Atlas, Metis, Momus, Multimodal-Looker); `hephaestus` and `sisyphus-junior` need category routing and are documented as not portable at the preset seam | LANDED at the DSH boundary (PR #8, #9) |
 | rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
 | comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
 | LSP tools | `lsp-tools-mcp` (8 tool aliases) | MCP server row in the profile bundle | PLANNED (Phase 4) |
@@ -54,22 +54,28 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   combined invocation, and an ultrawork regression, catalog delta proving only namespaced additions,
   and a merged PR.
 
-## Phase 2 (partial): skill library
+## Phase 2 (landed for harness-neutral workflows): skill library
 
 - Batch 1 landed (PR #6): `omo-git-master`, `omo-debugging`, `omo-remove-ai-slops`.
 - Batch 2 landed (PR #7): `omo-data-scientist`, `omo-review-work`, `omo-init-deep`, all adapted from
   `shared-skills` to the DSH tool surface (no `task`, `lsp_*`, `background_output`, ast-grep, or
   OpenCode-only config). Registered through the same seam as the mode skills; config gate
   `skills: { library: false }`.
-- Batch 3 (blocked on sequencing): the OMO workflow skills `programming`, `refactor`, `frontend`,
-  `ulw-plan`, `ulw-execute`, `ulw-research` depend on OmO's agent roles and follow Phase 3.
-- Batch 4 (blocked on sequencing): the tool-bound skills `ast-grep`, `lsp-setup`, `browser`,
-  `ultimate-browsing`, `visual-qa`, `coding-agent-sessions` follow the Phase 4 tool mapping.
+- Batch 3 landed (PR #10): `omo-ulw-plan` (explore-first decision-complete planning),
+  `omo-ulw-execute` (orchestrator-only plan execution with worktree discipline, unit decomposition,
+  parallel subagents or workflows, and per-unit evidence), `omo-ulw-research` (claim-graph research
+  with source-tier gating and a cited deliverable), `omo-programming` (language-gated practice for
+  Python, Rust, TypeScript, and Go), `omo-refactor` (behavior-locked refactors with atomic green
+  steps), and `omo-frontend` (design-quality frontend with route-before-code, component states, and
+  an anti-slop list). Each body is a condensed self-contained directive; the original reference
+  packs and helper scripts stay in the repository instead of being copied into the bundle.
+- Batch 4 (tool-bound, Phase 4): `ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`,
+  `visual-qa`, `coding-agent-sessions` follow the Phase 4 tool mapping.
 - Acceptance for every batch: the skill loads through the `skill` tool in a live session, the
   catalog diff shows only namespaced additions, and no shipped body references a tool the target
   profile lacks.
 
-## Phase 3 (partial): agent roles as DSH presets
+## Phase 3 (landed at the DSH boundary): agent roles as DSH presets
 
 - Batch 1 landed (PR #8): `omo-prometheus` (planner), `omo-oracle` (advisor), `omo-librarian` (research),
   and `omo-explore` (codebase search) as bundle-carried `@deepseek-ai/dsh-agent-preset` declarations.
@@ -78,9 +84,12 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 - Batch 2 landed (PR #9): `omo-sisyphus` and `omo-atlas` full-tool orchestrators, plus the read-only
   `omo-metis` (pre-planning critic), `omo-momus` (plan reviewer), and `omo-multimodal-looker`
   (visual analysis). All nine OMO presets are non-default and selectable from the Desktop roster.
-- Batch 3 (remaining): `hephaestus` (provider-specific deep worker) and `sisyphus-junior` (category
-  executor) need category-style model routing that DSH does not expose as a preset concern; decide
-  between a provider-agnostic worker preset and a documented non-port before implementing.
+- Batch 3 decision (documented non-port): `hephaestus` is a provider-specific deep worker whose value
+  comes from OmO's per-provider model table, and `sisyphus-junior` is a category executor whose value
+  comes from OmO's category-to-model routing. DSH exposes neither as a preset concern: a session's
+  model is chosen at session level, and a preset cannot carry routing. Shipping them as plain
+  full-tool presets would duplicate `omo-sisyphus` without their defining behavior, so they are
+  recorded as not portable here. If DSH later exposes per-agent model routing, revisit this row.
 - Acceptance: preset mounts and activates in a registry-mounting profile, appears in the roster, a
   live session selects it and shows the role behavior with the intended tool surface, and the
   unmodified default preset still works.

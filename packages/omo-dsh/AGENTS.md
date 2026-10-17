@@ -2,10 +2,12 @@
 
 Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships OmO's keyword modes:
 `ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
-`hyperplan + ultrawork` invocation, two batches of OmO's harness-neutral skill library
-(`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`), and
-nine OMO agent-role presets (Prometheus, Oracle, Librarian, Explore, Metis, Momus, Multimodal-Looker, Sisyphus, Atlas). The package is private and is
-not published to npm; users install the bundle into a DSH profile. The phased plan for the remaining
+`hyperplan + ultrawork` invocation, three batches of OmO's harness-neutral skill library
+(`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`,
+`ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`), and nine OMO
+agent-role presets (Prometheus, Oracle, Librarian, Explore, Metis, Momus, Multimodal-Looker,
+Sisyphus, Atlas). The package is private and is not published to npm; users install the bundle into
+a DSH profile. The phased plan for the remaining
 capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
@@ -42,6 +44,12 @@ prevents a retried step from appending the pointer twice.
 | `skills/data-scientist.md` | Hybrid-engine data analysis directive, adapted from OmO's `data-scientist` skill |
 | `skills/review-work.md` | Post-implementation gate review directive, adapted from OmO's `review-work` skill |
 | `skills/init-deep.md` | Hierarchical AGENTS.md generation directive, adapted from OmO's `init-deep` skill |
+| `skills/ulw-plan.md` | Decision-complete planning directive, adapted from OmO's `ulw-plan` skill |
+| `skills/ulw-execute.md` | Orchestrator-only plan execution directive, adapted from OmO's `ulw-execute` skill |
+| `skills/ulw-research.md` | Claim-graph research directive, adapted from OmO's `ulw-research` skill |
+| `skills/programming.md` | Language-gated programming practice directive, adapted from OmO's `programming` skill |
+| `skills/refactor.md` | Behavior-locked refactor directive, adapted from OmO's `refactor` skill |
+| `skills/frontend.md` | Design-quality frontend directive, adapted from OmO's `frontend` skill |
 | `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row and the nine OMO agent-preset declarations |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
@@ -58,18 +66,24 @@ were removed from OmO and are not ported.
 
 ## Skill library
 
-Batches 1 and 2 port the harness-neutral OmO workflows that need no OpenCode-only tool. Each one is
+Three batches port the harness-neutral OmO workflows that need no OpenCode-only tool. Each one is
 adapted to the DSH tool surface (`bash`, `read`, `write`, `edit`, `grep`, `glob`, `subagent`,
 `workflow`, `todo_write`, background jobs, `terminal_*`) instead of OmO's OpenCode tools (`task`,
 `lsp_*`, `background_output`). Registered names stay namespaced: `omo-git-master`, `omo-debugging`,
-`omo-remove-ai-slops`, `omo-data-scientist`, `omo-review-work`, `omo-init-deep`.
+`omo-remove-ai-slops`, `omo-data-scientist`, `omo-review-work`, `omo-init-deep`, `omo-ulw-plan`,
+`omo-ulw-execute`, `omo-ulw-research`, `omo-programming`, `omo-refactor`, `omo-frontend`.
+
+- Batch 1: `git-master`, `debugging`, `remove-ai-slops`.
+- Batch 2: `data-scientist`, `review-work`, `init-deep`.
+- Batch 3: `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`. These
+  are the OMO workflow skills that the agent roles unblocked; each body is a condensed,
+  self-contained directive, while the original skill's reference packs and helper scripts stay in
+  the repository instead of being copied into the bundle.
 
 The library registers through the same `ctx.skills.register` seam as the mode skills; disable the
-whole library with `skills: { library: false }`. The remaining `shared-skills` entries split into two
-groups: the OMO workflow skills (`ulw-plan`, `ulw-execute`, `ulw-research`, `programming`,
-`refactor`, `frontend`) wait for the agent-role mapping in Phase 3, and the tool-bound skills
-(`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`, `coding-agent-sessions`) wait
-for the tool mapping in Phase 4.
+whole library with `skills: { library: false }`. The remaining `shared-skills` entries are tool-bound
+(`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`, `coding-agent-sessions`) and
+wait for the tool mapping in Phase 4.
 
 ## Agent presets
 
