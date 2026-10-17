@@ -2,10 +2,10 @@
 
 Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). It ships OmO's keyword modes:
 `ultrawork`, `team mode`, `hyperplan` (with the `hpp` shorthand), and the combined
-`hyperplan + ultrawork` invocation, three batches of OmO's harness-neutral skill library
+`hyperplan + ultrawork` invocation, four batches of OmO's harness-neutral skill library
 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`,
-`ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`), and nine OMO
-agent-role presets (Prometheus, Oracle, Librarian, Explore, Metis, Momus, Multimodal-Looker,
+`ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`, `ast-grep`,
+`lsp-setup`, `coding-agent-sessions`), and nine OMO agent-role presets (Prometheus, Oracle, Librarian, Explore, Metis, Momus, Multimodal-Looker,
 Sisyphus, Atlas), plus two hook-level checks: `.omo/rules` injection and a write/edit comment check.
 The package is private and is not published to npm; users install the bundle into a DSH profile. The phased plan for the remaining
 capabilities lives in [`ROADMAP.md`](./ROADMAP.md).
@@ -52,6 +52,9 @@ prevents a retried step from appending the pointer twice.
 | `skills/programming.md` | Language-gated programming practice directive, adapted from OmO's `programming` skill |
 | `skills/refactor.md` | Behavior-locked refactor directive, adapted from OmO's `refactor` skill |
 | `skills/frontend.md` | Design-quality frontend directive, adapted from OmO's `frontend` skill |
+| `skills/ast-grep.md` | Structural search and codemod directive over the `sg` CLI, adapted from OmO's `ast-grep` skill |
+| `skills/lsp-setup.md` | LSP wiring directive: build `lsp-tools-mcp`, verify its stdio handshake, register the MCP row, confirm the tools |
+| `skills/coding-agent-sessions.md` | Local agent-transcript reading directive, adapted from OmO's `coding-agent-sessions` skill |
 | `cordis.patch.yml` | Inserts the `omo-ultrawork` Host row and the nine OMO agent-preset declarations |
 | `locale/`, `icon.svg` | Plugin Manager display metadata |
 | `test/` | Behavior tests, run with `bun test packages/omo-dsh` |
@@ -68,12 +71,13 @@ were removed from OmO and are not ported.
 
 ## Skill library
 
-Three batches port the harness-neutral OmO workflows that need no OpenCode-only tool. Each one is
-adapted to the DSH tool surface (`bash`, `read`, `write`, `edit`, `grep`, `glob`, `subagent`,
-`workflow`, `todo_write`, background jobs, `terminal_*`) instead of OmO's OpenCode tools (`task`,
-`lsp_*`, `background_output`). Registered names stay namespaced: `omo-git-master`, `omo-debugging`,
-`omo-remove-ai-slops`, `omo-data-scientist`, `omo-review-work`, `omo-init-deep`, `omo-ulw-plan`,
-`omo-ulw-execute`, `omo-ulw-research`, `omo-programming`, `omo-refactor`, `omo-frontend`.
+Four batches port the OmO skills that work on the DSH tool surface. Each one is adapted to `bash`,
+`read`, `write`, `edit`, `grep`, `glob`, `subagent`, `workflow`, `todo_write`, background jobs, and
+`terminal_*` instead of OmO's OpenCode tools (`task`, `lsp_*`, `background_output`). Registered names
+stay namespaced: `omo-git-master`, `omo-debugging`, `omo-remove-ai-slops`, `omo-data-scientist`,
+`omo-review-work`, `omo-init-deep`, `omo-ulw-plan`, `omo-ulw-execute`, `omo-ulw-research`,
+`omo-programming`, `omo-refactor`, `omo-frontend`, `omo-ast-grep`, `omo-lsp-setup`,
+`omo-coding-agent-sessions`.
 
 - Batch 1: `git-master`, `debugging`, `remove-ai-slops`.
 - Batch 2: `data-scientist`, `review-work`, `init-deep`.
@@ -82,10 +86,21 @@ adapted to the DSH tool surface (`bash`, `read`, `write`, `edit`, `grep`, `glob`
   self-contained directive, while the original skill's reference packs and helper scripts stay in
   the repository instead of being copied into the bundle.
 
+- Batch 4: `ast-grep` (structural search and codemods through the `sg` CLI, with a presence gate),
+  `lsp-setup` (build `packages/lsp-tools-mcp`, verify its stdio `tools/list` handshake, register a
+  `@deepseek-ai/dsh-mcp-client` row on the profile, confirm the `mcp__lsp__*` tools), and
+  `coding-agent-sessions` (find and read local agent transcripts without mutating their stores).
+- Not ported: `browser`, `ultimate-browsing`, and `visual-qa` are bound to OmO's own browser engine and
+  screenshot pipeline. DSH exposes browser automation through user-installed MCP servers or CLIs, so a
+  ported body would either duplicate an installed tool or promise a capability the profile may not
+  have. They stay in the repository instead.
+
 The library registers through the same `ctx.skills.register` seam as the mode skills; disable the
-whole library with `skills: { library: false }`. The remaining `shared-skills` entries are tool-bound
-(`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`, `coding-agent-sessions`) and
-wait for the tool mapping in Phase 4.
+whole library with `skills: { library: false }`.
+
+LSP capability is deliberately not a bundle row: the MCP server path is machine-specific, so shipping
+an absolute path in `cordis.patch.yml` would break on any other checkout. `omo-lsp-setup` carries the
+tested recipe (build, handshake check, profile row, verification) and the user owns when to run it.
 
 ## Agent presets
 

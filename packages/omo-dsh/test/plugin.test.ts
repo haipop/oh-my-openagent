@@ -83,7 +83,7 @@ describe("bundle activation", () => {
 
     expect(name).toBe("omo-ultrawork")
     expect(inject).toEqual(["skills", "workingDirectory"])
-    expect(state.registeredSkills).toHaveLength(14)
+    expect(state.registeredSkills).toHaveLength(17)
     expect(state.handlers).toHaveLength(2)
     expect(state.handlers.map((handler) => handler.event)).toEqual(["agent/pre-step", "tools/post-execute"])
     expect(state.handlers[0]?.options).toEqual({ prepend: true })
@@ -111,6 +111,9 @@ describe("bundle activation", () => {
       "omo-programming",
       "omo-refactor",
       "omo-frontend",
+      "omo-ast-grep",
+      "omo-lsp-setup",
+      "omo-coding-agent-sessions",
     ])
     const ultrawork = skills.find((skill) => skill.name === "omo-ultrawork")
     const hyperplan = skills.find((skill) => skill.name === "omo-hyperplan")
