@@ -1,8 +1,9 @@
 # omo-dsh - DeepSeek Harness adapter
 
-Host bundle that ports OmO's ultrawork mode (`ulw` / `ultrawork`) to DeepSeek Harness (DSH).
-Version one ships one capability: the ultrawork keyword mode. The package is private and is not
-published to npm; users install the bundle into a DSH profile.
+Host bundle that ports OmO's capabilities to DeepSeek Harness (DSH). Version one ships the
+ultrawork keyword mode. The package is private and is not published to npm; users install the bundle
+into a DSH profile. The phased plan for the remaining capabilities lives in
+[`ROADMAP.md`](./ROADMAP.md).
 
 ## Why a bundle and not a port of an existing adapter
 
