@@ -28,10 +28,10 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
 | keyword mode routing | OpenCode `keyword-detector` (ultrawork / team / hyperplan / hyperplan-ultrawork; search and analyze were removed upstream) | one mode registry on the same injection seam, per-mode pointers, namespaced runtime skills, per-mode config | LANDED (PR #5) |
 | skill library | `shared-skills` (18 skills) + OpenCode builtin skills | `ctx.skills.register` per adapted skill, namespaced `omo-*`; batches 1-3 (`git-master`, `debugging`, `remove-ai-slops`, `data-scientist`, `review-work`, `init-deep`, `ulw-plan`, `ulw-execute`, `ulw-research`, `programming`, `refactor`, `frontend`) landed; tool-bound skills stay in Phase 4 | LANDED for harness-neutral workflows (PR #6, #7, #10) |
 | agent roles | 11 agents + category routing (`model-core`, `delegate-core`) | DSH agent presets (YAML composition); nine presets landed (four read-only specialists plus Sisyphus, Atlas, Metis, Momus, Multimodal-Looker); `hephaestus` and `sisyphus-junior` need category routing and are documented as not portable at the preset seam | LANDED at the DSH boundary (PR #8, #9) |
-| rules injection | `rules-engine` + `rules-injector` hook | DSH `agent-instructions` covers AGENTS.md; add `.omo/rules` via projected context | EVALUATE (Phase 4) |
-| comment checker | `comment-checker-core` + binary | `tools/post-execute` hook + bundled checker | PLANNED (Phase 4) |
+| rules injection | `rules-engine` + `rules-injector` hook | `.omo/rules/*.md` read once per session and injected as sourced context through `agent/pre-step`, with frontmatter globs matched against prompt paths | LANDED (Phase 4 batch 1, PR #11) |
+| comment checker | `comment-checker-core` + binary | `tools/post-execute` scans added `write`/`edit` text for slop comments and attaches a bounded warning context; the bundled binary is not ported (no external-checker seam) | LANDED (Phase 4 batch 1, PR #11) |
 | LSP tools | `lsp-tools-mcp` (8 tool aliases) | MCP server row in the profile bundle | PLANNED (Phase 4) |
-| hashline edit | `hashline-core` + patched edit tool | DSH edit tool has its own protocol | EVALUATE |
+| hashline edit | `hashline-core` + patched edit tool | DSH's `write`/`edit` already carry a file-version guard and the `fs/write-intent` + `fs/edit-intent` waterfalls, so a second hash protocol would fight the Host's own guard | NATIVE (no port) |
 | team mode | OpenCode 12 `team_*` tools + mailbox/lockstep engine | DSH Agent Teams is native; keyword pointer lands in Phase 1, prompts/skills in Phase 5 | PARTIAL (Phase 1) |
 | task delegation, background agents | `delegate-core`, background-agent feature | native `subagent`, `workflow`, `bash` jobs | NATIVE (guidance only) |
 | todo + goal | OpenCode tools | native `todo_write`, `create_goal`/`update_goal`/`get_goal` | NATIVE |
@@ -94,28 +94,18 @@ design decision before implementation, `NATIVE` no port needed (DSH already prov
   live session selects it and shows the role behavior with the intended tool surface, and the
   unmodified default preset still works.
 
-## Phase 4: hooks and tools
+## Phase 4 (in progress): hooks and tools
 
-- Rules injection from `.omo/rules` (or documented alternative), comment checker on `tools/post-execute`,
-  LSP MCP registration, hashline decision after evaluating the DSH edit protocol.
-- Acceptance: each hook/tool proven by a live event or tool call, not by unit tests alone.
-
-## Phase 5: team and parallel
-
-- Port OmO's team prompts/skills onto DSH Agent Teams instead of the OpenCode mailbox engine; document
-  the differences. Evaluate whether any OpenCode team tool has no DSH equivalent.
-- Acceptance: a real multi-member run with a shared task board and a completed deliverable.
-
-## Phase 6: config, routing, and status
-
-- Read the adapter's keys from `~/.omo/omo.json[c]` (user layer only, project layer opt-in), map
-  model routing where DSH allows it, and expose a read-only status tool.
-- Acceptance: config precedence tests, a live reconfiguration run, and a documented migration path.
-
-## Per-phase definition of done
-
-1. Unit tests pin the new contract.
-2. `bun run typecheck` and the repository audits stay green.
-3. A live DSH run through the real model proves the user-visible behavior.
-4. A Chinese audit note with artifact hashes lands in the local evidence directory.
-5. The PR merges with a merge commit and the running profiles are relinked to the merged checkout.
+- Batch 1 landed (PR #11): rules injection on `agent/pre-step` and the comment check on
+  `tools/post-execute`. Rules read `.omo/rules/*.md` plus `~/.omo/rules`, parse the frontmatter subset
+  (`description`, `globs`, `alwaysApply`), inject once per rule per session, and fail open. The
+  comment check flags restating narration, filler, banners, commented-out code, and em dashes in
+  added `write`/`edit` text, then attaches a capped warning context instead of blocking a tool that
+  already ran.
+- Batch 2 (planned): register the LSP MCP (`packages/lsp-tools-mcp`) in the bundle patch; port the
+  tool-bound skills (`ast-grep`, `lsp-setup`, `browser`, `ultimate-browsing`, `visual-qa`,
+  `coding-agent-sessions`) once their tools exist in the target profile.
+- Hashline: not ported. DSH's filesystem tools already carry a version guard and expose
+  `fs/write-intent` / `fs/edit-intent` waterfalls, so a parallel hash protocol would conflict with
+  the Host's own edit safety.
+- Acceptance: each hook/tool is proven by a live event or tool call, not by unit tests alone.

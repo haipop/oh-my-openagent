@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**DeepSeek Harness gains OmO's rules injection and a write/edit comment check.** The adapter now reads
+`.omo/rules/*.md` (and `~/.omo/rules`) through the `agent/pre-step` waterfall, parses the frontmatter
+subset OmO rule files use, and injects one sourced context message listing the rules that apply, once
+per rule per session: rules without globs apply to the whole session, and glob-scoped rules join when
+the prompt names a matching path. A second listener on `tools/post-execute` inspects the text a
+`write` or `edit` call added, flags comments that only restate the code (obvious narration, filler,
+banners, commented-out code, em dashes), and attaches a capped warning context to the accepted result
+instead of blocking a tool that already ran. Both checks are config-gated (`rules`, `commentChecker`),
+fail open, and never touch a failed tool result. Hashline is documented as not ported because DSH's
+filesystem tools already carry a version guard and expose their own write/edit intent waterfalls.
+([#11](https://github.com/haipop/oh-my-openagent/pull/11))
+
 **DeepSeek Harness gains OmO's six workflow skills.** The adapter now publishes `omo-ulw-plan` (explore-first planning that produces one decision-complete plan with per-step verification and a handoff block), `omo-ulw-execute` (orchestrator-only execution of a written plan with worktree discipline, unit decomposition, parallel subagents or workflows, and per-unit evidence), `omo-ulw-research` (claim-graph research with source-tier gating and a cited deliverable that names what stays unknown), `omo-programming` (language-gated practice for Python, Rust, TypeScript, and Go), `omo-refactor` (behavior-locked refactors with atomic green steps and before/after measurement), and `omo-frontend` (design-quality frontend work with route-before-code, component states, motion discipline, accessibility, and an anti-slop list). Each body is a condensed self-contained directive adapted to the DeepSeek Harness tool surface; the original reference packs and helper scripts stay in the repository instead of being copied into the bundle. ([#10](https://github.com/haipop/oh-my-openagent/pull/10))
 
 **DeepSeek Harness gains five more OmO agent-role presets, including the two orchestrators.** The adapter now declares `omo-sisyphus` (main orchestrator with the full tool matrix: planning, delegation, verification, goals, todos) and `omo-atlas` (the same matrix driven by an explicit todo list), plus the read-only `omo-metis` (pre-planning interrogation), `omo-momus` (plan reviewer with BLOCK / PASS WITH FIXES / PASS verdicts), and `omo-multimodal-looker` (`read` and `read_image` only). All nine OMO presets are non-default and selectable from the Desktop roster. The patch also records a silent roster failure found during live QA: a preset whose `@deepseek-ai/dsh-plan-mode` child row lacks its required `section` stays active at the Loader level but never appears in the roster, so the docs now require checking the roster itself, not only the activation state. ([#9](https://github.com/haipop/oh-my-openagent/pull/9))
