@@ -504,3 +504,60 @@ describe("comment checker", () => {
     expect(() => apply(ctx, { commentChecker: { extra: true } })).toThrow(/unknown config\.commentChecker key/)
   })
 })
+
+describe("shared config file", () => {
+  function createProjectConfig(document: string): string {
+    const cwd = mkdtempSync(join(tmpdir(), "omo-dsh-plugin-config-"))
+    tempDirectories.push(cwd)
+    mkdirSync(join(cwd, ".omo"), { recursive: true })
+    writeFileSync(join(cwd, ".omo", "omo.json"), document)
+    return cwd
+  }
+
+  test("#given a file keyword #when the step enters #then that keyword arms ultrawork", async () => {
+    const cwd = createProjectConfig('{"dsh":{"keywords":["shipit"]}}')
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, {})
+
+    const hosted = humanMessage("shipit the release")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    const messages = result.messages as { source: { kind: string } }[]
+    expect(messages.map((message) => message.source.kind)).toEqual(["user", "omo-ultrawork"])
+  })
+
+  test("#given the row config overrides the file keywords #when the step enters #then only the row keyword arms", async () => {
+    const cwd = createProjectConfig('{"dsh":{"keywords":["shipit"]}}')
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, { keywords: ["yolo"] })
+
+    const shipit = humanMessage("shipit the release")
+    const shipitDecision = { kind: "enter", messages: [shipit] }
+    expect(await runStep(state, stepPayload(rootAgent(), [shipit]), shipitDecision)).toBe(shipitDecision)
+
+    const yolo = humanMessage("yolo the release")
+    const yoloResult = await runStep(state, stepPayload(rootAgent(), [yolo]), { kind: "enter", messages: [yolo] })
+    expect((yoloResult.messages as unknown[]).length).toBe(2)
+  })
+
+  test("#given a file that disables rules #when the step enters #then no rules context is injected", async () => {
+    const cwd = createProjectConfig('{"dsh":{"rules":{"enabled":false}}}')
+    mkdirSync(join(cwd, ".omo", "rules"), { recursive: true })
+    writeFileSync(join(cwd, ".omo", "rules", "alpha.md"), "Always be careful.\n")
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, {})
+
+    const hosted = humanMessage("fix the parser")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given an invalid file value #when the step enters #then the row config still works", async () => {
+    const cwd = createProjectConfig('{"dsh":{"keywords":[]}}')
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, {})
+
+    const hosted = humanMessage("ulw fix the parser")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    expect((result.messages as unknown[]).length).toBe(2)
+  })
+})

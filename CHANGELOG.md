@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**DeepSeek Harness honors the shared OmO configuration file.** The adapter now reads `~/.omo/omo.json[c]`
+and the nearest `<project>/.omo/omo.json[c]` (JSONC, comments and trailing commas allowed) and applies
+the file's `dsh` block as runtime defaults for keyword modes, rule loading, and the write/edit comment
+check. Only the `dsh` block is read, because the same file configures other harnesses and a same-named
+top-level key must not silently change DSH behavior. The plugin row config stays authoritative: it wins
+over every file layer, project layers win over the user layer, and an invalid file falls back to the row
+config with a warning. Skill registration stays activation-time, so the file cannot toggle the runtime
+skill library. ([#13](https://github.com/haipop/oh-my-openagent/pull/13))
+
 **DeepSeek Harness gains OmO's tool-bound skills.** The adapter now publishes `omo-ast-grep` (structural
 search and codemods through the `sg` CLI, with a presence gate and preview-before-rewrite discipline),
 `omo-lsp-setup` (build `packages/lsp-tools-mcp`, verify its stdio `tools/list` handshake, register a
