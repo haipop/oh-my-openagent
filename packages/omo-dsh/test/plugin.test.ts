@@ -209,4 +209,48 @@ describe("step injection", () => {
     const ulwDecision = { kind: "enter", messages: [ulw] }
     expect(await runStep(state, stepPayload(rootAgent(), [ulw]), ulwDecision)).toBe(ulwDecision)
   })
+
+  test("#given a retried step with the same claimed message #when it enters again #then no second pointer is appended", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const agent = rootAgent()
+    const hosted = humanMessage("ulw fix the parser")
+
+    const first = await runStep(state, stepPayload(agent, [hosted]), { kind: "enter", messages: [hosted] })
+    expect((first.messages as unknown[]).length).toBe(2)
+
+    const retried = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(agent, [hosted]), retried)).toBe(retried)
+  })
+
+  test("#given a later prompt with a new message id #when it enters #then the mode injects again", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const agent = rootAgent()
+
+    const first = humanMessage("ulw fix the parser")
+    expect(((await runStep(state, stepPayload(agent, [first]), { kind: "enter", messages: [first] })).messages as unknown[]).length).toBe(2)
+
+    const second = humanMessage("ulw the tests too")
+    const secondDecision = { kind: "enter", messages: [second] }
+    const secondResult = await runStep(state, stepPayload(agent, [second]), secondDecision)
+    expect(secondResult).not.toBe(secondDecision)
+    expect((secondResult.messages as unknown[]).length).toBe(2)
+  })
+
+  test("#given a negated mention #when the step enters #then nothing is injected", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("do not use ultrawork, just fix the parser")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given a URL containing the word #when the step enters #then nothing is injected", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("read https://example.com/ulw and report")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
 })
