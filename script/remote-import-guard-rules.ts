@@ -7,16 +7,12 @@ const LOCAL_API = "packages/device-service-core/src/local-api/"
 const BUNSHIN_TS_RELAY = "packages/omo-senpi/vendor/bunshin-ts-relay/"
 const REMOTE = "packages/omo-senpi/src/components/remote/"
 
-// The surfaces of #13414 (thread tools, the omo remote CLI, the TUI's /remote under components/remote/tui) are thin callers
+// The surfaces of #13414 (thread tools and the TUI's /remote under components/remote/tui) are thin callers
 // of the one remote module: S3 lets them reach the remote layer only through its index, type-only imports included. A
 // surface importing another surface file (the TUI's own files) is not reaching the layer. Scope: S3 sees direct static
-// imports, require() and literal import() only; a route through another module, or bin/lib/thread.js loading built
-// bundles by a non-literal import() (frozen by NON_LITERAL_IMPORT_OFFENDERS), is outside it.
+// imports, require() and literal import() only; a route through another module is outside it.
 const isRemoteSurface = (file: string): boolean =>
-  file.startsWith("packages/omo-senpi/src/components/thread/") ||
-  file.startsWith(`${REMOTE}tui/`) ||
-  /^packages\/omo-native\/remote-[^/]+\.ts$/.test(file) ||
-  file === "packages/omo-native/bin/lib/thread.js"
+  file.startsWith("packages/omo-senpi/src/components/thread/") || file.startsWith(`${REMOTE}tui/`)
 
 // Tests, test helpers and QA fakes are exempt from S1, S2 and S3 (v6 V6).
 const isTestFile = (file: string): boolean =>
@@ -46,7 +42,7 @@ export const REMOTE_IMPORT_RULES: GuardRules = {
     // The three infrastructure callers of section 1: endpoint registration, sign-in hand-off, memory re-adopt/forget
     // (the memory device session's CLI session file, cli-session.ts, moved out of account-runtime.ts in omo#14374).
     "packages/device-service-core/src/registrant.ts",
-    "packages/omo-native/device-service-handoff.ts",
+    "packages/omo-opencode/src/cli/service-auth/device-service-handoff.ts",
     "packages/omo-senpi/src/components/memory/device-session/cli-session.ts",
   ],
   s3: { surface: isRemoteSurface, layers: [DEVICE_SERVICE_CORE, REMOTE, BUNSHIN_TS_RELAY], entry: `${REMOTE}index.ts` },
@@ -65,9 +61,6 @@ export const S1_OFFENDERS: Readonly<Record<string, Offender>> = {
 }
 
 export const S2_OFFENDERS: Readonly<Record<string, Offender>> = {
-  "packages/omo-native/remote-cli.ts": { uses: ["createDeviceServiceSessions"], removedBy: "omo PR 4c-2" },
-  "packages/omo-native/remote-local.ts": { uses: ["connectDeviceService"], removedBy: "omo PR 4c-1" },
-  "packages/omo-native/remote-session-verbs.ts": { uses: ["createDeviceServiceSessions"], removedBy: "omo PR 4c-2" },
   "packages/omo-senpi/src/extension/bunshin-ts-pick-transport.ts": {
     uses: ["createRelayTransport"],
     removedBy: "omo PR 4c-3",
@@ -77,46 +70,6 @@ export const S2_OFFENDERS: Readonly<Record<string, Offender>> = {
 
 // S3 starts at today's surfaces; U5 and U6 move them onto components/remote/index.ts and remove their rows.
 export const S3_OFFENDERS: Readonly<Record<string, Offender>> = {
-  "packages/omo-native/remote-attach-dialogs.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-attach-presentation.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-attach.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-bootstrap.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-cli.ts": {
-    uses: [DEVICE_SERVICE_CORE, REMOTE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-cold-wake.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-entry.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-local.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-render.ts": {
-    uses: [DEVICE_SERVICE_CORE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
-  "packages/omo-native/remote-session-verbs.ts": {
-    uses: [DEVICE_SERVICE_CORE, REMOTE],
-    removedBy: "omo#13414 U6 (CLI + attach onto the module)",
-  },
   "packages/omo-senpi/src/components/thread/consumer/device-service-port.ts": {
     uses: [DEVICE_SERVICE_CORE],
     removedBy: "omo#13414 U5 (thread tools onto the module)",
@@ -161,17 +114,6 @@ export const NON_LITERAL_IMPORT_OFFENDERS: Readonly<Record<string, number>> = {
   "packages/omo-codex/plugin/skills/lsp-setup/scripts/verify-lsp.ts": 1,
   "packages/omo-codex/scripts/install-generated-bundle.test.mjs": 1,
   "packages/omo-codex/scripts/install-local.mjs": 1,
-  "packages/omo-native/bin/lib/category-coverage.js": 2,
-  "packages/omo-native/bin/lib/computer-use-doctor.js": 1,
-  "packages/omo-native/bin/lib/config-doctor.js": 1,
-  "packages/omo-native/bin/lib/engine-boot.js": 5,
-  "packages/omo-native/bin/lib/engine-models.js": 1,
-  "packages/omo-native/bin/lib/host-status.js": 1,
-  "packages/omo-native/bin/lib/launcher.js": 1,
-  "packages/omo-native/bin/lib/model-chains.js": 1,
-  // omo PR 4c-3 removes these three.
-  "packages/omo-native/bin/lib/thread.js": 3,
-  "packages/omo-native/compiled-diagnostic-runtime.ts": 1,
   "packages/omo-opencode/src/hooks/compaction-todo-preserver/hook.ts": 1,
   "packages/omo-opencode/src/tools/task/todo-sync.ts": 1,
   "packages/omo-senpi/plugin/scripts/build-extension-runtimes.test.mjs": 1,
@@ -194,11 +136,13 @@ export const NON_LITERAL_IMPORT_OFFENDERS: Readonly<Record<string, number>> = {
   "packages/omo-senpi/scripts/qa/task-terminal-provider-error-qa.mjs": 4,
   "packages/omo-senpi/scripts/qa/thread-tools/lib/gateway.mjs": 2,
   "packages/omo-senpi/scripts/qa/thread-tools/lib/harness.mjs": 7,
+  "packages/omo-senpi/scripts/qa/thread-tools/lib/sdk-call.mjs": 1,
   "packages/omo-senpi/scripts/qa/todo-fanout-reminder-e2e.mjs": 1,
   "packages/omo-senpi/src/components/computer-use/permission-registry.test-fixture.ts": 1,
   "packages/omo-senpi/src/components/init-deep-advisor/component.ts": 1,
   "packages/omo-senpi/src/components/lsp/daemon-tool-client.ts": 1,
   "packages/omo-senpi/src/components/onboarding/scan-component.ts": 1,
+  "packages/omo-senpi/src/components/onboarding/setup/engine-models.js": 1,
   "packages/omo-senpi/src/components/side-panel/index.ts": 1,
   "packages/omo-senpi/src/components/thread/gateway/extension-registrations.ts": 1,
   // A test fixture for the paged thread_read tests (#14053); it loads senpi's projector by a computed specifier.

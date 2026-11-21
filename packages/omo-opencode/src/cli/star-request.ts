@@ -1,16 +1,7 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
-import type { InstallPlatform } from "./types"
 
 export const STAR_REPOSITORIES = ["code-yeongyu/oh-my-openagent", "code-yeongyu/lazycodex"] as const
-
-const PLATFORM_REPOSITORIES = {
-  opencode: ["code-yeongyu/oh-my-openagent"],
-  codex: STAR_REPOSITORIES,
-  both: STAR_REPOSITORIES,
-  native: STAR_REPOSITORIES,
-  "native-dev": STAR_REPOSITORIES,
-} as const satisfies Record<InstallPlatform, readonly string[]>
 
 const execFileAsync = promisify(execFile)
 
@@ -31,11 +22,12 @@ export async function runGitHubStarCommand(repository: string): Promise<void> {
 }
 
 export async function starGitHubRepositories(
-  platform: InstallPlatform = "both",
+  platform: "codex" = "codex",
   runCommand: GitHubStarCommandRunner = runGitHubStarCommand,
 ): Promise<readonly GitHubStarResult[]> {
   const results: GitHubStarResult[] = []
-  for (const repository of PLATFORM_REPOSITORIES[platform]) {
+  if (platform !== "codex") throw new Error(`Unsupported install platform: ${platform}`)
+  for (const repository of STAR_REPOSITORIES) {
     try {
       await runCommand(repository)
       results.push({ repository, ok: true })

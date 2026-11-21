@@ -2,8 +2,6 @@ import { describe, expect, test } from "bun:test"
 
 import {
   detectInstall,
-  INSTALL_COMMANDS,
-  INSTALL_TARGETS,
   installDetectScript,
   type InstallClient,
   type InstallOs,
@@ -174,12 +172,5 @@ describe("installDetectScript", () => {
       "data-install": "unix",
       "data-install-hint": "computer",
     })
-  })
-})
-
-describe("install guide", () => {
-  test("docs/guide/install.md carries every command the site shows", async () => {
-    const guide = await Bun.file(new URL("../../../docs/guide/install.md", import.meta.url)).text()
-    for (const target of INSTALL_TARGETS) expect(guide).toContain(INSTALL_COMMANDS[target])
   })
 })

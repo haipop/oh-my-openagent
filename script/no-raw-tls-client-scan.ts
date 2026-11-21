@@ -215,25 +215,15 @@ export function discoverPluginBuiltRuntimes(): string[] {
 // - the npm payload: root package.json "files" (bin, postinstall.mjs,
 //   script/qa, packages/shared-skills, packages/omo-codex plugin+scripts,
 //   lsp-core src, component dists, ...);
-// - the omo binary payload: packages/omo-native/package.json "files"
-//   (bin, plugin) plus its root *.ts compile inputs, which
-//   script/build-omo-binary.ts compiles into the omo binary;
 // - every package's src/ and plugin/ trees, the inputs of the dist build.
 export function shippedRootEntries(): string[] {
   const roots = new Set<string>()
-  const readFilesField = (manifest: string, prefix: string) => {
-    const parsed = JSON.parse(readFileSync(path.join(WORKSPACE_ROOT, manifest), "utf8")) as { files?: string[] }
-    for (const entry of parsed.files ?? []) roots.add(prefix + entry)
-  }
-  readFilesField("package.json", "")
-  readFilesField("packages/omo-native/package.json", "packages/omo-native/")
+  const manifest = JSON.parse(readFileSync(path.join(WORKSPACE_ROOT, "package.json"), "utf8")) as { files?: string[] }
+  for (const entry of manifest.files ?? []) roots.add(entry)
   for (const entry of readdirSync(path.join(WORKSPACE_ROOT, "packages"), { withFileTypes: true })) {
     if (!entry.isDirectory()) continue
     roots.add("packages/" + entry.name + "/src")
     roots.add("packages/" + entry.name + "/plugin")
-  }
-  for (const tracked of listTrackedFiles()) {
-    if (/^packages\/omo-native\/[^/]+\.(ts|tsx|js|mjs|cjs)$/.test(tracked)) roots.add(tracked)
   }
   return [...roots].sort()
 }

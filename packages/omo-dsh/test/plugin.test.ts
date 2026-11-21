@@ -72,12 +72,7 @@ async function runStep(state: FakeState, payload: unknown, decision: unknown) {
   return (await registered.handler(payload, async () => decision)) as Record<string, unknown>
 }
 
-async function runPostExecute(
-  state: FakeState,
-  exec: unknown,
-  result: unknown,
-  downstream: unknown,
-) {
+async function runPostExecute(state: FakeState, exec: unknown, result: unknown, downstream: unknown) {
   const registered = state.handlers.find((handler) => handler.event === "tools/post-execute")
   if (registered === undefined) throw new Error("no tools/post-execute handler registered")
   return (await registered.handler(exec, result, async () => downstream)) as Record<string, unknown>
@@ -97,10 +92,16 @@ describe("bundle activation", () => {
     expect(state.handlers[0]?.options).toEqual({ prepend: true })
     expect(state.handlers[1]?.options).toBeUndefined()
 
-    const statusTool = state.registeredTools[0] as { name: string; description: string; output: { render(args: unknown, value: unknown): unknown[] } }
+    const statusTool = state.registeredTools[0] as {
+      name: string
+      description: string
+      output: { render(args: unknown, value: unknown): unknown[] }
+    }
     expect(statusTool.name).toBe("omo_status")
     expect(statusTool.description.length).toBeGreaterThan(0)
-    expect(statusTool.output.render({}, { ok: true })).toEqual([{ type: "text", text: JSON.stringify({ ok: true }, null, 2) }])
+    expect(statusTool.output.render({}, { ok: true })).toEqual([
+      { type: "text", text: JSON.stringify({ ok: true }, null, 2) },
+    ])
 
     const skills = state.registeredSkills as {
       name: string
@@ -198,7 +199,12 @@ describe("step injection", () => {
 
     expect(result).not.toBe(decision)
     expect(result.kind).toBe("enter")
-    const messages = result.messages as { source: { kind: string }; role: string; content: { text: string }[]; id: string }[]
+    const messages = result.messages as {
+      source: { kind: string }
+      role: string
+      content: { text: string }[]
+      id: string
+    }[]
     expect(messages).toHaveLength(2)
     expect(messages[0]).toBe(hosted)
     expect(messages[1]?.role).toBe("user")
@@ -313,7 +319,10 @@ describe("step injection", () => {
     const agent = rootAgent()
 
     const first = humanMessage("ulw fix the parser")
-    expect(((await runStep(state, stepPayload(agent, [first]), { kind: "enter", messages: [first] })).messages as unknown[]).length).toBe(2)
+    expect(
+      ((await runStep(state, stepPayload(agent, [first]), { kind: "enter", messages: [first] })).messages as unknown[])
+        .length,
+    ).toBe(2)
 
     const second = humanMessage("ulw the tests too")
     const secondDecision = { kind: "enter", messages: [second] }
@@ -330,25 +339,26 @@ describe("step injection", () => {
     expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
   })
 
-  test.each([
-    "do not use hyperplan ultrawork",
-    "don't use hpp  ulw",
-    "不要用 hyperplan ultrawork",
-    "不用 ulw hpp",
-  ])("#given a negated combined mode (%s) #when the step enters #then neither mode activates", async (prompt) => {
-    const { ctx, state } = createFakeContext()
-    apply(ctx, {})
-    const hosted = humanMessage(prompt)
-    const decision = { kind: "enter", messages: [hosted] }
-    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
-  })
+  test.each(["do not use hyperplan ultrawork", "don't use hpp  ulw", "不要用 hyperplan ultrawork", "不用 ulw hpp"])(
+    "#given a negated combined mode (%s) #when the step enters #then neither mode activates",
+    async (prompt) => {
+      const { ctx, state } = createFakeContext()
+      apply(ctx, {})
+      const hosted = humanMessage(prompt)
+      const decision = { kind: "enter", messages: [hosted] }
+      expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+    },
+  )
 
   test("#given a negated combo followed by a separate invocation #then only the latter activates", async () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
     const hosted = humanMessage("avoid hyperplan ulw; use ultrawork for this change")
     const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
-    expect(result.messages).toEqual([hosted, expect.objectContaining({ source: expect.objectContaining({ kind: "omo-ultrawork" }) })])
+    expect(result.messages).toEqual([
+      hosted,
+      expect.objectContaining({ source: expect.objectContaining({ kind: "omo-ultrawork" }) }),
+    ])
   })
 
   test("#given a previous mode in the step messages #when a new prompt names another mode #then it activates", async () => {
@@ -361,7 +371,10 @@ describe("step injection", () => {
     const next = humanMessage("team mode for the implementation")
     const messages = [...(initial.messages as unknown[]), next]
     const result = await runStep(state, stepPayload(agent, [next]), { kind: "enter", messages })
-    expect(result.messages).toEqual([...messages, expect.objectContaining({ source: expect.objectContaining({ kind: "omo-team" }) })])
+    expect(result.messages).toEqual([
+      ...messages,
+      expect.objectContaining({ source: expect.objectContaining({ kind: "omo-team" }) }),
+    ])
   })
 
   test("#given a URL containing the word #when the step enters #then nothing is injected", async () => {
@@ -528,7 +541,11 @@ describe("comment checker", () => {
   test("#given a write with a restating comment #when post-execute runs #then a warning context is attached", async () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
-    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// increment the counter\ncounter += 1\n" }, agent: rootAgent() }
+    const exec = {
+      name: "write",
+      arguments: { file_path: "src/a.ts", content: "// increment the counter\ncounter += 1\n" },
+      agent: rootAgent(),
+    }
     const result = await runPostExecute(state, exec, { isError: false }, { kind: "accept" })
     expect(result.kind).toBe("accept")
     const contexts = result.additionalContexts as { source: { kind: string }; content: { text: string }[] }[]
@@ -540,7 +557,11 @@ describe("comment checker", () => {
   test("#given a comment that explains why #when post-execute runs #then the decision is untouched", async () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
-    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// Retries once because the backend drops idle connections.\n" }, agent: rootAgent() }
+    const exec = {
+      name: "write",
+      arguments: { file_path: "src/a.ts", content: "// Retries once because the backend drops idle connections.\n" },
+      agent: rootAgent(),
+    }
     const downstream = { kind: "accept" }
     expect(await runPostExecute(state, exec, { isError: false }, downstream)).toBe(downstream)
   })
@@ -548,7 +569,11 @@ describe("comment checker", () => {
   test("#given a failed tool result #when post-execute runs #then nothing is attached", async () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
-    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// loop through rows\n" }, agent: rootAgent() }
+    const exec = {
+      name: "write",
+      arguments: { file_path: "src/a.ts", content: "// loop through rows\n" },
+      agent: rootAgent(),
+    }
     const downstream = { kind: "accept" }
     expect(await runPostExecute(state, exec, { isError: true }, downstream)).toBe(downstream)
   })
@@ -566,7 +591,11 @@ describe("comment checker", () => {
   test("#given the checker disabled #when a slop write lands #then nothing is attached", async () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, { commentChecker: { enabled: false } })
-    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// loop through rows\n" }, agent: rootAgent() }
+    const exec = {
+      name: "write",
+      arguments: { file_path: "src/a.ts", content: "// loop through rows\n" },
+      agent: rootAgent(),
+    }
     const downstream = { kind: "accept" }
     expect(await runPostExecute(state, exec, { isError: false }, downstream)).toBe(downstream)
   })

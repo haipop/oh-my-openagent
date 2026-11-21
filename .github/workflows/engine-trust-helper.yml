@@ -8,10 +8,9 @@ on:
     branches: [master, dev]
     paths:
       - "crates/omo-engine-trust-helper/**"
-      - "packages/omo-native/engine-trust-policy.ts"
-      - "packages/omo-native/windows-trust-helper.ts"
-      - "packages/omo-native/test/windows-trust-helper*.ts"
-      - "packages/omo-native/test/trust-certificate-fixtures.ts"
+      - "script/engine-trust/engine-trust-policy.ts"
+      - "script/engine-trust/test/engine-trust-policy.test.ts"
+      - "script/engine-trust/test/trust-certificate-fixtures.ts"
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
@@ -20,10 +19,9 @@ on:
     branches: [master, dev]
     paths:
       - "crates/omo-engine-trust-helper/**"
-      - "packages/omo-native/engine-trust-policy.ts"
-      - "packages/omo-native/windows-trust-helper.ts"
-      - "packages/omo-native/test/windows-trust-helper*.ts"
-      - "packages/omo-native/test/trust-certificate-fixtures.ts"
+      - "script/engine-trust/engine-trust-policy.ts"
+      - "script/engine-trust/test/engine-trust-policy.test.ts"
+      - "script/engine-trust/test/trust-certificate-fixtures.ts"
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
@@ -93,11 +91,10 @@ jobs:
 
       - name: Helper output through the decoder and the policy
         shell: bash
-        working-directory: packages/omo-native
         env:
           OMO_ENGINE_TRUST_HELPER_TARGET_DIR: ${{ github.workspace }}\target\${{ matrix.rust_target }}\release
           OMO_ENGINE_TRUST_HELPER_REQUIRED: "1"
-        run: bun test --timeout 60000 test/windows-trust-helper.test.ts test/windows-trust-helper.windows.test.ts
+        run: bun test --timeout 60000 script/engine-trust/test/engine-trust-policy.test.ts
 
       - name: Write job summary
         if: always()
@@ -107,6 +104,6 @@ jobs:
           JOB_SUMMARY_STATUS: ${{ job.status }}
           JOB_SUMMARY_DETAILS: |
             - Clippy (-D warnings) and the Crypt32 adapter tests on in-memory stores with synthetic certificates.
-            - Release build of omo-engine-trust-helper, then its real output through the decoder and selectEngineTrust.
+            - Release build of omo-engine-trust-helper and the retained engine-trust policy decision suite.
           JOB_SUMMARY_NEXT: Start with the first failing adapter test; each one names the Crypt32 behaviour it pins.
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh

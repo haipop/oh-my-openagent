@@ -231,7 +231,9 @@ export function buildRulesPointer(rules, maxBytes = DEFAULT_MAX_BYTES) {
     const title = rule.description.length > 0 ? ` (${rule.description})` : ""
     const section = `\n## Rule: ${rule.name}${title}\n${rule.body}`
     if (used + section.length > maxBytes) {
-      chunks.push(`\n## Rule: ${rule.name}${title}\n_[truncated: rule budget reached; read the file in .omo/rules for the rest]_`)
+      chunks.push(
+        `\n## Rule: ${rule.name}${title}\n_[truncated: rule budget reached; read the file in .omo/rules for the rest]_`,
+      )
       break
     }
     chunks.push(section)

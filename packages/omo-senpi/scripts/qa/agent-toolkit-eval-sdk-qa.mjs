@@ -222,7 +222,7 @@ async function supervise() {
   try {
     child = spawn(process.execPath, [script, "--worker", sandbox, "--plugin-root", pluginRoot], {
       cwd: join(sandbox, "project"),
-      env: isolatedEnvironment(sandbox, packageRoot),
+      env: isolatedEnvironment(sandbox),
       detached: true,
       stdio: ["ignore", "pipe", "pipe"],
     })

@@ -1,0 +1,67 @@
+name: Fork macOS CI
+
+on:
+  push:
+    branches: [feat/deepseek-harness]
+  pull_request:
+    branches: [feat/deepseek-harness]
+  merge_group:
+    types: [checks_requested]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: >-
+      github.ref == 'refs/heads/feat/deepseek-harness' ||
+      github.base_ref == 'feat/deepseek-harness' ||
+      github.event.merge_group.base_ref == 'refs/heads/feat/deepseek-harness'
+    runs-on: macos-15
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [core, codex, senpi, desktop]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.4'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Lint, typecheck and build
+        if: matrix.suite == 'core'
+        run: |
+          bun run lint
+          bun run typecheck
+          bun run build
+      - name: Test OpenCode V2, DeepSeek Harness and CI routing
+        if: matrix.suite == 'core'
+        run: >-
+          bun test --timeout 20000
+          packages/omo-opencode/src/opencode-v2
+          packages/omo-opencode/src/cli/opencode-v2-install-boundary.test.ts
+          packages/omo-dsh
+          script/ci-platform-runner-allocation.test.ts
+      - name: Test Codex
+        if: matrix.suite == 'codex'
+        run: |
+          temp_dir=$(cd "$RUNNER_TEMP" && pwd -P)
+          TMPDIR="$temp_dir" bun run test:codex
+      - name: Test Senpi
+        if: matrix.suite == 'senpi'
+        run: bun run test:senpi
+      - name: Build desktop engine
+        if: matrix.suite == 'desktop'
+        run: cargo build --release --locked -p senpi-desktop-engine
+      - name: Test Desktop
+        if: matrix.suite == 'desktop'
+        run: bun run test:desktop

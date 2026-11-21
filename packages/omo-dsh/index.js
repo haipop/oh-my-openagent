@@ -54,7 +54,15 @@ export const name = "omo-ultrawork"
  */
 export const inject = ["skills", "workingDirectory", "tools"]
 
-const KNOWN_CONFIG_KEYS = new Set(["enabled", "keywords", "applyToSubagents", "modes", "skills", "rules", "commentChecker"])
+const KNOWN_CONFIG_KEYS = new Set([
+  "enabled",
+  "keywords",
+  "applyToSubagents",
+  "modes",
+  "skills",
+  "rules",
+  "commentChecker",
+])
 const KNOWN_MODE_KEYS = new Set(["ultrawork", "team", "hyperplan", "hyperplanUltrawork"])
 const KNOWN_SKILL_KEYS = new Set(["library"])
 const KNOWN_RULE_KEYS = new Set(["enabled", "roots", "maxRules", "maxBytes"])
@@ -134,7 +142,11 @@ function resolveRules(raw) {
     rules.enabled = raw.enabled
   }
   if (raw.roots !== undefined) {
-    if (!Array.isArray(raw.roots) || raw.roots.length === 0 || raw.roots.some((root) => typeof root !== "string" || root.length === 0)) {
+    if (
+      !Array.isArray(raw.roots) ||
+      raw.roots.length === 0 ||
+      raw.roots.some((root) => typeof root !== "string" || root.length === 0)
+    ) {
       throw new TypeError("omo-ultrawork: config.rules.roots must be a non-empty array of strings")
     }
     rules.roots = Object.freeze([...raw.roots])
@@ -164,11 +176,16 @@ function resolveCommentChecker(raw) {
     if (!KNOWN_COMMENT_KEYS.has(key)) throw new TypeError(`omo-ultrawork: unknown config.commentChecker key "${key}"`)
   }
   if (raw.enabled !== undefined) {
-    if (typeof raw.enabled !== "boolean") throw new TypeError("omo-ultrawork: config.commentChecker.enabled must be a boolean")
+    if (typeof raw.enabled !== "boolean")
+      throw new TypeError("omo-ultrawork: config.commentChecker.enabled must be a boolean")
     checker.enabled = raw.enabled
   }
   if (raw.tools !== undefined) {
-    if (!Array.isArray(raw.tools) || raw.tools.length === 0 || raw.tools.some((tool) => typeof tool !== "string" || tool.length === 0)) {
+    if (
+      !Array.isArray(raw.tools) ||
+      raw.tools.length === 0 ||
+      raw.tools.some((tool) => typeof tool !== "string" || tool.length === 0)
+    ) {
       throw new TypeError("omo-ultrawork: config.commentChecker.tools must be a non-empty array of tool names")
     }
     checker.tools = Object.freeze([...raw.tools])
@@ -302,7 +319,11 @@ async function injectRules(ctx, options, payload, decision) {
   if (state === undefined) {
     const cwd = await resolveSessionDirectory(ctx, payload.agent)
     if (cwd === undefined) return decision
-    state = { cwd, rules: loadRules({ cwd, roots: options.rules.roots, maxRules: options.rules.maxRules }), injected: new Set() }
+    state = {
+      cwd,
+      rules: loadRules({ cwd, roots: options.rules.roots, maxRules: options.rules.maxRules }),
+      injected: new Set(),
+    }
     rulesStateBySession.set(session, state)
   }
   const fresh = selectRules(state.rules, promptText).filter((rule) => !state.injected.has(rule.name))
@@ -342,7 +363,11 @@ async function warnAboutComments(options, exec, result, downstream) {
     summary: `comment check: ${findings.length} finding(s) in ${added.path || "written file"}`,
   })
   if (downstream.kind === "block") {
-    return { kind: "block", feedback: downstream.feedback, additionalContexts: [warning, ...(downstream.additionalContexts ?? [])] }
+    return {
+      kind: "block",
+      feedback: downstream.feedback,
+      additionalContexts: [warning, ...(downstream.additionalContexts ?? [])],
+    }
   }
   return { ...downstream, additionalContexts: [warning, ...(downstream.additionalContexts ?? [])] }
 }

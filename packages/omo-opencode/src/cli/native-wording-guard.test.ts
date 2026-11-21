@@ -11,7 +11,6 @@ const ADDITIONAL_SOURCE_GLOBS = [
   "docs/reference/**/*.md",
   "docs/guide/*.md",
   "docs/legal/*.md",
-  "packages/omo-native/bin/**/*.js",
   "packages/omo-senpi/src/components/**/*.ts",
   "packages/web/src/**/*.{ts,tsx,astro,md}",
 ] as const
@@ -49,7 +48,6 @@ const ENGINE_NAME_ALLOWLIST: readonly { readonly why: string; readonly pattern: 
   { why: "omo.json harness view id", pattern: /\[senpi\]/g },
   { why: "the engine named as the engine", pattern: /senpi engine/gi },
   { why: "the doctor edition line", pattern: /engine: ?senpi/gi },
-  { why: "engine installer export re-exported by install-native-dev", pattern: /runSenpiInstaller/g },
   { why: "engine telemetry reference document", pattern: /senpi-telemetry(?:\.md)?/gi },
   { why: "engine task package, docs, and project state dir", pattern: /senpi-task(?:\.md)?/g },
   { why: "engine telemetry event names", pattern: /omo_senpi_[a-z0-9_]+/g },
@@ -135,8 +133,8 @@ function report(violations: readonly Violation[]): string[] {
   return violations.map((violation) => `${violation.file}:${violation.line}  ${violation.text}`)
 }
 
-describe("user-facing surfaces call the standalone edition OmO Native", () => {
-  test("#given every installer, postinstall, docs, native bin, runtime notice and README surface #when scanned #then none names the edition after the engine", async () => {
+describe("user-facing surfaces do not name a standalone edition after Senpi", () => {
+  test("#given every installer, postinstall, docs, runtime notice and README surface #when scanned #then none names the edition after the engine", async () => {
     // given / when
     const violations = await collectViolations(namesEditionAfterEngine)
 
@@ -144,7 +142,7 @@ describe("user-facing surfaces call the standalone edition OmO Native", () => {
     expect(report(violations)).toEqual([])
   })
 
-  test("#given every installer, postinstall, docs, native bin, runtime notice and README surface #when scanned #then each remaining senpi mention is an allowlisted engine name", async () => {
+  test("#given every installer, postinstall, docs, runtime notice and README surface #when scanned #then each remaining senpi mention is an allowlisted engine name", async () => {
     // given / when
     const violations = await collectViolations(hasUnallowlistedEngineMention)
 
@@ -216,7 +214,7 @@ describe("the guard itself can fail", () => {
     "#given %p line %p #when checked #then only a generated bundle's bundler init_ identifiers are excused (reported: %p)",
     (file, line, reported) => {
       // given
-      const path = `packages/omo-native/bin/lib/${file}`
+      const path = `packages/omo-opencode/src/cli/service-auth/${file}`
 
       // when / then
       expect(hasUnallowlistedEngineMention(line, path)).toBe(reported)

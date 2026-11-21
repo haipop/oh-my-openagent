@@ -6,12 +6,14 @@ import { formatHeader, formatIssue } from "./format-shared"
 function formatOkSummary(result: DoctorResult, headline: string, installedVersion: string): string[] {
   const target = result.target ?? "opencode"
   const latest = result.latestVersion ?? LATEST_UNAVAILABLE_TEXT
-  return [
+  const lines = [
     ` ${color.green(SYMBOLS.check)} ${color.green(
       `${headline} · Edition: ${EDITION_LABELS[target]} · Installed: ${installedVersion} · Latest: ${latest}`,
     )}`,
-    `   Update: ${UPDATE_COMMANDS[target]}`,
   ]
+  const updateCommand = UPDATE_COMMANDS[target]
+  if (updateCommand !== null) lines.push(`   Update: ${updateCommand}`)
+  return lines
 }
 
 export function formatDefault(result: DoctorResult): string {

@@ -30,6 +30,18 @@ describe("cli-program", () => {
     expect(cleanupBlock?.[1]).toContain("--project")
   })
 
+  test("run is a retired V1 boundary rather than an advertised agent launcher", async () => {
+    const cliProgramSource = await readFile(path.resolve(import.meta.dir, "cli-program.ts"), "utf8")
+    const runBlock = cliProgramSource.match(/program\s*\n\s*\.command\("run"\)([\s\S]*?)\n\s*\.action\(/)
+
+    expect(runBlock).not.toBeNull()
+    expect(runBlock?.[1]).not.toContain("--agent")
+    expect(runBlock?.[1]).not.toContain("Hephaestus")
+    expect(runBlock?.[1]).not.toContain("Atlas")
+    expect(runBlock?.[1]).not.toContain("todos")
+    expect(runBlock?.[1]).not.toContain("background")
+  })
+
   test("cleanup command exposes uninstall as the user-facing alias", async () => {
     // given
     const cliProgramSource = await readFile(path.resolve(import.meta.dir, "cleanup-command.ts"), "utf-8")
@@ -42,7 +54,7 @@ describe("cli-program", () => {
     expect(cleanupBlock?.[1]).toContain('.alias("uninstall")')
   })
 
-  test("config migrate command exposes dry-run and JSON-only controls", async () => {
+  test("config migrate command is a no-write rejection boundary", async () => {
     // given
     const cliProgramSource = await readFile(path.resolve(import.meta.dir, "cli-program.ts"), "utf-8")
 
@@ -52,8 +64,9 @@ describe("cli-program", () => {
     // then
     expect(migrateBlock).not.toBeNull()
     expect(migrateBlock?.[1]).toContain('.command("migrate")')
-    expect(migrateBlock?.[1]).toContain('.option("--dry-run"')
-    expect(migrateBlock?.[1]).toContain('.option("--json"')
+    expect(migrateBlock?.[1]).not.toContain('.option("--dry-run"')
+    expect(migrateBlock?.[1]).not.toContain('.option("--json"')
+    expect(migrateBlock?.[1]).toContain(".allowUnknownOption()")
     expect(migrateBlock?.[1]).toContain("runConfigMigrate")
   })
 

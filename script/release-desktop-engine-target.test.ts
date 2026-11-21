@@ -10,12 +10,6 @@ import {
   loadDesktopEngineTargets,
   stageCompiledDesktopEngine,
 } from "./release-desktop-engine-target"
-import {
-  buildRuntimeManifest,
-  RELEASE_BINARY_TARGETS,
-  resolveExpectedSidecarRelPaths,
-  stageSidecarPayload,
-} from "./build-omo-binary"
 
 // The CLI test spawns three bun children. On 16 windows-latest runs it passed in at most 0.2 s,
 // while cold runners went past Bun's 5 s default (#9386): the per-test budget absorbs those slow
@@ -33,7 +27,7 @@ describe("desktop engine target fixture", () => {
     const decisions = targets.map((entry) => entry.target)
 
     // Then every binary has exactly one availability decision.
-    expect(decisions).toEqual(RELEASE_BINARY_TARGETS.map((entry) => entry.target))
+    expect(decisions).toEqual(DESKTOP_ENGINE_TARGETS.map((entry) => entry.target))
     expect(targets).toEqual(DESKTOP_ENGINE_TARGETS)
     expect(targets.filter((entry) => entry.available).map((entry) => entry.target)).toEqual([
       "darwin-arm64",
@@ -130,7 +124,7 @@ describe("desktop engine target fixture", () => {
 })
 
 describe("compiled desktop engine staging", () => {
-  test("stages only the exact target-specific Rust binary into the expected manifest path", async () => {
+  test("stages only the exact target-specific Rust binary into the expected payload path", () => {
     // Given a Darwin cross-target binary and a different host-release binary.
     const root = mkdtempSync(join(tmpdir(), "omo-desktop-engine-target-"))
     try {
@@ -146,14 +140,14 @@ describe("compiled desktop engine staging", () => {
 
       // When staging this target's compiled executable.
       const staged = stageCompiledDesktopEngine("darwin-x64-baseline", stageDir, root)
-      const manifest = await buildRuntimeManifest(stageDir, { omoAiVersion: "1.0.0", enginePin: "test" })
 
       // Then the declared payload, content and manifest executable bit agree.
       expect(staged).toBe(entry.payload)
-      expect(resolveExpectedSidecarRelPaths(RELEASE_BINARY_TARGETS[2]!)).toContain(entry.payload)
       expect(readFileSync(join(stageDir, entry.payload), "utf8")).toBe("x64-rust-binary")
       if (process.platform !== "win32") expect(statSync(source).mode & 0o777).toBe(0o644)
-      expect(manifest.entries).toEqual([expect.objectContaining({ relPath: entry.payload, mode: 0o755, size: 15 })])
+      if (process.platform !== "win32") {
+        expect(statSync(join(stageDir, entry.payload)).mode & 0o777).toBe(0o755)
+      }
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
@@ -180,21 +174,18 @@ describe("compiled desktop engine staging", () => {
     }
   })
 
-  test("the release builder refuses an available target without its compiled Rust payload", () => {
+  test("the retained desktop staging entry point refuses an available target without its compiled Rust payload", () => {
     // Given an isolated source root with no Windows Rust output, even when CI built one.
     const root = mkdtempSync(join(tmpdir(), "omo-desktop-builder-missing-"))
     try {
-      const target = RELEASE_BINARY_TARGETS.find((entry) => entry.target === "windows-x64")
-      if (target === undefined) throw new Error("windows-x64 target expected")
-
-      // When the actual release staging entry point is run.
+      // When the retained desktop staging entry point is run.
       const stage = (): void => {
-        stageSidecarPayload(target, join(root, "stage"), "1.0.0", undefined, root)
+        stageCompiledDesktopEngine("windows-x64", join(root, "stage"), root)
       }
 
       // Then a missing required compiled payload fails closed before the plugin build starts (#9857).
       expect(stage).toThrow(/missing required desktop engine for windows-x64:.*x86_64-pc-windows-msvc/)
-      expect(existsSync(join(root, "stage", "plugin"))).toBe(false)
+      expect(existsSync(join(root, "stage"))).toBe(false)
     } finally {
       rmSync(root, { recursive: true, force: true })
     }

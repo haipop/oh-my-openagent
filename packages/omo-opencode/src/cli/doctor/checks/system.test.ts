@@ -31,8 +31,6 @@ const mockGetLoadedPluginVersion = mock(() => ({
   expectedVersion: "3.0.0",
   loadedVersion: "3.1.0",
 }))
-const mockGetLatestPluginVersion = mock(async (_currentVersion: string | null) => null as string | null)
-const mockGetSuggestedInstallTag = mock(() => "latest")
 const mockConfigExists = mock((_path: PathLike) => true)
 const mockReadConfigFile = mock((_path: string) => "{}")
 const mockParseConfigContent = mock((_content: string) => ({}))
@@ -46,8 +44,6 @@ function createSystemDeps() {
     compareVersions: mockCompareVersions,
     getPluginInfo: mockGetPluginInfo,
     getLoadedPluginVersion: mockGetLoadedPluginVersion,
-    getLatestPluginVersion: mockGetLatestPluginVersion,
-    getSuggestedInstallTag: mockGetSuggestedInstallTag,
     configExists: mockConfigExists,
     readConfigFile: mockReadConfigFile,
     parseConfigContent: mockParseConfigContent,
@@ -61,8 +57,6 @@ describe("system check", () => {
     mockCompareVersions.mockReset()
     mockGetPluginInfo.mockReset()
     mockGetLoadedPluginVersion.mockReset()
-    mockGetLatestPluginVersion.mockReset()
-    mockGetSuggestedInstallTag.mockReset()
     mockConfigExists.mockReset()
     mockReadConfigFile.mockReset()
     mockParseConfigContent.mockReset()
@@ -88,8 +82,6 @@ describe("system check", () => {
       expectedVersion: "3.0.0",
       loadedVersion: "3.1.0",
     })
-    mockGetLatestPluginVersion.mockResolvedValue(null)
-    mockGetSuggestedInstallTag.mockReturnValue("latest")
     mockConfigExists.mockReturnValue(true)
     mockReadConfigFile.mockReturnValue("{}")
     mockParseConfigContent.mockReturnValue({})
@@ -127,8 +119,6 @@ describe("system check", () => {
           expectedVersion: "3.0.0",
           loadedVersion: "3.1.0",
         }),
-        getLatestPluginVersion: async () => null,
-        getSuggestedInstallTag: () => "latest",
         configExists: () => true,
         readConfigFile: () => "{",
         parseConfigContent: () => {
@@ -146,17 +136,17 @@ describe("system check", () => {
   })
 
   describe("#given cache directory contains spaces", () => {
-    it("uses a quoted cache directory in mismatch fix command", async () => {
+    it("reports a cache mismatch without a V1 reinstall command", async () => {
       //#given
       //#when
       const result = await checkSystem(createSystemDeps())
 
       //#then
       const mismatchIssue = result.issues.find((issue) => issue.title === "Loaded plugin version mismatch")
-      expect(mismatchIssue?.fix).toBe('Reinstall: cd "/Users/test/Library/Caches/opencode with spaces" && bun install')
+      expect(mismatchIssue?.fix).toBe("Synchronize the project-local OpenCode V2 plugin source, then restart OpenCode.")
     })
 
-    it("includes Bun postinstall trust guidance in the update fix command", async () => {
+    it("does not report a retired npm update issue", async () => {
       //#given
       mockGetLoadedPluginVersion.mockReturnValue({
         cacheDir: "/Users/test/Library/Caches/opencode with spaces",
@@ -165,17 +155,12 @@ describe("system check", () => {
         expectedVersion: "3.0.0-canary.1",
         loadedVersion: "3.0.0-canary.1",
       })
-      mockGetLatestPluginVersion.mockResolvedValue("3.0.0-canary.2")
-      mockGetSuggestedInstallTag.mockReturnValue("canary")
-      mockCompareVersions.mockImplementationOnce(() => true).mockImplementationOnce(() => false)
-
       //#when
       const result = await checkSystem(createSystemDeps())
 
       //#then
       const outdatedIssue = result.issues.find((issue) => issue.title === "Loaded plugin is outdated")
-      const commands = outdatedIssue?.fix?.split("\n").map((line) => line.split(" && ")[1])
-      expect(commands).toEqual(["bun add oh-my-opencode@canary", "bun pm untrusted", "bun pm trust oh-my-opencode"])
+      expect(outdatedIssue).toBeUndefined()
     })
   })
 

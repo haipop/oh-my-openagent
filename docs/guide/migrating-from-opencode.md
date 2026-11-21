@@ -1,4 +1,6 @@
-# Migrating from OpenCode
+# Historical: Migrating from OpenCode to OmO Native
+
+This guide describes the upstream standalone edition. The `feat/deepseek-harness` branch does not ship that edition or support OpenCode V1. For a local OpenCode V2 plugin or a supported host plugin, use the [fork README](../../README.md).
 
 You've been running omo as the OpenCode plugin (oh-my-openagent 4.19.x, or a 5.x beta) and want the standalone `omo` command instead. This page walks that move, one command per step. Setup never writes to OpenCode's files, and you can run both editions side by side for as long as you like. The one OpenCode file omo does move, on its first session, is covered in [Keeping OpenCode around](#keeping-opencode-around).
 

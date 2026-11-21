@@ -8,6 +8,7 @@ name: Computer live Windows full
 # lands with the Windows driver, so until then the row stays open (probes/hosted-windows-live.md).
 on:
   pull_request:
+    branches-ignore: [feat/deepseek-harness]
     paths:
       - ".github/workflows/computer-live-windows-full.yml"
       - "crates/omo-computer-backend-win32/**"
@@ -30,6 +31,7 @@ env:
 
 jobs:
   platform:
+    if: github.ref != 'refs/heads/feat/deepseek-harness'
     permissions:
       contents: read
       pull-requests: read

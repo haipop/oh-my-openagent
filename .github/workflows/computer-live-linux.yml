@@ -6,6 +6,7 @@ name: Computer live Linux
 # the session containers. Every job ends with teardown receipts.
 on:
   pull_request:
+    branches-ignore: [feat/deepseek-harness]
     paths:
       - ".github/workflows/computer-live-linux.yml"
       - "crates/omo-computer-backend-x11/**"

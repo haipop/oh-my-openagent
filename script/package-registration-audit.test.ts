@@ -33,7 +33,6 @@ const adapterPackagePaths: readonly string[] = [
   "packages/omo-computer-tool",
   "packages/omo-computer-prelude",
   "packages/omo-opencode",
-  "packages/omo-native",
 ] as const
 const skillPackagePaths: readonly string[] = ["packages/shared-skills"] as const
 const shimSourceRoots: readonly string[] = ["packages/omo-opencode/src", "packages/omo-codex/src"] as const
@@ -216,8 +215,6 @@ describe("package registration audit", () => {
       await Promise.all(
         managedWorkspacePaths
           // omo-opencode stays linked because the Senpi build imports its config-migration export.
-          // omo-native publishes under its own npm name and is not an internal workspace devDependency.
-          .filter((path) => path !== "packages/omo-native")
           .map((path) => readManifest(join(path, "package.json")).then((manifest) => manifest.name)),
       )
     ).toSorted()

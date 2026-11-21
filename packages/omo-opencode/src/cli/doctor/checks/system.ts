@@ -6,12 +6,7 @@ import { findOpenCodeBinary, getOpenCodeVersion, compareVersions } from "./syste
 import { getPluginInfo } from "./system-plugin"
 import { getLatestPluginVersion, getLoadedPluginVersion, getSuggestedInstallTag } from "./system-loaded-version"
 import { parseJsonc } from "../../../shared/jsonc-parser"
-import {
-  ACCEPTED_PACKAGE_NAMES,
-  PUBLISHED_PACKAGE_NAME,
-  PLUGIN_NAME,
-  LEGACY_PLUGIN_NAME,
-} from "../../../shared/plugin-identity"
+import { PLUGIN_NAME, LEGACY_PLUGIN_NAME } from "../../../shared/plugin-identity"
 import { getPluginEntryName } from "../../../shared/plugin-entry-shape"
 
 const runtime = globalThis as typeof globalThis & { Bun?: { version?: string } }
@@ -22,8 +17,6 @@ interface SystemCheckDeps {
   compareVersions: typeof compareVersions
   getPluginInfo: typeof getPluginInfo
   getLoadedPluginVersion: typeof getLoadedPluginVersion
-  getLatestPluginVersion: typeof getLatestPluginVersion
-  getSuggestedInstallTag: typeof getSuggestedInstallTag
   configExists: typeof existsSync
   readConfigFile: (path: string) => string
   parseConfigContent: (content: string) => unknown
@@ -35,8 +28,6 @@ const defaultDeps: SystemCheckDeps = {
   compareVersions,
   getPluginInfo,
   getLoadedPluginVersion,
-  getLatestPluginVersion,
-  getSuggestedInstallTag,
   configExists: existsSync,
   readConfigFile: (path) => readFileSync(path, "utf-8"),
   parseConfigContent: (content) => parseJsonc<Record<string, unknown>>(content),
@@ -70,15 +61,6 @@ function buildMessage(status: CheckResult["status"], issues: DoctorIssue[]): str
   return `${issues.length} system warning(s) detected`
 }
 
-function getLoadedPackageName(installedPackagePath: string): string {
-  const parts = installedPackagePath.split(/[\\/]/)
-  const nodeModulesIndex = parts.lastIndexOf("node_modules")
-  const packageName = nodeModulesIndex >= 0 ? parts[nodeModulesIndex + 1] : undefined
-  return packageName !== undefined && ACCEPTED_PACKAGE_NAMES.some((acceptedName) => acceptedName === packageName)
-    ? packageName
-    : PUBLISHED_PACKAGE_NAME
-}
-
 export async function gatherSystemInfo(deps: SystemCheckDeps = defaultDeps): Promise<SystemInfo> {
   const [binaryInfo, pluginInfo] = await Promise.all([deps.findOpenCodeBinary(), Promise.resolve(deps.getPluginInfo())])
   const loadedInfo = deps.getLoadedPluginVersion()
@@ -101,8 +83,6 @@ export async function gatherSystemInfo(deps: SystemCheckDeps = defaultDeps): Pro
 export async function checkSystem(deps: SystemCheckDeps = defaultDeps): Promise<CheckResult> {
   const [systemInfo, pluginInfo] = await Promise.all([gatherSystemInfo(deps), Promise.resolve(deps.getPluginInfo())])
   const loadedInfo = deps.getLoadedPluginVersion()
-  const latestVersion = await deps.getLatestPluginVersion(systemInfo.loadedVersion)
-  const installTag = deps.getSuggestedInstallTag(systemInfo.loadedVersion)
   const issues: DoctorIssue[] = []
 
   if (!systemInfo.opencodePath) {
@@ -129,7 +109,7 @@ export async function checkSystem(deps: SystemCheckDeps = defaultDeps): Promise<
     issues.push({
       title: `${PLUGIN_NAME} is not registered`,
       description: "Plugin entry is missing from OpenCode configuration.",
-      fix: `Run: bunx ${PUBLISHED_PACKAGE_NAME} install`,
+      fix: "Use this branch's project-local OpenCode V2 plugin setup; the V1 installer is retired.",
       severity: "error",
       affects: ["all agents"],
     })
@@ -159,23 +139,9 @@ export async function checkSystem(deps: SystemCheckDeps = defaultDeps): Promise<
     issues.push({
       title: "Loaded plugin version mismatch",
       description: `Cache expects ${loadedInfo.expectedVersion} but loaded ${loadedInfo.loadedVersion}.`,
-      fix: `Reinstall: cd "${loadedInfo.cacheDir}" && bun install`,
+      fix: "Synchronize the project-local OpenCode V2 plugin source, then restart OpenCode.",
       severity: "warning",
       affects: ["plugin loading"],
-    })
-  }
-
-  if (systemInfo.loadedVersion && latestVersion && !deps.compareVersions(systemInfo.loadedVersion, latestVersion)) {
-    const loadedPackageName = getLoadedPackageName(loadedInfo.installedPackagePath)
-    issues.push({
-      title: "Loaded plugin is outdated",
-      description: `Loaded ${systemInfo.loadedVersion}, latest ${latestVersion}.`,
-      fix:
-        `Update: cd "${loadedInfo.cacheDir}" && bun add ${loadedPackageName}@${installTag}\n` +
-        `If Bun reports blocked postinstalls, inspect them: cd "${loadedInfo.cacheDir}" && bun pm untrusted\n` +
-        `Then trust only OMO-related packages from that list: cd "${loadedInfo.cacheDir}" && bun pm trust ${loadedPackageName}`,
-      severity: "warning",
-      affects: ["plugin features"],
     })
   }
 

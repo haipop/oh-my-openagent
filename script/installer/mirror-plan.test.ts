@@ -8,6 +8,12 @@ import {
   shouldMoveChannel,
 } from "./mirror-plan"
 import { signPut } from "./r2-signed-put"
+import {
+  DESKTOP_ENGINE_CHECKSUMS_ASSET,
+  DESKTOP_ENGINE_RELEASE_HOSTS,
+  desktopEngineReleaseAssetName,
+} from "../../packages/senpi-desktop-engine/src/release-assets"
+import { KEYCHAIN_HELPER_RELEASE_ASSET } from "../release-keychain-helper-target"
 
 const hash = (seed: string) => seed.repeat(64).slice(0, 64)
 const asset = (name: string, sha: string | null) => ({ name, size: 10, digest: sha === null ? null : `sha256:${sha}` })
@@ -61,6 +67,50 @@ describe("planMirrorAssets", () => {
     expect(() =>
       planMirrorAssets(noDigest, sums({ "omo-linux-x64": hash("a"), "omo-darwin-arm64": hash("b") })),
     ).toThrow("no GitHub sha256")
+  })
+})
+
+describe("current Desktop release", () => {
+  const engines = DESKTOP_ENGINE_RELEASE_HOSTS.map((host) => {
+    const name = desktopEngineReleaseAssetName(host)
+    if (name === null) throw new Error("missing engine asset: " + host)
+    return asset(name, hash("d"))
+  })
+  const helperSums = sums({ [KEYCHAIN_HELPER_RELEASE_ASSET]: hash("b") })
+  const engineSums = sums(Object.fromEntries(engines.map(({ name }) => [name, hash("d")])))
+  const release = [
+    asset(KEYCHAIN_HELPER_RELEASE_ASSET, hash("b")),
+    asset("SHA256SUMS", hash("c")),
+    asset(DESKTOP_ENGINE_CHECKSUMS_ASSET, hash("e")),
+    ...engines,
+  ]
+
+  test("mirrors both verified manifests and every retained asset with no standalone binaries", () => {
+    expect(planMirrorAssets(release, helperSums, engineSums).map(({ name }) => name)).toEqual(
+      release.map(({ name }) => name),
+    )
+  })
+
+  test("rejects incomplete or unexpected assets", () => {
+    expect(() => planMirrorAssets(release.slice(0, -1), helperSums, engineSums)).toThrow("missing")
+    expect(() => planMirrorAssets([...release, asset("omo-linux-x64", hash("a"))], helperSums, engineSums)).toThrow(
+      "unexpected",
+    )
+  })
+
+  test("requires complete, matching Desktop and helper checksum coverage", () => {
+    const first = engines[0]
+    if (first === undefined) throw new Error("missing engine fixture")
+    const incomplete = new Map(engineSums)
+    incomplete.delete(first.name)
+    expect(() => planMirrorAssets(release, helperSums, incomplete)).toThrow("missing")
+    expect(() => planMirrorAssets(release, helperSums, new Map(engineSums).set(first.name, hash("f")))).toThrow(
+      "GitHub says",
+    )
+    expect(() => planMirrorAssets(release, sums({ [KEYCHAIN_HELPER_RELEASE_ASSET]: hash("a") }), engineSums)).toThrow(
+      "GitHub says",
+    )
+    expect(() => planMirrorAssets(release, helperSums)).toThrow(DESKTOP_ENGINE_CHECKSUMS_ASSET)
   })
 })
 

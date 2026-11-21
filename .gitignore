@@ -19,7 +19,6 @@ packages/*/bin/oh-my-opencode.exe
 packages/*/bin/*.map
 # The keychain helper is built and signed by the release lane (#11262), never committed.
 packages/*/bin/omo-keychain
-packages/omo-native/bin/darwin/
 
 # IDE
 .idea/

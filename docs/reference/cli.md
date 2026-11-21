@@ -1,5 +1,7 @@
 # CLI Reference
 
+This reference describes upstream releases. The `feat/deepseek-harness` branch does not ship the standalone `omo` launcher or support OpenCode V1. Use the [fork README](../../README.md) for current installation and supported commands.
+
 Complete reference for the published CLI package. During the rename transition, both package names work:
 
 - `oh-my-openagent` (preferred package name)

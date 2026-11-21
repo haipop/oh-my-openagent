@@ -365,14 +365,6 @@
         "replacedBy": "script/release-computer-engine-target.test.ts (row 72)"
       },
       {
-        "path": "script/omob-desktop-engine.ts",
-        "replacedBy": "the new prebuild staging in script/build-omo-binary.ts (row 72)"
-      },
-      {
-        "path": "script/omob-desktop-engine.test.ts",
-        "replacedBy": "script/build-omo-binary.test.ts cases (row 72)"
-      },
-      {
         "path": "script/install-bunshin-desktop-capability.mjs",
         "replacedBy": "script/install-bunshin-computer-capability.mjs (row 64)"
       },
@@ -405,20 +397,8 @@
         "replacedBy": "the lazy-chunk test of row 39"
       },
       {
-        "path": "packages/omo-native/computer-use-doctor-runtime.ts",
-        "replacedBy": "packages/omo-native/computer-v3-doctor-runtime.ts (row 39)"
-      },
-      {
-        "path": "packages/omo-native/test/computer-use-doctor.test.ts",
-        "replacedBy": "the doctor tests of row 39"
-      },
-      {
-        "path": "packages/omo-native/test/computer-use-doctor-failures.test.ts",
-        "replacedBy": "the doctor tests of row 39"
-      },
-      {
-        "path": "packages/omo-native/computer-use-engine-probe.ts",
-        "replacedBy": "the engine probe inside packages/omo-native/computer-v3-doctor-runtime.ts (row 39)"
+        "path": "packages/omo-senpi/src/components/computer-use/computer-use-doctor-runtime.ts",
+        "replacedBy": "packages/omo-senpi/src/components/computer-use/computer-v3-doctor-runtime.ts (row 39)"
       }
     ],
     "classC": [
@@ -442,10 +422,6 @@
       "package.json",
       "packages/get-worker/src/release-names.ts",
       "packages/get-worker/test/routes.test.ts",
-      "packages/omo-native/bin/lib/launcher.js",
-      "packages/omo-native/category-coverage-entry.ts",
-      "packages/omo-native/compiled-doctor.ts",
-      "packages/omo-native/engine-trust-helper-path.ts",
       "packages/omo-senpi/.gitignore",
       "packages/omo-senpi/AGENTS.md",
       "packages/omo-senpi/package.json",
@@ -471,9 +447,6 @@
       "packages/omo-senpi/src/install/plugin-artifacts.ts",
       "packages/web/lib/stats.test.ts",
       "script/AGENTS.md",
-      "script/build-omo-binary.test.ts",
-      "script/build-omo-native.ts",
-      "script/build-omob.ts",
       "script/changelog-shipping-policy.test.ts",
       "script/ci-fast-path.full-matrix.test.ts",
       "script/ci-fast-path.mjs",
@@ -484,13 +457,10 @@
       "script/knip-coverage-baseline.jsonc",
       "script/knip-entry-exports.unchecked.json",
       "script/lint-ratchet.test.ts",
-      "script/omo-native-parity-compare.test.ts",
       "script/package-registration-audit.test.ts",
       "script/publish-release-platform-workflow.test.ts",
       "script/release-assets-verify-workflow.test.ts",
-      "script/release-keychain-helper-target.test.ts",
       "script/senpi-test-script.test.ts",
-      "script/verify-omo-ai-payload.test.ts",
       "test-temp-leak-report-only.json"
     ],
     "classD": [

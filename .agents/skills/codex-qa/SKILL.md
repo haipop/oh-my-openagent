@@ -44,11 +44,10 @@ cd <this-skill-dir>                        # .agents/skills/codex-qa
 bash scripts/lib/common.sh --self-check    # confirm deps + isolation harness
 ```
 
-**Docker is the default QA surface.** Run this QA inside a disposable container
-that has the latest codex and a copy of your config, with the host `~/.codex`
-untouched: `script/agent/qa-docker.sh` (see [references/docker-qa.md](references/docker-qa.md)).
-The local scripts below are the fallback for when Docker is unavailable or on
-Windows.
+**Run QA on the native host. Docker is not required.** Use the local
+`codex app-server` via the scripts below, with a disposable `CODEX_HOME`
+and the loopback model fixture. Do not copy the real `~/.codex` into
+the sandbox.
 
 ## Router: pick your case
 

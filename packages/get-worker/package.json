@@ -8,7 +8,6 @@
     "deploy": "wrangler deploy",
     "type-check": "tsgo --noEmit",
     "test": "bun test",
-    "lint:scripts": "shellcheck scripts/install.sh",
     "cf-typegen": "wrangler types --include-runtime false"
   },
   "devDependencies": {

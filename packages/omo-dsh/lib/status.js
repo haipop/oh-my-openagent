@@ -57,7 +57,9 @@ export function buildStatus(input) {
       rowKeys: Object.freeze([...input.config.rowKeys]),
       files: Object.freeze([...input.config.files]),
       layers: Object.freeze(
-        input.config.layers.map((layer) => Object.freeze({ file: layer.file, keys: Object.freeze(Object.keys(layer.config).sort()) })),
+        input.config.layers.map((layer) =>
+          Object.freeze({ file: layer.file, keys: Object.freeze(Object.keys(layer.config).sort()) }),
+        ),
       ),
     }),
     modelRouting: Object.freeze({

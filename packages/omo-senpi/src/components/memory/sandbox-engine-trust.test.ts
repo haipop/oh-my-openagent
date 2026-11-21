@@ -3,8 +3,8 @@ import { chmodSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
-import { prepareTrustDirectory, writeTrustGeneration } from "../../../../omo-native/trust-generation"
-import { readUsernsView, USERNS_ROOTS_ENV } from "../../../../omo-native/trust-userns"
+import { prepareTrustDirectory, writeTrustGeneration } from "./trust-generation"
+import { readUsernsView, USERNS_ROOTS_ENV } from "./trust-userns"
 import { buildSandboxTransform } from "./sandbox"
 import { probeBwrapUsability } from "./sandbox-bwrap-probe"
 import { rmSyncEfaultTolerant } from "./teardown.test-support"
@@ -14,7 +14,7 @@ import { spawnTimeout } from "../../../test-support/spawn-timeout"
 
 const bwrap = process.platform === "linux" ? Bun.which("bwrap") : null
 const bwrapUsable = bwrap !== null && (await probeBwrapUsability(bwrap)).usable
-const trustGeneration = join(import.meta.dir, "..", "..", "..", "..", "omo-native", "trust-generation.ts")
+const trustGeneration = join(import.meta.dir, "trust-generation.ts")
 // The probe loads this checkout's module graph, so the checkout itself must be visible inside the
 // sandbox: under bwrap a checkout placed under /tmp is hidden by the sandbox's own /tmp tmpfs.
 // The repo root is always ro-bound (a no-op when it is already visible through another mount).

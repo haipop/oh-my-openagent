@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto"
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
-import { computerUseDoctorReport } from "../../../../omo-native/computer-use-doctor-runtime"
+import { computerUseDoctorReport } from "./computer-use-doctor-runtime"
 import { describeEngineSource } from "./engine-source"
 
 test.each(["explicit", "runtime-dir", "sidecar", "package-prebuild", "dev-build", "cache"])(
@@ -13,7 +13,7 @@ test.each(["explicit", "runtime-dir", "sidecar", "package-prebuild", "dev-build"
     const root = mkdtempSync(join(tmpdir(), "cu-installed-source-"))
     const originalExec = process.execPath
     const execDir = join(root, "bin")
-    const packageRoot = join(root, "packages", "omo-native")
+    const packageRoot = join(root, "packages", "omo-senpi")
     const packageDir = join(root, "packages", "senpi-desktop-engine")
     const runtimeDir = join(root, "runtime")
     const host = "linux-x64"

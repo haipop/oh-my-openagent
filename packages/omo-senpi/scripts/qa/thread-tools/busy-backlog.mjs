@@ -6,17 +6,16 @@
  * 2. 127 more follow-ups from 16 SDK senders (inside each sender's pair burst) are taken into the busy TUI's queue.
  * 3. One more follow-up is refused queue_full, naming 128 held by the session, the oldest age and the reason.
  * 4. A steer at the running turn is still admitted (steered), not refused by the full follow-up lane.
- * 5. `omo thread list` shows the target running, with its backlog.
+ * 5. SDK list shows the target running, with its backlog.
  * 6. On release the TUI writes the steer, then every follow-up in the order it was queued, and the backlog drains.
  */
 import { createThreadSdk } from "../../../src/components/thread/sdk.ts"
 import {
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   holdDirective,
-  omo,
   runScenario,
   storeRows,
   waitFor,
@@ -41,12 +40,12 @@ await runScenario("busy-backlog", async ({ report, fake, scratch, install, start
   const collapsed = []
   for (let index = 0; index < 5; index++)
     collapsed.push(
-      await cliSend(scratch, install, target.durableId, `QA-TOKEN-alert unanswered for ${index * 3} min`, [
-        "--mode",
-        "follow_up",
-        "--collapse-key",
-        "qa-alert-1",
-      ]),
+      await threadSdk(scratch, install, "send", {
+        thread: target.durableId,
+        text: `QA-TOKEN-alert unanswered for ${index * 3} min`,
+        mode: "follow_up",
+        collapse_key: "qa-alert-1",
+      }),
     )
   const afterCollapse = await waitFor(
     async () => {
@@ -100,7 +99,11 @@ await runScenario("busy-backlog", async ({ report, fake, scratch, install, start
   )
 
   // 3. queue_full details
-  const refused = await cliSend(scratch, install, target.durableId, "QA-TOKEN-one-too-many", ["--mode", "follow_up"])
+  const refused = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: "QA-TOKEN-one-too-many",
+    mode: "follow_up",
+  })
   const details = refused.json?.error?.details ?? {}
   report.assert(
     "queue-full-names-why",
@@ -115,12 +118,12 @@ await runScenario("busy-backlog", async ({ report, fake, scratch, install, start
   )
 
   // 4. steer at the running turn
-  const steer = await cliSend(scratch, install, target.durableId, "QA-TOKEN-steer read this now", [
-    "--mode",
-    "steer",
-    "--expected-turn",
-    String(full[0].turn_epoch),
-  ])
+  const steer = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: "QA-TOKEN-steer read this now",
+    mode: "steer",
+    expected_turn_id: full[0].turn_epoch,
+  })
   report.assert(
     "steer-admitted-with-full-follow-up-lane",
     steer.json?.kind === "ok" && steer.json?.delivery?.kind === "steered",
@@ -128,7 +131,7 @@ await runScenario("busy-backlog", async ({ report, fake, scratch, install, start
   )
 
   // 5. thread_list backlog
-  const listed = await omo(scratch, install, ["thread", "list", "--json"])
+  const listed = await threadSdk(scratch, install, "list")
   const row = (listed.json?.threads ?? []).find((thread) => thread.thread === target.durableId)
   report.assert(
     "thread-list-shows-backlog",

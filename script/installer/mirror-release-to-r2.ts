@@ -9,6 +9,7 @@ import { appendFile, mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
+import { DESKTOP_ENGINE_CHECKSUMS_ASSET } from "../../packages/senpi-desktop-engine/src/release-assets"
 import { mirrorChannel } from "./mirror-channel"
 import { betasToPrune, MirrorPlanError, parseSha256Sums, planMirrorAssets, VERSION_PATTERN } from "./mirror-plan"
 import { withRetry } from "./mirror-retry"
@@ -99,10 +100,21 @@ async function main(): Promise<void> {
       size: Number(asset.size),
       digest: typeof asset.digest === "string" ? asset.digest : null,
     }))
-    await withRetry("download SHA256SUMS", () => downloadAsset(tag, "SHA256SUMS", join(work, "SHA256SUMS")))
-    const plan = planMirrorAssets(assets, parseSha256Sums(await Bun.file(join(work, "SHA256SUMS")).text()))
-    await inBatches(plan, UPLOAD_CONCURRENCY, (asset) =>
-      withRetry(`download ${asset.name}`, () => downloadAsset(tag, asset.name, join(work, asset.name))),
+    const manifests = new Set(["SHA256SUMS"])
+    if (assets.some(({ name }) => name === DESKTOP_ENGINE_CHECKSUMS_ASSET))
+      manifests.add(DESKTOP_ENGINE_CHECKSUMS_ASSET)
+    for (const name of manifests) {
+      await withRetry(`download ${name}`, () => downloadAsset(tag, name, join(work, name)))
+    }
+    const sums = parseSha256Sums(await Bun.file(join(work, "SHA256SUMS")).text())
+    const engineSums = manifests.has(DESKTOP_ENGINE_CHECKSUMS_ASSET)
+      ? parseSha256Sums(await Bun.file(join(work, DESKTOP_ENGINE_CHECKSUMS_ASSET)).text())
+      : undefined
+    const plan = planMirrorAssets(assets, sums, engineSums)
+    await inBatches(
+      plan.filter(({ name }) => !manifests.has(name)),
+      UPLOAD_CONCURRENCY,
+      (asset) => withRetry(`download ${asset.name}`, () => downloadAsset(tag, asset.name, join(work, asset.name))),
     )
     log(`plan: ${plan.length} assets, ${(plan.reduce((sum, asset) => sum + asset.size, 0) / 1e9).toFixed(2)} GB`)
     for (const asset of plan) {
@@ -110,7 +122,7 @@ async function main(): Promise<void> {
       if (local !== asset.sha256)
         throw new MirrorPlanError(`${asset.name}: downloaded sha256 ${local} != published ${asset.sha256}`)
     }
-    log(`verified all ${plan.length} downloads against SHA256SUMS and the GitHub digests`)
+    log(`verified all ${plan.length} downloads against the release manifests and GitHub digests`)
 
     await inBatches(plan, UPLOAD_CONCURRENCY, async (asset) => {
       const key = `releases/v${version}/${asset.name}`

@@ -55,6 +55,21 @@ describe("runSenpiInstaller", () => {
     expect(await backupFiles(agentDir)).toHaveLength(2)
   })
 
+  test("#given a sandbox home #when installing #then no independent omo launcher is written", async () => {
+    const agentDir = await makeAgentDir()
+    const homeDir = await makeAgentDir()
+    const pluginPath = await makePluginFixture()
+
+    const result = await runSenpiInstaller({
+      env: { HOME: homeDir, SENPI_CODING_AGENT_DIR: agentDir },
+      repoRoot,
+      pluginPath,
+    })
+
+    expect(result).not.toHaveProperty("launcherPath")
+    await expect(readFile(join(homeDir, ".local", "bin", "omo"), "utf8")).rejects.toThrow()
+  })
+
   test("#given existing user settings #when installing #then unrelated values are preserved and package entries are deduped", async () => {
     // given
     const agentDir = await makeAgentDir()

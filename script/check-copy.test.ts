@@ -65,7 +65,7 @@ describe("no-em-dash-copy", () => {
     "lib/copy.js",
     "workers/copy.mts",
     "bin/oh-my-opencode.js",
-    "packages/omo-native/bin/copy.js",
+    "packages/omo-opencode/src/cli/service-auth/cli-service-auth-hooks.ts",
     "packages/omo-opencode/src/testing/create-plugin-module.ts",
     "packages/example/src/copy.ts",
     "packages/web/app/page.tsx",

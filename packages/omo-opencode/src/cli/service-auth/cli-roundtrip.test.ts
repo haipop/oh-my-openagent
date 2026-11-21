@@ -1,11 +1,11 @@
 import { expect, onTestFinished, test } from "bun:test"
 import { existsSync } from "node:fs"
 import { readdir, readFile, stat } from "node:fs/promises"
-import { join, resolve } from "node:path"
+import { join } from "node:path"
 import { fakeApi, grant, minted, temporaryHome } from "./test-support"
 import { credentialSchema } from "./protocol"
 
-test("real omo launcher signs in, reports status, and logs out without disk or output credentials", async () => {
+test("OpenCode CLI signs in, reports status, and logs out without disk or output credentials", async () => {
   const home = await temporaryHome()
   let stored: string | null = null
   const requests: string[] = []
@@ -28,7 +28,7 @@ test("real omo launcher signs in, reports status, and logs out without disk or o
     if (path === "/v1/devices/device-1" && request.method === "DELETE") return new Response(null, { status: 204 })
     return new Response(null, { status: 404 })
   })
-  const root = resolve(import.meta.dir, "../../../../..")
+  const cli = join(import.meta.dir, "../index.ts")
   const children: ReturnType<typeof Bun.spawn>[] = []
   onTestFinished(async () => {
     for (const child of children) {
@@ -37,13 +37,7 @@ test("real omo launcher signs in, reports status, and logs out without disk or o
     }
   })
   async function run(args: string[]) {
-    const command = [
-      process.execPath,
-      "--preload",
-      join(import.meta.dir, "cli-keystore.fixture.ts"),
-      join(root, "packages/omo-native/bin/omo.js"),
-      ...args,
-    ]
+    const command = [process.execPath, "--preload", join(import.meta.dir, "cli-keystore.fixture.ts"), cli, ...args]
     const env = {
       PATH: process.env.PATH,
       HOME: home,

@@ -77,7 +77,12 @@ describe("injected mode messages", () => {
 
   test("#given each mode kind #when the message is built #then the source kind and summary are mode specific", () => {
     const team = createModeMessage({ id: "m1", pointer: "p", kind: TEAM_SOURCE_KIND, summary: "team mode activated" })
-    const hyper = createModeMessage({ id: "m2", pointer: "p", kind: HYPERPLAN_SOURCE_KIND, summary: "hyperplan mode activated" })
+    const hyper = createModeMessage({
+      id: "m2",
+      pointer: "p",
+      kind: HYPERPLAN_SOURCE_KIND,
+      summary: "hyperplan mode activated",
+    })
     const combo = createModeMessage({
       id: "m3",
       pointer: "p",
@@ -92,7 +97,9 @@ describe("injected mode messages", () => {
   test("#given messages #when the injection is recognized #then every bundle kind matches and other kinds do not", () => {
     expect(isUltraworkMessage(createUltraworkMessage({ id: "message-1", pointer: "p" }))).toBe(true)
     expect(isModeMessage(createModeMessage({ id: "m", pointer: "p", kind: TEAM_SOURCE_KIND, summary: "s" }))).toBe(true)
-    expect(isModeMessage(createModeMessage({ id: "m", pointer: "p", kind: HYPERPLAN_SOURCE_KIND, summary: "s" }))).toBe(true)
+    expect(isModeMessage(createModeMessage({ id: "m", pointer: "p", kind: HYPERPLAN_SOURCE_KIND, summary: "s" }))).toBe(
+      true,
+    )
     expect(isModeMessage({ source: { kind: "user" } })).toBe(false)
     expect(isModeMessage({})).toBe(false)
   })

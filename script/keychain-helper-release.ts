@@ -14,7 +14,7 @@ import {
   KEYCHAIN_HELPER_REQUIREMENT,
   KEYCHAIN_HELPER_TEAM,
   UNIVERSAL,
-} from "../packages/omo-native/keychain-helper/build"
+} from "../packages/omo-opencode/src/cli/service-auth/keychain-helper/build"
 
 export type ToolResult = { readonly status: number; readonly stdout: string; readonly stderr: string }
 export type ToolRunner = (command: string, args: readonly string[]) => ToolResult

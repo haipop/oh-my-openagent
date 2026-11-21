@@ -14,7 +14,7 @@ import {
   callDirective,
   deliveryRow,
   holdDirective,
-  omo,
+  threadSdk,
   runScenario,
   waitFor,
 } from "./lib/gateway.mjs"
@@ -23,33 +23,18 @@ await runScenario("report-origin-steer", async ({ report, fake, scratch, install
   const tui = await startTui("tui-target")
   const target = await awaitTuiEndpoint(scratch, tui)
   const a = (
-    await omo(scratch, install, [
-      "thread",
-      "bind",
-      target.durableId,
-      "--platform",
-      "slack",
-      "--account",
-      "bot-account",
-      "--chat",
-      "chat-a",
-      "--thread",
-      "t1",
-      "--json",
-    ])
+    await threadSdk(scratch, install, "bind", {
+      session: target.durableId,
+      binding: { platform: "slack", account_id: "bot-account", chat_id: "chat-a", thread_id: "t1" },
+    })
   ).json?.binding?.binding_id
   report.assert("one-binding", typeof a === "string", `a=${a}`)
 
-  const fromA = await omo(scratch, install, [
-    "thread",
-    "send",
-    "--binding",
-    a,
-    "--idempotency-key",
-    "evt-a",
-    `${holdDirective("ros-a")} ${callDirective("thread_report", { kind: "report", text: "a-step" })}`,
-    "--json",
-  ])
+  const fromA = await threadSdk(scratch, install, "send", {
+    binding_id: a,
+    idempotency_key: "evt-a",
+    text: `${holdDirective("ros-a")} ${callDirective("thread_report", { kind: "report", text: "a-step" })}`,
+  })
   report.assert(
     "a-sent",
     fromA.code === 0 && fromA.json?.kind === "ok",
@@ -112,7 +97,7 @@ await runScenario("report-origin-steer", async ({ report, fake, scratch, install
   )
 
   const rows =
-    (await omo(scratch, install, ["thread", "outbox", a, "--after", "0", "--json"])).json?.rows?.map(
+    (await threadSdk(scratch, install, "outbox", { binding_id: a, after_cursor: 0 })).json?.rows?.map(
       (row) => row.text,
     ) ?? null
   report.assert(

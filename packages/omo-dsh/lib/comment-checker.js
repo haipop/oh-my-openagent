@@ -28,16 +28,58 @@ const MAX_FINDINGS = 6
 
 /** File extensions whose comments are worth checking. */
 const CODE_EXTENSIONS = new Set([
-  ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs",
-  ".py", ".rs", ".go", ".java", ".kt", ".swift", ".c", ".h", ".cc", ".cpp", ".hpp",
-  ".rb", ".php", ".sh", ".bash", ".zsh", ".css", ".scss", ".vue", ".svelte", ".sql",
+  ".ts",
+  ".tsx",
+  ".mts",
+  ".cts",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".py",
+  ".rs",
+  ".go",
+  ".java",
+  ".kt",
+  ".swift",
+  ".c",
+  ".h",
+  ".cc",
+  ".cpp",
+  ".hpp",
+  ".rb",
+  ".php",
+  ".sh",
+  ".bash",
+  ".zsh",
+  ".css",
+  ".scss",
+  ".vue",
+  ".svelte",
+  ".sql",
 ])
 
 const SLOP_PATTERNS = [
-  { id: "restates-obvious", test: (text) => /^(?:increment|decrement|loop (?:through|over)|iterate|set\s+\w+\s+to|return(?:\s+the)?|get\s+the|compute|calculate|create|initialize|init|call|invoke|check if|verify that|handle the|update the|add the|remove the|helper (?:to|for)|utility (?:to|for)|function (?:to|that)|this (?:function|method|variable|loop)|the following)\b/iu.test(text) },
-  { id: "filler", test: (text) => /\b(?:simply|basically|obviously|clearly|just note that|note that|as you can see|of course)\b/iu.test(text) },
+  {
+    id: "restates-obvious",
+    test: (text) =>
+      /^(?:increment|decrement|loop (?:through|over)|iterate|set\s+\w+\s+to|return(?:\s+the)?|get\s+the|compute|calculate|create|initialize|init|call|invoke|check if|verify that|handle the|update the|add the|remove the|helper (?:to|for)|utility (?:to|for)|function (?:to|that)|this (?:function|method|variable|loop)|the following)\b/iu.test(
+        text,
+      ),
+  },
+  {
+    id: "filler",
+    test: (text) =>
+      /\b(?:simply|basically|obviously|clearly|just note that|note that|as you can see|of course)\b/iu.test(text),
+  },
   { id: "banner", test: (text) => /^(?:[=\-*#_~]{4,}|[A-Z ]{6,}:?)$/u.test(text.trim()) },
-  { id: "commented-code", test: (text) => /\b(?:function\s*\(|const\s+\w+\s*=|let\s+\w+\s*=|if\s*\(|for\s*\(|return\s+\w+[;)]|=>|console\.\w+\(|print\()/u.test(text) },
+  {
+    id: "commented-code",
+    test: (text) =>
+      /\b(?:function\s*\(|const\s+\w+\s*=|let\s+\w+\s*=|if\s*\(|for\s*\(|return\s+\w+[;)]|=>|console\.\w+\(|print\()/u.test(
+        text,
+      ),
+  },
   { id: "em-dash", test: (text) => /[—–]/u.test(text) },
 ]
 
@@ -53,7 +95,8 @@ const LINE_COMMENT = /^\s*(?:\/\/|\/\*+|\*|#|--|;|%)\s?(.*)$/u
 export function commentTextOf(line) {
   const own = LINE_COMMENT.exec(line)
   if (own !== null) return (own[1] ?? "").replace(/\*\/\s*$/u, "").trim()
-  const tokens = /"(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|\x60(?:\\.|[^\x60\\])*(?:\x60|$)|(?:\/\/|#|--)\s*(.*)$/gu
+  const tokens =
+    /"(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|\x60(?:\\.|[^\x60\\])*(?:\x60|$)|(?:\/\/|#|--)\s*(.*)$/gu
   for (const token of line.matchAll(tokens)) {
     if (token[1] !== undefined) return token[1].trim()
   }

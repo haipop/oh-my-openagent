@@ -10,7 +10,7 @@ import { createInterface } from "node:readline"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import { createSandbox, seedSandbox, credentialDigest } from "./drive.mjs"
 import { withTelemetryOptOut } from "./telemetry-opt-out-env.mjs"
-import { engineDependencyDir } from "../../../omo-native/bin/lib/engine-dependency.js"
+import { engineDependencyDir } from "../../src/components/onboarding/setup/engine-dependency.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, "../../../..")

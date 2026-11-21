@@ -1,5 +1,4 @@
 import type { InstallArgs } from "./types"
-import { isNativeDevPlatformEnabled, NATIVE_DEV_PLATFORM_ENV_FLAG } from "./native-dev-platform-flag"
 
 export type InstallCommandOptions = {
   readonly tui?: boolean
@@ -29,11 +28,6 @@ export function resolveInstallArgs(
       ? "codex"
       : undefined
   const platform = options.platform ?? defaultPlatform
-  if (platform === "native-dev" && !isNativeDevPlatformEnabled()) {
-    throw new Error(
-      `The native-dev install platform is not available in this release. Set ${NATIVE_DEV_PLATFORM_ENV_FLAG}=1 to enable it from a source checkout.`,
-    )
-  }
 
   return {
     tui: options.tui !== false,

@@ -217,11 +217,10 @@ describe("cli-local", () => {
 
     // then
     expect(install.exitCode).toBe(0)
-    const installResult = JSON.parse(install.stdout) as { readonly pluginPath: string; readonly launcherPath?: string }
+    const installResult = JSON.parse(install.stdout) as { readonly pluginPath: string }
     expect(installResult).toMatchObject({ ok: true, action: "install" })
     expect(install.stdout.trim().split("\n")).toHaveLength(1)
     expect(installedSettings.packages).toEqual([installResult.pluginPath])
-    expect(installResult.launcherPath).toBe(join(agentDir, "home", ".local", "bin", "omo"))
     expect(uninstall.exitCode).toBe(0)
     expect(JSON.parse(uninstall.stdout)).toMatchObject({ ok: true, action: "uninstall" })
     expect(uninstall.stdout.trim().split("\n")).toHaveLength(1)

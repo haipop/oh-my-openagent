@@ -1,77 +1,51 @@
-# src/cli/ — CLI: install, run, doctor, config, mcp (oauth), refresh-model-capabilities, get-local-version, version, boulder, worktree-sweep, cleanup, ulw-loop
-
-**Generated:** 2026-07-03
+# src/cli/ — Retired OpenCode V1 surface plus retained Codex and diagnostics CLI
 
 ## OVERVIEW
 
-Commander.js CLI with 12 commands (`sparkshell` removed 2026-07). Entry: `index.ts` → `runCli()` in `cli-program.ts`; runtime commands registered via `configureRuntimeCommands()` in `runtime-commands.ts`.
+Commander.js CLI. Entry: `index.ts` → `runCli()` in `cli-program.ts`; runtime commands are registered by `runtime-commands.ts`.
+
+The only active installer is `install --platform=codex` (including interactive Clack mode and `--no-tui`). OpenCode V1, `both`, `native`, and `native-dev` requests are rejected before probing or writes. The public V1 `run` command and OpenCode `config migrate` command remain as explicit no-write rejections so legacy scripts fail fast instead of loading the V1 SDK.
 
 ## COMMANDS
 
-| Command | Purpose | Key Logic |
-|---------|---------|-----------|
-| `install` | Interactive/non-interactive setup | Provider selection → config gen → plugin registration |
-| `run <message>` | Non-interactive session launcher | Agent resolution (flag → env → config → Sisyphus) |
-| `doctor` | 4-category health checks | System, Config, Tools, Models |
-| `config migrate` | Migrate legacy OMO config into `~/.omo/omo.jsonc` | `config-migrate.ts` over `runOpenCodeStartupMigration`; `--dry-run` prints transform + backup move plan, `--json` machine-readable |
-| `get-local-version` | Version detection | Installed vs npm latest |
-| `version` | Print plugin version | Trivial 2-line subcommand |
-| `mcp` | MCP management; nested `oauth` group | `mcp oauth login <server-name>` (PKCE), `logout`, `status` |
-| `refresh-model-capabilities` | Refresh models.dev cache | Model capabilities refresh |
-| `boulder` | Boulder state inspector | Format work-state + tasks from `.omo/boulder-state/` |
-| `worktree-sweep` | Sweep stale git worktrees | `worktree-sweep/`: classify + delete merged/stale worktrees; excludes externally-owned roots (`~/.codex/worktrees`, `~/.codex-gui-cli-remote/worktrees`) by default |
-| `cleanup` (alias `uninstall`) | Remove Codex Light state | Clean managed Codex cache/marketplace + repair project-local legacy Codex artifacts |
-| `ulw-loop` | Codex ulw-loop CLI | Run the Codex LazyCodex ulw-loop CLI |
+| Command | Purpose |
+|---------|---------|
+| `install` / `setup` | Install the Codex harness adapter only |
+| `cleanup` / `uninstall` | Remove managed Codex Light state |
+| `run` | Retired V1 launcher boundary; directs users to native `opencode run` |
+| `doctor` | Read-only OpenCode diagnostics or Codex diagnostics when `--platform=codex` is selected |
+| `config migrate` | Retired OpenCode migration boundary; performs no writes |
+| `version` | Print package version |
+| `mcp` | OAuth management |
+| service/account commands | Service-auth surfaces owned by the separate service-auth lane |
+| `refresh-model-capabilities` | Refresh the model capability cache |
+| `boulder` | Inspect Boulder state |
+| `worktree-sweep` | Report or remove stale linked worktrees |
+| `ulw-loop` | Delegate to the Codex ulw-loop CLI |
 
-`install` accepts `--platform=opencode|codex|both|native` (default `opencode`). `codex`/`both` route through `install-codex/` to install the Codex CLI Light edition (also `npx lazycodex-ai install`). See `packages/omo-codex/AGENTS.md`. `native` is public: it routes through `install-native/`, which clears a stale global `omo` left by a pre-rename oh-my-openagent/oh-my-opencode release (`legacy-omo-bin.ts` scan + `repair-legacy-omo-bin.ts`, only the conflicting bin, never the package), runs the real OmO Native install (`bun add -g omo-ai@beta`, npm fallback with bun stated as recommended) through an injected spawn, verifies the `omo` PATH resolves is omo-ai (`verify-omo-command.ts`, with the exact `export PATH=...` fix when it is not), and then points at `omo setup`. Every user-facing surface advertises that installer command (`formatNativeInstallEntryCommand`), not the raw package install, because it is the only spelling that is correct on both kinds of machine. A `native-dev` choice appears (hidden from help) only when `OMO_ENABLE_NATIVE_DEV_PLATFORM=1` (legacy `OMO_ENABLE_SENPI_PLATFORM=1` still accepted) is set from a source checkout; it routes through `install-native-dev/`, which wraps the in-repo engine adapter installer. `install-ast-grep-sg.ts` provisions the `sg` binary at install time.
+## INSTALL BOUNDARY
+
+`install.ts` validates arguments and delegates only the `codex` platform to `install-codex/`. `install-validators.ts` keeps retired platform spellings in its rejection matrix; `native-dev-platform-flag.ts` exposes only `codex` to Commander. Interactive selection is implemented in `tui-install-prompts.ts`; it offers only Codex and preserves the default autonomous-permission decision.
 
 ## STRUCTURE
 
 ```
 cli/
-├── index.ts                     # Entry point → runCli()
-├── cli-program.ts               # Commander.js program (10 commands)
-├── install.ts                   # Routes to TUI or CLI installer
-├── cli-installer.ts             # Non-interactive (console output)
-├── tui-installer.ts             # Interactive (@clack/prompts)
-├── model-fallback.ts            # Model config gen by provider availability
-├── provider-availability.ts     # Provider detection
-├── fallback-chain-resolution.ts # Fallback chain logic
-├── config-manager/              # 27 config utilities
-│   ├── plugin registration, provider config
-│   ├── JSONC operations, auth plugins
-│   └── npm dist-tags, binary detection
-├── doctor/
-│   ├── runner.ts                # Parallel check execution
-│   ├── formatter.ts             # Output formatting
-│   └── checks/                  # 25 check files (8 registered + 3 Codex-only) — see [doctor/AGENTS.md](doctor/AGENTS.md)
-├── run/                         # Session launcher
-│   ├── runner.ts                # Main orchestration
-│   ├── agent-resolver.ts        # Flag → env → config → Sisyphus
-│   ├── session-resolver.ts      # Create/resume sessions
-│   ├── event-handlers.ts        # Event processing
-│   └── poll-for-completion.ts   # Wait for todos/background tasks
-├── worktree-sweep/               # Stale git worktree classification + sweep
-└── mcp-oauth/                   # OAuth token management
+├── cli-program.ts               # Commander program and retired V1 command boundaries
+├── install.ts                   # Codex-only install boundary
+├── cli-installer.ts             # Noninteractive Codex output
+├── tui-installer.ts             # Interactive Codex installer
+├── install-codex/               # Adapter over canonical omo-codex installer
+├── doctor/                      # Read-only diagnostics
+├── config-migrate.ts            # No-write rejection
+├── config-manager/              # Read-only/config utility exports
+├── worktree-sweep/
+├── mcp-oauth/
+└── runtime-commands.ts
 ```
 
-## MODEL FALLBACK SYSTEM
+Deleted `run/`, `install-native/`, `install-native-dev/`, and `get-local-version/` are intentionally not recreated: the first three are retired public paths, and local-version was an unregistered private V1 updater with an OpenCode `bun update` command.
 
-No single global priority. CLI install-time resolution uses per-agent fallback chains from `model-fallback-requirements.ts`.
+## DOCTOR
 
-Common patterns: Claude/OpenAI/Gemini are preferred when an agent chain includes them, `librarian` follows its fallback chain before GLM providers, `sisyphus` falls back through Kimi then GLM-5, and `hephaestus` requires OpenAI-compatible providers.
-
-## DOCTOR CHECKS
-
-| Category | Validates |
-|----------|-----------|
-| **System** | Binary found, version >=1.0.150, plugin registered, version match |
-| **Config** | JSONC validity, Zod schema, model override syntax |
-| **Tools** | AST-Grep, comment-checker, LSP servers, GH CLI, MCP servers |
-| **Models** | Cache exists, model resolution, agent/category overrides, availability |
-
-## HOW TO ADD A DOCTOR CHECK
-
-1. Create `src/cli/doctor/checks/{name}.ts`
-2. Export check function matching `DoctorCheck` interface
-3. Register in `checks/index.ts`
+OpenCode doctor is diagnostic only. It may inspect installed binaries and legacy configuration, but it must not advise rerunning a V1 installer, OpenCode npm update, native setup, or config migration. Codex doctor and its update guidance remain supported.

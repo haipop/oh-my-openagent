@@ -1,13 +1,22 @@
 import * as Plugin from "@opencode/plugin/promise/plugin"
+import { markAdmittedPrompt } from "./session-mode"
+import { createOmoStatusTool } from "./status-tool"
+import { injectUltraworkContext } from "./ultrawork-context"
 
-import { log } from "../shared/logger"
-import { OPENCODE_V2_NOTICE_MESSAGE } from "./startup-notice"
-
-// OpenCode 2 entry point. It only registers the plugin so OpenCode 2 loads it; the V1 `server`
-// export next to it keeps running the full plugin on OpenCode 1.x.
 export const opencodeV2Server = Plugin.define({
   id: "oh-my-openagent",
-  setup: () => {
-    log("[opencode-v2] loaded without the V1 runtime", { notice: OPENCODE_V2_NOTICE_MESSAGE })
+  async setup(context) {
+    await context.session.hook("prompt", (event) => {
+      markAdmittedPrompt(event)
+    })
+
+    await context.session.hook("context", (event) => {
+      injectUltraworkContext(event)
+    })
+
+    await context.tool.transform((editor) => {
+      editor.add(createOmoStatusTool(context.session))
+    })
+    await context.tool.reload()
   },
 })

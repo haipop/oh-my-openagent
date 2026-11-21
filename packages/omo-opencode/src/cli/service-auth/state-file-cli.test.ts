@@ -1,25 +1,15 @@
-import { afterAll, beforeAll, expect, test } from "bun:test"
-import { cpSync, mkdirSync, mkdtempSync, rmSync } from "node:fs"
+import { beforeAll, expect, test } from "bun:test"
+import { mkdirSync } from "node:fs"
 import { lstat, readFile, stat } from "node:fs/promises"
-import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
-import { buildServiceAuth } from "../../../../../script/build-service-auth"
 import { credentialId } from "./keystore"
 import { credentialSchema } from "./protocol"
 import { fakeApi, grant, minted, temporaryHome } from "./test-support"
 
 // #7185b: on a Linux machine with no Secret Service, `omo login` keeps the shared sign-in in the private state file, a
-// second process uses the same device instead of registering a new one, and `omo logout` removes the file. The launcher
-// loads a service-auth bundle built from THIS source into a temp copy of the launcher tree (the tracked bundle is
-// regenerated only at the release-train top).
-const root = resolve(import.meta.dir, "../../../../..")
-const launcherTree = mkdtempSync(join(tmpdir(), "omo-state-file-launcher-"))
-cpSync(join(root, "packages", "omo-native", "bin"), launcherTree, { recursive: true })
-const launcher = join(launcherTree, "omo.js")
-beforeAll(async () => {
-  await buildServiceAuth(false, join(launcherTree, "lib", "service-auth.generated.js"))
-}, 120_000)
-afterAll(() => rmSync(launcherTree, { recursive: true, force: true }))
+// second process uses the same device instead of registering a new one, and `omo logout` removes the file. The CLI
+// under test is the OpenCode source, so the proof follows the retained service-auth owner.
+const cli = resolve(import.meta.dir, "../index.ts")
 
 type Run = {
   readonly args: readonly string[]
@@ -35,8 +25,8 @@ type Observed = {
   readonly requests: readonly string[]
 }
 
-// The four launcher processes are the slow shared setup, so they run in this hook (a hook may take as long as the
-// launcher needs on a loaded machine; a test may not raise its own timeout) and the test asserts what they observed.
+// The four CLI processes are the slow shared setup, so they run in this hook (a hook may take as long as the
+// CLI needs on a loaded machine; a test may not raise its own timeout) and the test asserts what they observed.
 let observed: Observed | undefined
 beforeAll(async () => {
   if (process.platform !== "linux") return
@@ -57,7 +47,7 @@ beforeAll(async () => {
   const runs: Run[] = []
   const run = async (args: readonly string[]): Promise<string> => {
     const child = Bun.spawn(
-      [process.execPath, "--preload", join(import.meta.dir, "state-file-cli.fixture.ts"), launcher, ...args],
+      [process.execPath, "--preload", join(import.meta.dir, "state-file-cli.fixture.ts"), cli, ...args],
       {
         cwd: home,
         env: {
@@ -109,7 +99,7 @@ beforeAll(async () => {
 test.skipIf(process.platform !== "linux")(
   "#given no Secret Service #when omo logs in, runs again and logs out #then one device lives in the 0600 file until logout",
   () => {
-    if (observed === undefined) throw new Error("the launcher runs in beforeAll did not complete")
+    if (observed === undefined) throw new Error("the CLI runs in beforeAll did not complete")
     const { runs, requests } = observed
     expect(runs.map(({ args, code, keystoreCalls }) => ({ args, code, keystoreCalls }))).toEqual(
       [["login", "--device", "--no-browser"], ["whoami"], ["account", "show"], ["logout"]].map((args) => ({

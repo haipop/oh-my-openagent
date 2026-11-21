@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * adopt (todo 16, IS-3): a session on a Desktop-thread shard host (`i-*`) is taken into a local
- * terminal with `omo daemon adopt <session>`, run in a real pty. The terminal shows the prior
+ * Senpi terminal after a takeover release from the host. The terminal shows the prior
  * exchange, registers its own `tui` endpoint for the SAME durable id, the host no longer lists the
  * session, the transcript carries the host's `session_released` entry, and a later delivery reaches
  * the adopted terminal.
@@ -10,15 +10,14 @@ import {
   EndpointClient,
   assistantTexts,
   awaitTuiEndpoint,
-  cliSend,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
-  omo,
   openHostSession,
   runScenario,
   sessionEntries,
   startShardHost,
+  threadSdk,
   waitFor,
 } from "./lib/gateway.mjs"
 
@@ -35,10 +34,33 @@ await runScenario("adopt", async ({ report, scratch, install, startTui }) => {
     () => assistantTexts(hostSession.sessionPath).some((text) => text.includes("QA-ACK QA-TOKEN-adopt-prior")),
     { label: "host session answered" },
   )
+  await waitFor(
+    () =>
+      shard.client.records.some(
+        (record) => record.type === "agent_settled" && record.sessionId === hostSession.routingId,
+      ),
+    { label: "host session settled" },
+  )
   // A client still attached makes the release answer `attached`; this one detaches (the session is retained).
   shard.client.close()
 
-  const adopted = await startTui("tui-adopted", { args: ["daemon", "adopt", hostSession.durableId] })
+  const probe = await EndpointClient.connect(shard.socket, "shard-probe")
+  const released = await waitFor(
+    async () => {
+      const reply = await probe.request({
+        type: "release_session",
+        reason: "takeover",
+        sessionId: hostSession.routingId,
+      })
+      // The settled event can precede the RPC host removing its pending prompt record.
+      return reply.error === "turn_active" && reply.errorData?.busy?.includes("prompt") ? undefined : reply
+    },
+    { label: "host releases the settled session", timeoutMs: 5000 },
+  )
+  if (released.success !== true || released.data?.session_path !== hostSession.sessionPath) {
+    throw new Error(`release did not return the hosted session file: ${JSON.stringify(released)}`)
+  }
+  const adopted = await startTui("tui-adopted", { args: ["--session", released.data.session_path] })
   const endpoint = await awaitTuiEndpoint(scratch, adopted)
   report.assert(
     "adopted-same-durable-id",
@@ -52,7 +74,6 @@ await runScenario("adopt", async ({ report, scratch, install, startTui }) => {
   })
   report.assert("prior-exchange-visible", true, "QA-ACK QA-TOKEN-adopt-prior rendered")
 
-  const probe = await EndpointClient.connect(shard.socket, "shard-probe")
   const listed = await probe.request({ type: "list_sessions" })
   const stillHosted = (listed.data?.sessions ?? []).some(
     (session) => session.durableSessionId === hostSession.durableId,
@@ -69,22 +90,25 @@ await runScenario("adopt", async ({ report, scratch, install, startTui }) => {
     "custom entry session_released present",
   )
 
-  const threads = await omo(scratch, install, ["thread", "list", "--json"])
+  const threads = await threadSdk(scratch, install, "list")
   const rows = Array.isArray(threads.json?.threads)
     ? threads.json.threads.filter((thread) => thread.thread === hostSession.durableId)
     : []
+  const located = await threadSdk(scratch, install, "locate", { thread: hostSession.durableId })
   report.assert(
     "listed-once-as-tui",
-    rows.length === 1 && rows[0].surface === "tui" && rows[0].endpoint?.kind === "tui" && rows[0].alive === true,
-    JSON.stringify(rows.map((row) => ({ surface: row.surface, endpoint: row.endpoint?.kind, alive: row.alive }))),
+    rows.length === 1 &&
+      rows[0].surface === "tui" &&
+      rows[0].status === "live" &&
+      located.json?.thread?.endpoint?.kind === "tui" &&
+      located.json.thread.alive === true,
+    JSON.stringify({ rows, endpoint: located.json?.thread?.endpoint?.kind }),
   )
 
-  const sent = await cliSend(
-    scratch,
-    install,
-    hostSession.durableId,
-    "QA-TOKEN-after-adopt reaches the adopted terminal",
-  )
+  const sent = await threadSdk(scratch, install, "send", {
+    thread: hostSession.durableId,
+    text: "QA-TOKEN-after-adopt reaches the adopted terminal",
+  })
   const deliveryId = sent.json?.delivery_id
   await waitFor(
     () => assistantTexts(hostSession.sessionPath).some((text) => text.includes("QA-ACK QA-TOKEN-after-adopt")),

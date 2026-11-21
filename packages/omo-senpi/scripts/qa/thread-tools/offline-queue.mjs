@@ -2,16 +2,17 @@
 /**
  * offline-queue (todo 16, IS-6 durability): a delivery to a session whose process is gone is kept
  * (`queued_offline`, no endpoint) and applied exactly once when the session starts again through the
- * real CLI `omo --session <path>`, with no keystroke on the restarted terminal.
+ * real CLI `senpi --session <path>`, with no keystroke on the restarted terminal. Automatic
+ * same-device wake is disabled in the scratch project so only that restart can take the queue.
  *
  * The sender is a second pty TUI that listed the target while it was alive (its `thread_send` tool
  * keeps the address). The target's process is SIGKILLed: it is gone, its session file stays.
  *
  * Two more documented behaviors (`docs/reference/omo-thread.md`, "Sending"), once PD-2 and PD-1:
- * - a fresh `omo thread send <durable id>`, from a process that never saw the target alive, is
+ * - a fresh SDK send, from a process that never saw the target alive, is
  *   `queued_offline` too: the target is found from its session file, since the engine's status row
  *   of a dead terminal names no session path; the restart applies that delivery once as well.
- * - with NO endpoint of the agent dir alive, `omo thread send` is `queued_offline`, never
+ * - with NO endpoint of the agent dir alive, SDK send is `queued_offline`, never
  *   `host_unavailable`, and the session's next start applies it once.
  */
 import {
@@ -19,17 +20,19 @@ import {
   awaitToolResult,
   awaitTuiEndpoint,
   callDirective,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
   runScenario,
+  useManualRecovery,
   waitFor,
 } from "./lib/gateway.mjs"
 
 const TOKEN = "QA-TOKEN-offline"
 
 await runScenario("offline-queue", async ({ report, fake, scratch, install, startTui }) => {
+  useManualRecovery(scratch)
   const first = await startTui("tui-target")
   const endpoint = await awaitTuiEndpoint(scratch, first)
   await first.submit("first turn QA-TOKEN-before")
@@ -44,7 +47,9 @@ await runScenario("offline-queue", async ({ report, fake, scratch, install, star
   report.assert(
     "sender-sees-target-live",
     listed?.kind === "ok" &&
-      listed.threads.some((thread) => thread.thread === endpoint.durableId && thread.alive === true),
+      listed.threads.some(
+        (thread) => thread.thread === endpoint.durableId && thread.status === "live" && thread.surface === "tui",
+      ),
     `threads=${listed?.threads?.length}`,
   )
 
@@ -52,7 +57,10 @@ await runScenario("offline-queue", async ({ report, fake, scratch, install, star
   const exitCode = await first.exited
   report.assert("target-process-gone", exitCode !== 0, `exit=${exitCode}`)
 
-  const fresh = await cliSend(scratch, install, endpoint.durableId, "QA-TOKEN-offline-cli from a fresh process")
+  const fresh = await threadSdk(scratch, install, "send", {
+    thread: endpoint.durableId,
+    text: "QA-TOKEN-offline-cli from a fresh process",
+  })
   report.assert(
     "fresh-cli-send-queued-offline",
     fresh.json?.kind === "ok" && fresh.json.delivery?.kind === "queued_offline" && fresh.json.endpoint_kind === null,
@@ -67,7 +75,7 @@ await runScenario("offline-queue", async ({ report, fake, scratch, install, star
   const sent = await awaitToolResult(fake, "thread_send", mark)
   report.assert(
     "send-queued-offline",
-    sent?.kind === "ok" && sent.delivery?.kind === "queued_offline" && sent.endpoint === null,
+    sent?.kind === "ok" && sent.thread === endpoint.durableId && sent.delivery?.kind === "queued_offline",
     JSON.stringify(sent).slice(0, 300),
   )
   deliveries.push({ id: sent?.delivery_id, token: TOKEN })
@@ -110,7 +118,10 @@ await runScenario("offline-queue", async ({ report, fake, scratch, install, star
     tui.press("enter")
     await tui.exited
   }
-  const none = await cliSend(scratch, install, endpoint.durableId, "QA-TOKEN-offline-none with nothing running")
+  const none = await threadSdk(scratch, install, "send", {
+    thread: endpoint.durableId,
+    text: "QA-TOKEN-offline-none with nothing running",
+  })
   report.assert(
     "no-endpoint-send-queued-offline",
     none.code === 0 &&

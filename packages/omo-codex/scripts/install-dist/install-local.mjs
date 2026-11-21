@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// omo-codex-install:afd4d8bb414d8f04054cfbce0c5a3e959297bae8b2c207bcacc8b82f28ec1bfd:34c70ab6e6b1cc79f0cfd4c7be593a61b3052c4ca9dfded22d2a91b33f328b43
+// omo-codex-install:c42c1469c5c8e5aa2ef338d05c231241065a583ea02a1ac301dc6c4dfb42a436:a6d4eebb1cf261f6391b4068b15d7e5162ec0e13b97b85e94e7ef7b8bdf3fd4d
 var __esm = (fn, res, err) => () => {
   if (fn)
     try {
@@ -24254,7 +24254,6 @@ var CODEX_ONLY_ERROR = "lazycodex-ai installs the Codex Light edition only. Use 
 var PASSTHROUGH_COMMANDS = new Set([
   "doctor",
   "cleanup",
-  "get-local-version",
   "boulder",
   "refresh-model-capabilities",
   "run",

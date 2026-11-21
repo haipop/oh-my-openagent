@@ -12,7 +12,7 @@ import {
   callDirective,
   deliveryRow,
   holdDirective,
-  omo,
+  threadSdk,
   runScenario,
   waitFor,
 } from "./lib/gateway.mjs"
@@ -21,34 +21,19 @@ await runScenario("report-origin-auto-steer", async ({ report, fake, scratch, in
   const tui = await startTui("tui-target")
   const target = await awaitTuiEndpoint(scratch, tui)
   const bind = (chat) =>
-    omo(scratch, install, [
-      "thread",
-      "bind",
-      target.durableId,
-      "--platform",
-      "slack",
-      "--account",
-      "bot-account",
-      "--chat",
-      chat,
-      "--thread",
-      "t1",
-      "--json",
-    ])
+    threadSdk(scratch, install, "bind", {
+      session: target.durableId,
+      binding: { platform: "slack", account_id: "bot-account", chat_id: chat, thread_id: "t1" },
+    })
   const a = (await bind("chat-a")).json?.binding?.binding_id
   const b = (await bind("chat-b")).json?.binding?.binding_id
   report.assert("two-bindings", typeof a === "string" && typeof b === "string", `a=${a} b=${b}`)
 
-  const fromA = await omo(scratch, install, [
-    "thread",
-    "send",
-    "--binding",
-    a,
-    "--idempotency-key",
-    "evt-a",
-    `${holdDirective("ro-a")} QA-TOKEN-from-a`,
-    "--json",
-  ])
+  const fromA = await threadSdk(scratch, install, "send", {
+    binding_id: a,
+    idempotency_key: "evt-a",
+    text: `${holdDirective("ro-a")} QA-TOKEN-from-a`,
+  })
   report.assert(
     "a-sent",
     fromA.code === 0 && fromA.json?.kind === "ok",
@@ -56,16 +41,11 @@ await runScenario("report-origin-auto-steer", async ({ report, fake, scratch, in
   )
   await waitFor(() => fake.heldTags().includes("ro-a"), { label: "A's answer streaming" })
 
-  const fromB = await omo(scratch, install, [
-    "thread",
-    "send",
-    "--binding",
-    b,
-    "--idempotency-key",
-    "evt-b",
-    callDirective("thread_report", { kind: "report", text: "answer-for-b" }),
-    "--json",
-  ])
+  const fromB = await threadSdk(scratch, install, "send", {
+    binding_id: b,
+    idempotency_key: "evt-b",
+    text: callDirective("thread_report", { kind: "report", text: "answer-for-b" }),
+  })
   report.assert(
     "b-sent",
     fromB.code === 0 && fromB.json?.kind === "ok",
@@ -91,7 +71,7 @@ await runScenario("report-origin-auto-steer", async ({ report, fake, scratch, in
   })
 
   const outbox = async (bindingId) =>
-    (await omo(scratch, install, ["thread", "outbox", bindingId, "--after", "0", "--json"])).json?.rows?.map(
+    (await threadSdk(scratch, install, "outbox", { binding_id: bindingId, after_cursor: 0 })).json?.rows?.map(
       (row) => row.text,
     ) ?? null
   const rows = { a: await outbox(a), b: await outbox(b) }

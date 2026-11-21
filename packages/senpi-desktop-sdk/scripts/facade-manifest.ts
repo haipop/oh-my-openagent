@@ -1,8 +1,7 @@
 // Builds facade-manifest.json from the TSDoc of src/facade.ts. Each tagged interface method becomes one entry:
 // `Interface.method`, its parameters and return type as written, and its `@tier`, `@policy` and `@wire` tags.
-// The parser accepts only the shapes facade.ts uses (interface bodies of doc comments, properties and method
-// signatures) and throws on anything else, so an unsupported edit fails generation instead of dropping a method.
 import { ENGINE_METHODS, ENGINE_NOTIFICATIONS } from "@oh-my-opencode/senpi-desktop-protocol"
+import ts from "@typescript/typescript6"
 
 const FACADE_SOURCE = "packages/senpi-desktop-sdk/src/facade.ts"
 
@@ -127,48 +126,36 @@ function methodEntry(owner: string, member: string, doc: DocTags): FacadeMethodE
   }
 }
 
-/** The members of one interface body, each with the doc comment right before it. */
-function members(body: string, owner: string): { readonly text: string; readonly doc: DocTags | undefined }[] {
-  const found: { text: string; doc: DocTags | undefined }[] = []
-  let rest = body
-  let doc: DocTags | undefined
-  for (;;) {
-    rest = rest.trimStart()
-    if (rest.length === 0) return found
-    if (rest.startsWith("/**")) {
-      const end = rest.indexOf("*/")
-      if (end < 0) throw new Error(`${owner}: unterminated doc comment`)
-      doc = parseDoc(rest.slice(0, end + 2))
-      rest = rest.slice(end + 2)
-      continue
-    }
-    if (rest.startsWith("//") || rest.startsWith("/*")) throw new Error(`${owner}: only doc comments are supported`)
-    const [text] = splitTopLevel(rest, ";")
-    if (text === undefined) throw new Error(`${owner}: unterminated member`)
-    const end = rest.indexOf(text) + text.length
-    if (rest[end] !== ";") throw new Error(`${owner}: member ${JSON.stringify(text)} must end with ';'`)
-    found.push({ text: text.replace(/\s+/g, " "), doc })
-    doc = undefined
-    rest = rest.slice(end + 1)
-  }
-}
-
 /** Every tagged method of every exported interface in `source`, in source order. */
 export function buildFacadeManifest(source: string): FacadeManifest {
+  const file = ts.createSourceFile(FACADE_SOURCE, source, ts.ScriptTarget.Latest, true)
+  const diagnostics: unknown = Reflect.get(file, "parseDiagnostics")
+  if (!Array.isArray(diagnostics) || diagnostics.length !== 0) throw new SyntaxError("invalid facade source")
   const methods: FacadeMethodEntry[] = []
-  const header = /export interface (\w+)(?:<[^>]*>)?(?:\s+extends\s+[\w<>, ]+)?\s*\{/g
-  for (let match = header.exec(source); match !== null; match = header.exec(source)) {
-    const owner = match[1] ?? ""
-    const open = match.index + match[0].length - 1
-    const close = closingIndex(source, open)
-    header.lastIndex = close
-    for (const member of members(source.slice(open + 1, close - 1), owner)) {
-      const isMethod = /^\w+\s*\(/.test(member.text)
-      if (isMethod) {
-        if (member.doc === undefined) throw new Error(`${owner}: method without a doc comment: ${member.text}`)
-        methods.push(methodEntry(owner, member.text, member.doc))
-      } else if (member.doc?.tags.has("tier")) {
-        throw new Error(`${owner}: @tier on a property: ${member.text}`)
+  for (const statement of file.statements) {
+    if (!ts.isInterfaceDeclaration(statement)) continue
+    if (!statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)) continue
+    const owner = statement.name.text
+    for (const member of statement.members) {
+      let doc: DocTags | undefined
+      const start = member.getFullStart()
+      const comments = [
+        ...(ts.getTrailingCommentRanges(source, start) ?? []),
+        ...(ts.getLeadingCommentRanges(source, start) ?? []),
+      ]
+      for (const range of comments) {
+        const comment = source.slice(range.pos, range.end)
+        if (!comment.startsWith("/**")) throw new Error(`${owner}: only doc comments are supported`)
+        doc = parseDoc(comment)
+      }
+      const text = member.getText(file).replace(/[;,]$/, "").trimEnd().replace(/\s+/g, " ")
+      if (ts.isMethodSignature(member)) {
+        if (doc === undefined) throw new Error(`${owner}: method without a doc comment: ${text}`)
+        methods.push(methodEntry(owner, text, doc))
+      } else if (!ts.isPropertySignature(member)) {
+        throw new Error(`${owner}: unsupported member: ${text}`)
+      } else if (doc?.tags.has("tier")) {
+        throw new Error(`${owner}: @tier on a property: ${text}`)
       }
     }
   }

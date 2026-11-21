@@ -22,6 +22,7 @@ export interface ExpressionContext {
   readonly needs?: unknown
   readonly matrix?: unknown
   readonly steps?: unknown
+  readonly inputs?: unknown
 }
 
 const functions = {
@@ -45,7 +46,7 @@ export function evaluate(expression: unknown, context: ExpressionContext): unkno
     context.needs ?? {},
     context.matrix ?? {},
     context.steps ?? {},
-    {},
+    context.inputs ?? {},
     ...Object.values(functions),
   )
 }

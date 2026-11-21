@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * graceful-close (#14313): `omo thread close <thread> --graceful` on a BUSY daemon session and on a BUSY terminal.
+ * graceful-close (#14313): SDK close with graceful=true on a BUSY daemon session and on a BUSY terminal.
  * Each close fences new sends, lets the running turn finish on its own, hands the queued send back, and ends the
  * session cleanly (the terminal exits by itself). Every sender's row ends `refused target_closed`; the session file has
  * a `session-closed` record and no `interrupted-run`; a reopen has no hold and answers a new send.
@@ -10,17 +10,16 @@ import { join } from "node:path"
 import {
   assistantTexts,
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryRow,
   openHostSession,
-  omo,
   runScenario,
   sessionEntries,
   startShardHost,
   waitFor,
 } from "./lib/gateway.mjs"
 
-const GRACEFUL_CLOSE = ["--graceful", "--wait-ms", "40000", "--json"]
+const GRACEFUL_CLOSE = { graceful: true, wait_ms: 40_000 }
 
 const custom = (path, type) =>
   sessionEntries(path).filter((entry) => entry.type === "custom" && entry.customType === type)
@@ -85,7 +84,7 @@ async function assertCleanStop(report, label, path) {
 
 async function assertAnswersAfterReopen(report, label, scratch, install, target, path) {
   const token = `QA-TOKEN-${label}-after-reopen`
-  await cliSend(scratch, install, target, token)
+  await threadSdk(scratch, install, "send", { thread: target, text: token })
   await waitFor(() => assistantTexts(path).some((text) => text.includes(token)), {
     label: `reopened ${label} answers a new send`,
   })
@@ -99,12 +98,20 @@ async function busyDaemonSession({ report, scratch, install, fake }) {
   await host.client.request({ type: "prompt", sessionId: target.routingId, message: "QA:HOLD d-busy QA-TOKEN-d-busy" })
   await waitFor(() => fake.heldTags().includes("d-busy"), { label: "daemon turn held" })
 
-  const queued = await cliSend(scratch, install, target.durableId, "QA-TOKEN-d-queued", ["--mode", "follow_up"])
+  const queued = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: "QA-TOKEN-d-queued",
+    mode: "follow_up",
+  })
   report.assert("daemon-send-queued-while-busy", queued.json?.delivery?.kind === "queued", queued.stdout.slice(0, 300))
 
-  const closing = omo(scratch, install, ["thread", "close", target.durableId, ...GRACEFUL_CLOSE])
+  const closing = threadSdk(scratch, install, "close", { thread: target.durableId, ...GRACEFUL_CLOSE })
   await fenced(closing, target.sessionPath, "daemon")
-  const during = await cliSend(scratch, install, target.durableId, "QA-TOKEN-d-during", ["--mode", "follow_up"])
+  const during = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: "QA-TOKEN-d-during",
+    mode: "follow_up",
+  })
   report.log(`send during drain: ${during.stdout.trim().slice(0, 300)}`)
   report.assert("daemon-turn-still-running-under-fence", fake.release("d-busy"), "held d-busy released by the rig")
 
@@ -143,10 +150,14 @@ async function busyTerminal({ report, scratch, install, fake, startTui }) {
   const command = `touch ${started}; while [ ! -f ${gate} ]; do sleep 0.1; done; echo QA-TOKEN-t-busy`
   await tui.submit(fake.script("t-busy", [{ name: "bash", args: { command } }]))
   await waitFor(() => existsSync(started), { label: "terminal tool call running" })
-  const queued = await cliSend(scratch, install, endpoint.durableId, "QA-TOKEN-t-queued", ["--mode", "follow_up"])
+  const queued = await threadSdk(scratch, install, "send", {
+    thread: endpoint.durableId,
+    text: "QA-TOKEN-t-queued",
+    mode: "follow_up",
+  })
   report.log(`send to busy terminal: ${queued.stdout.trim().slice(0, 200)}`)
 
-  const closing = omo(scratch, install, ["thread", "close", endpoint.durableId, ...GRACEFUL_CLOSE])
+  const closing = threadSdk(scratch, install, "close", { thread: endpoint.durableId, ...GRACEFUL_CLOSE })
   await fenced(closing, endpoint.sessionPath, "terminal")
   writeFileSync(gate, "go")
   const closed = await closing

@@ -1,10 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
-import {
-  createHarness,
-  type Harness,
-  isDarwin,
-  userSearchList,
-} from "../../../../../omo-native/test/keychain-helper.test-support"
+import { createHarness, type Harness, isDarwin, userSearchList } from "./test-support/keychain-helper.test-support"
 import { probeOwnerMarker } from "./owner-marker"
 
 const OWNED = "e".repeat(64)

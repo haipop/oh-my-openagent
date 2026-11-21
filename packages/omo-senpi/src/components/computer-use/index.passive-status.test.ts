@@ -5,7 +5,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { FAKE_ENGINE_PATH } from "@oh-my-opencode/senpi-desktop-service/testing"
 import { resolveComputerSettings } from "@oh-my-opencode/senpi-desktop-tool"
-import { computerUseDoctorReport } from "../../../../omo-native/computer-use-doctor-runtime"
+import { computerUseDoctorReport } from "./computer-use-doctor-runtime"
 import { FakeExtensionAPI } from "../../../test-support/fake-extension-api"
 import { createComputerUseComponent } from "./index"
 

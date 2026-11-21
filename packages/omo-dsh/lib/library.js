@@ -62,8 +62,7 @@ export const SKILL_LIBRARY = Object.freeze([
     file: "review-work.md",
     description:
       "OmO review-work gate for DeepSeek Harness: the orchestrator runs manual QA on the real surface first, then one gate reviewer subagent audits goal fit, constraints, code quality, security, missed context, and the QA evidence before a BLOCK, PASS WITH FIXES, or PASS verdict.",
-    whenToUse:
-      "When the user asks to review completed work, or before a PR handoff, on DeepSeek Harness.",
+    whenToUse: "When the user asks to review completed work, or before a PR handoff, on DeepSeek Harness.",
   }),
   Object.freeze({
     id: "init-deep",
@@ -89,8 +88,7 @@ export const SKILL_LIBRARY = Object.freeze([
     file: "ulw-execute.md",
     description:
       "OmO ulw-execute workflow for DeepSeek Harness: orchestrator-only execution of a written plan with worktree discipline, unit decomposition, parallel subagents or workflows, per-unit evidence, and integration verification.",
-    whenToUse:
-      "When the user asks to execute a written plan or invokes ulw-execute on DeepSeek Harness.",
+    whenToUse: "When the user asks to execute a written plan or invokes ulw-execute on DeepSeek Harness.",
   }),
   Object.freeze({
     id: "ulw-research",
@@ -116,8 +114,7 @@ export const SKILL_LIBRARY = Object.freeze([
     file: "refactor.md",
     description:
       "OmO refactor workflow for DeepSeek Harness: behavior-locked refactors with a contract, decomposition strategy, atomic green steps, before-and-after measurement, and cleanup rules that ban mixed-scope diffs.",
-    whenToUse:
-      "When the user asks to refactor, simplify, extract, restructure, or modernize code on DeepSeek Harness.",
+    whenToUse: "When the user asks to refactor, simplify, extract, restructure, or modernize code on DeepSeek Harness.",
   }),
   Object.freeze({
     id: "frontend",

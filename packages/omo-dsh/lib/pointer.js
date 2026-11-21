@@ -58,7 +58,7 @@ export function buildTeamPointer() {
     "",
     "1. Make the first user-visible line of this turn exactly: `TEAM MODE ENABLED!`",
     "2. Plan the board, then create the shared tasks with `team_task_create` (one task per work item, each with a disjoint write scope and a self-contained brief).",
-    "3. Spawn one durable member per role with `spawn_teammate` (fresh context: `context: \"fresh\"` unless the member truly needs this conversation). Keep concurrent members modest.",
+    '3. Spawn one durable member per role with `spawn_teammate` (fresh context: `context: "fresh"` unless the member truly needs this conversation). Keep concurrent members modest.',
     "4. Coordinate through `send_message`, collect with `wait_agent`, inspect with `list_agents`, and stop a member with `interrupt_agent`. Do not replace a coordinated team with plain `subagent` calls when the user asked for team mode.",
     "5. Before finishing: mark every task terminal with `team_task_update`, interrupt idle members, and report the final board state.",
     "",

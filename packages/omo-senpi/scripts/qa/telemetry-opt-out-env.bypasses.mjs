@@ -183,12 +183,6 @@ export const SPAWN_BYPASSES = [
   },
   {
     file: `${QA}/thread-tools/lib/gateway.mjs`,
-    function: "start",
-    call: `Bun.spawn([process.env.THREAD_QA_NODE ?? "node", i)`,
-    reason: SCRATCH_ENV,
-  },
-  {
-    file: `${QA}/thread-tools/lib/gateway.mjs`,
     function: "capture",
     call: "Bun.spawnSync([command, ...args])",
     reason: "pgrep/lsof receipts during cleanup",
@@ -244,12 +238,6 @@ export const SPAWN_BYPASSES = [
     reason: "cmd.exe branch of the same spawnSenpi options",
   },
   {
-    file: "script/qa/dependency-audit/runtime.ts",
-    function: "run",
-    call: "Bun.spawn([...command])",
-    reason: "options.env is runtime.env, built by withTelemetryOptOut in createRuntime",
-  },
-  {
     file: "script/qa/desktop/linux/engine.ts",
     function: "spawn",
     call: "spawn(binary)",
@@ -266,11 +254,5 @@ export const SPAWN_BYPASSES = [
     function: "spawn",
     call: "spawn(binary)",
     reason: "launches the desktop engine binary, which carries no omo telemetry",
-  },
-  {
-    file: "script/qa/omo-native-telemetry-capture.mjs",
-    function: "startCaptureServer",
-    call: "spawn(bunBin)",
-    reason: "starts the loopback capture server only",
   },
 ]

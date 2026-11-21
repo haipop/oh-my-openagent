@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process"
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { computerUseDoctorReport } from "../../../../omo-native/computer-use-doctor-runtime"
+import { computerUseDoctorReport } from "./computer-use-doctor-runtime"
 import { describeEngineSource } from "./engine-source"
 
 // Mode bits only mean "not executable" where the host filesystem has them; Windows has no exec bit.
@@ -37,7 +37,7 @@ test.each([
       cwd: root,
       env: { HOME: root },
       version: "5.1.7",
-      packageRoot: join(root, "packages", "omo-native"),
+      packageRoot: join(root, "packages", "omo-senpi"),
       platform,
       arch: "x64",
       launchEngine: () => {
@@ -67,7 +67,7 @@ test.each(["linux-riscv64", "win32-ia32", "linux-x64", "linux-arm64", "win32-arm
         cwd: root,
         env,
         version,
-        packageRoot: join(root, "packages", "omo-native"),
+        packageRoot: join(root, "packages", "omo-senpi"),
         platform,
         arch,
         launchEngine: () => {

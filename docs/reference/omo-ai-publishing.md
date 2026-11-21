@@ -1,4 +1,6 @@
-# omo-ai Publishing Runbook
+# Historical: omo-ai Publishing Runbook
+
+The `feat/deepseek-harness` branch does not publish `omo-ai`. This runbook documents historical releases only. For the retained release jobs, see [Release Process](release-process.md).
 
 `omo-ai` is the npm package for OmO Native. It ships a single bin, `omo`, which launches the exact-pinned `@code-yeongyu/senpi` release with the full OMO extension loaded. This runbook records the registry state the package was bootstrapped into, how a release picks its channel, and the checks a maintainer runs around each release.
 

@@ -48,7 +48,7 @@ async function logoutHarness(reply: () => Response | Promise<Response>, override
       process.execPath,
       "--preload",
       join(import.meta.dir, "cli-keystore.fixture.ts"),
-      join(resolve(import.meta.dir, "../../../../.."), "packages", "omo-native", "bin", "omo.js"),
+      resolve(import.meta.dir, "../index.ts"),
       action,
     ]
     const env = {
@@ -79,7 +79,7 @@ async function logoutHarness(reply: () => Response | Promise<Response>, override
   return { launch, readStored, entered: entered.promise, writes, calls, atRefresh, atRevoke }
 }
 
-test("native logout journals before refresh and persists rotated credentials before revoke", async () => {
+test("CLI logout journals before refresh and persists rotated credentials before revoke", async () => {
   const h = await logoutHarness(() =>
     Response.json({ ...grant, accessToken: "rotated-access", refreshToken: "rotated-refresh" }),
   )
@@ -163,7 +163,7 @@ for (const outcome of [
   "reauth_required",
   "invalid_grant",
 ]) {
-  test(`native logout refresh ${outcome} fully clears with the correct warning and successful exit`, async () => {
+  test(`CLI logout refresh ${outcome} fully clears with the correct warning and successful exit`, async () => {
     const terminal = ["unauthorized", "account_deleted", "reauth_required", "invalid_grant"].includes(outcome)
     let tlsRequests = 0
     const tlsServer =

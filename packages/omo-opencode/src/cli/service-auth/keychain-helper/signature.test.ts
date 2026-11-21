@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { KEYCHAIN_HELPER_REQUIREMENT as BUILT_REQUIREMENT } from "../../../../../omo-native/keychain-helper/build"
+import { KEYCHAIN_HELPER_REQUIREMENT as BUILT_REQUIREMENT } from "./build"
 import { createSignatureChecker, KEYCHAIN_HELPER_REQUIREMENT, signatureBackend } from "./signature"
 
 describe("keychain helper signature check (#11262 design 1, Checking the helper)", () => {

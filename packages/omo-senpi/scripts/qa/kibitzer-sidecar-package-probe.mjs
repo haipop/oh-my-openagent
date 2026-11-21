@@ -32,7 +32,7 @@ import { createRequire } from "node:module"
 import { tmpdir } from "node:os"
 import { dirname, isAbsolute, join, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
-import { sameVersion } from "../../../omo-native/bin/lib/same-version.js"
+import { sameVersion } from "./same-version.mjs"
 
 export const DRIVER = "kibitzer-sidecar-package-probe"
 export const LAYER = "probe"

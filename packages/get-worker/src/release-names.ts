@@ -4,11 +4,9 @@ export type Channel = (typeof CHANNELS)[number]
 
 // Same shape as script/release-latest-flag.ts: X.Y.Z with an optional dotted pre-release.
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?$/
-// Every asset a release attaches: the compiled omo binaries, SHA256SUMS, and the desktop engines.
-const BINARY = /^omo-(?:darwin|linux|windows)-(?:x64|arm64)(?:-musl)?(?:-baseline)?(?:\.exe)?$/
 const ENGINE = /^senpi-desktop-engine-(?:checksums\.txt|(?:darwin|linux|win32)-(?:x64|arm64)(?:\.exe)?)$/
 
-export type AssetKind = "binary" | "checksums" | "engine"
+export type AssetKind = "checksums" | "engine"
 
 export function isChannel(value: string): value is Channel {
   return CHANNELS.some((channel) => channel === value)
@@ -24,7 +22,6 @@ export function isBetaVersion(version: string): boolean {
 
 export function assetKind(name: string): AssetKind | null {
   if (name === "SHA256SUMS") return "checksums"
-  if (BINARY.test(name)) return "binary"
   if (ENGINE.test(name)) return "engine"
   return null
 }
@@ -43,9 +40,4 @@ export function channelPointerKey(channel: Channel): string {
 
 export function githubAssetUrl(version: string, asset: string): string {
   return `https://github.com/${GITHUB_REPOSITORY}/releases/download/v${version}/${asset}`
-}
-
-// omo-ai publishes pre-releases as X.Y.Z-0.beta.N; the GitHub tag drops the "0." (compiled-update.ts releaseVersionOf).
-export function releaseVersionOfNpmVersion(npmVersion: string): string {
-  return npmVersion.replace(/-0\./, "-")
 }

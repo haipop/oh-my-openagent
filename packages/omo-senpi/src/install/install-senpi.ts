@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
 import { resolveAgentHome } from "../components/agent-home/resolve-agent-home"
-import { installLocalLauncher, uninstallLocalLauncher } from "./local-launcher"
 import { ensurePluginArtifacts } from "./plugin-artifacts"
 import {
   dedupePackages,
@@ -38,7 +37,6 @@ export interface SenpiInstallResult {
   readonly agentDir: string
   readonly settingsPath: string
   readonly pluginPath: string
-  readonly launcherPath?: string | undefined
   readonly changed: boolean
   readonly backupPath: string
   readonly removed?: boolean
@@ -59,22 +57,12 @@ export async function runSenpiInstaller(options: SenpiInstallOptions = {}): Prom
   if (!packages.includes(context.pluginPath)) packages.push(context.pluginPath)
   settings.packages = packages
   const backupPath = await writeSettingsAtomically(context.settingsPath, settings)
-  // The local route runs the user's own engine checkout, so it needs the same launcher the
-  // published package ships; without it this install would boot unbranded. A launcher this
-  // installer did not write (another product's `omo`) is left alone and reported as absent.
-  const launcherPath = installLocalLauncher({
-    pluginPath: context.pluginPath,
-    senpiCliPath: join(context.repoRoot, "packages", "coding-agent", "dist", "cli.js"),
-    homeDir: context.homeDir,
-  })
-
   return {
     ok: true,
     action: "install",
     agentDir: context.agentDir,
     settingsPath: context.settingsPath,
     pluginPath: context.pluginPath,
-    launcherPath,
     changed: JSON.stringify(settings) !== before,
     backupPath,
   }
@@ -88,15 +76,12 @@ export async function runSenpiUninstaller(options: SenpiInstallOptions = {}): Pr
   const nextPackages = packages.filter((entry) => entry !== context.pluginPath)
   settings.packages = nextPackages
   const backupPath = await writeSettingsAtomically(context.settingsPath, settings)
-  uninstallLocalLauncher(context.homeDir)
-
   return {
     ok: true,
     action: "uninstall",
     agentDir: context.agentDir,
     settingsPath: context.settingsPath,
     pluginPath: context.pluginPath,
-    launcherPath: undefined,
     changed: JSON.stringify(settings) !== before,
     backupPath,
     removed: nextPackages.length !== packages.length,

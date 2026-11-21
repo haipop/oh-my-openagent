@@ -1,5 +1,5 @@
 import { expect, it } from "bun:test"
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -36,8 +36,7 @@ async function settledWithin(text: Promise<string>, ms: number): Promise<string>
   }
 }
 
-it("packs and installs omo-ai, then resolves its shipped PostHog sidecar and receives one real event", async () => {
-  // Given production omo-ai metadata and the canonical plugin payload, packed without dependency installs.
+it("packs and installs the Senpi plugin, then resolves its PostHog sidecar and receives one real event", async () => {
   const plugin = join(repoRoot, "packages/omo-senpi/plugin")
   expect(existsSync(join(plugin, "extensions/omo-telemetry-posthog.js"))).toBe(true)
   expect(existsSync(join(plugin, "extensions/omo-telemetry-otlp.js"))).toBe(true)
@@ -57,27 +56,12 @@ it("packs and installs omo-ai, then resolves its shipped PostHog sidecar and rec
     },
   })
   try {
-    const staged = join(root, "omo-ai")
-    await mkdir(staged)
-    // The sidecar bundles the SDK and imports only Node builtins, so omo-ai's registry dependency (the senpi
-    // engine: ~28,000 files, ~480 MB) plays no part in resolving or running it. Installing it took 237 s on
-    // windows-latest against 16 s on ubuntu (#10660); dropping it also proves the sidecar needs nothing else.
-    const { dependencies: _engine, ...omoAiManifest } = JSON.parse(
-      await readFile(join(repoRoot, "packages/omo-native/package.json"), "utf8"),
-    )
-    await writeFile(join(staged, "package.json"), JSON.stringify(omoAiManifest, null, 2))
-    await cp(join(repoRoot, "packages/omo-native/bin"), join(staged, "bin"), { recursive: true })
-    await cp(plugin, join(staged, "plugin"), {
-      recursive: true,
-      filter: (source) => !source.split(/[\\/]/).includes("node_modules"),
-    })
     const packed = JSON.parse(
-      await run(["npm", "pack", "--json", "--ignore-scripts", "--pack-destination", root], staged),
+      await run(["npm", "pack", "--json", "--ignore-scripts", "--pack-destination", root], plugin),
     )
     const tarball = join(root, packed[0].filename)
     const installed = join(root, "installed")
     await mkdir(installed)
-    // When the actual omo-ai tarball is installed into a fresh directory.
     await run(
       [
         "npm",
@@ -92,7 +76,7 @@ it("packs and installs omo-ai, then resolves its shipped PostHog sidecar and rec
       ],
       root,
     )
-    const extensionDir = join(installed, "node_modules/omo-ai/plugin/extensions")
+    const extensionDir = join(installed, "node_modules/@code-yeongyu/omo-senpi/extensions")
     const manifest = JSON.parse(await readFile(join(extensionDir, "../package.json"), "utf8"))
     expect(manifest.imports["#omo-telemetry-posthog-runtime"]).toBe("./extensions/omo-telemetry-posthog.js")
     expect(manifest.imports["#omo-telemetry-otlp-runtime"]).toBe("./extensions/omo-telemetry-otlp.js")

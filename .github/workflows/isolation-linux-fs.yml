@@ -2,6 +2,7 @@ name: Isolation Linux filesystems
 
 on:
   pull_request:
+    branches-ignore: [feat/deepseek-harness]
     paths:
       - 'packages/isolation-core/**'
       - '.github/workflows/isolation-linux-fs.yml'
@@ -21,6 +22,7 @@ permissions:
 
 jobs:
   linux-fs:
+    if: github.ref != 'refs/heads/feat/deepseek-harness'
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:

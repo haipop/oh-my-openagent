@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * repeated-wake (todo 16, IS-6 exactly-one-entry): the target TUI is mid-turn on a held (streaming)
- * fake-model answer. One `omo thread send` queues a delivery behind the turn; three more direct
+ * fake-model answer. One SDK send queues a delivery behind the turn; three more direct
  * `wake { delivery_ids }` commands hit the terminal's control endpoint while it streams. Releasing
  * the stream lets the queued delivery run. Every wake pass is answered, and the transcript holds
  * exactly ONE entry for the `delivery_id`, answered once.
@@ -9,7 +9,7 @@
 import {
   assistantTexts,
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
@@ -30,7 +30,10 @@ await runScenario("repeated-wake", async ({ report, fake, scratch, install, star
   const streaming = await target.client.request({ type: "get_state" })
   report.assert("target-streaming", streaming.data?.isStreaming === true, `isStreaming=${streaming.data?.isStreaming}`)
 
-  const sent = await cliSend(scratch, install, target.durableId, `${TOKEN} queued behind the running turn`)
+  const sent = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: `${TOKEN} queued behind the running turn`,
+  })
   const deliveryId = sent.json?.delivery_id
   report.assert(
     "send-queued-behind-turn",

@@ -111,8 +111,11 @@ jobs:
             sleep "$wait"; wait=$(( wait < 30 ? wait * 2 : 30 ))
           done
           test "$code" = 200
-          # /channels/latest falls back to npm with a 200 if R2 fails; only an r2 source proves the binding.
+          # Only an r2 source proves the binding is live; the installer routes stay retired.
           curl -fsS --max-time 20 -D - -o /dev/null "$base/channels/latest" | tr -d '\r' | grep -qi '^x-omo-source: r2$'
+          for route in install.sh install.ps1; do
+            test "$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' "$base/$route")" = 410
+          done
           # D1 is read without a fallback; it answers 200 once the cutover copy has filled the target.
           curl -fsS --max-time 20 "$base/stats/downloads" >/dev/null
 

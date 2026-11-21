@@ -11,11 +11,10 @@ import { existsSync } from "node:fs"
 import {
   assistantTexts,
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
-  omo,
   runScenario,
   sessionEntries,
   waitFor,
@@ -35,7 +34,10 @@ await runScenario("held-then-exit", async ({ report, scratch, install, startTui 
   )
 
   await tui.type("/exit")
-  const sent = await cliSend(scratch, install, endpoint.durableId, `${TOKEN} held behind a typed /exit`)
+  const sent = await threadSdk(scratch, install, "send", {
+    thread: endpoint.durableId,
+    text: `${TOKEN} held behind a typed /exit`,
+  })
   const deliveryId = sent.json?.delivery_id
   report.assert(
     "send-held",
@@ -101,7 +103,7 @@ await runScenario("held-then-exit", async ({ report, scratch, install, startTui 
     entries === 1 && restarted.keystrokes === 0,
     `entries=${entries} admission_kind=${row.admission_kind} keystrokes=${restarted.keystrokes}`,
   )
-  const listed = await omo(scratch, install, ["thread", "list", "--json"])
+  const listed = await threadSdk(scratch, install, "list")
   report.assert(
     "listed-with-same-id",
     Array.isArray(listed.json?.threads) &&

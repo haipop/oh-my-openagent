@@ -67,14 +67,14 @@ describe("agent command string scan", () => {
       try {
         // given: a tracked fragment and the logs it folds into
         mkdirSync(join(root, "changes/unreleased"), { recursive: true })
-        mkdirSync(join(root, "packages/omo-native"), { recursive: true })
+        mkdirSync(join(root, "packages/omo-senpi"), { recursive: true })
         const entry = "## 2026-11-06 - Doctor names the wrapper\n\n`omo doctor` now reports it.\n"
         writeFileSync(
           join(root, "changes/unreleased/12534.md"),
-          `${entry}<!-- changes-log: packages/omo-native/changes.md -->\n`,
+          `${entry}<!-- changes-log: packages/omo-senpi/changes.md -->\n`,
         )
         writeFileSync(join(root, "changes.md"), "")
-        writeFileSync(join(root, "packages/omo-native/changes.md"), "")
+        writeFileSync(join(root, "packages/omo-senpi/changes.md"), "")
         writeFileSync(join(root, "guide.md"), "run `omo doctor`\n")
         git("init", "-q")
         git("add", ".")
@@ -82,7 +82,7 @@ describe("agent command string scan", () => {
 
         // when: the release stamp prepends the entry to both logs and deletes the fragment
         writeFileSync(join(root, "changes.md"), entry)
-        writeFileSync(join(root, "packages/omo-native/changes.md"), entry)
+        writeFileSync(join(root, "packages/omo-senpi/changes.md"), entry)
         rmSync(join(root, "changes/unreleased/12534.md"))
         git("add", "-A")
 

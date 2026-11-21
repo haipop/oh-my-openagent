@@ -4,8 +4,8 @@
  * seam (patch `crash_after_admit`, armed by `THREAD_QA_CRASH_AFTER_ADMIT=started`) right after
  * `admitExternalMessage` answered `started` and before T2 records the outcome. Two cases: a session
  * with prior assistant messages, and a fresh session whose file holds only its persisted header.
- * Restarting through the real CLI (`omo --session <path>`, seam disarmed) keeps the same durable id
- * (`omo thread list --json`), leaves exactly one entry for the `delivery_id` on disk, and never
+ * Restarting through the real CLI (`senpi --session <path>`, seam disarmed) keeps the same durable id
+ * (SDK list), leaves exactly one entry for the `delivery_id` on disk, and never
  * admits it a second time (no second model turn for it).
  */
 import { existsSync, readFileSync } from "node:fs"
@@ -13,11 +13,11 @@ import { join } from "node:path"
 
 import {
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
-  omo,
+  registryEndpoints,
   runScenario,
   sessionEntries,
   waitFor,
@@ -53,12 +53,10 @@ await runScenario(
         )
       }
       const token = `QA-TOKEN-crash-${kind}`
-      const sent = await cliSend(
-        scratch,
-        install,
-        endpoint.durableId,
-        `${token} delivered into a receiver that crashes`,
-      )
+      const sent = await threadSdk(scratch, install, "send", {
+        thread: endpoint.durableId,
+        text: `${token} delivered into a receiver that crashes`,
+      })
       const deliveryId = sent.json?.delivery_id
       report.assert(
         `${kind}-send-ok`,
@@ -99,16 +97,16 @@ await runScenario(
         { label: `${kind} row applied after restart` },
       )
       const entries = deliveryEntries(endpoint.sessionPath).filter((entry) => deliveryIdOf(entry) === deliveryId).length
-      const listed = await omo(scratch, install, ["thread", "list", "--json"])
+      const listed = await threadSdk(scratch, install, "list")
       const listedRow = Array.isArray(listed.json?.threads)
         ? listed.json.threads.find((thread) => thread.thread === endpoint.durableId)
         : undefined
       report.assert(
         `${kind}-listed-same-id`,
-        listedRow?.alive === true && listedRow.surface === "tui",
+        listedRow?.status === "live" && listedRow.surface === "tui",
         JSON.stringify(
           listedRow
-            ? { id: listedRow.thread, surface: listedRow.surface, alive: listedRow.alive }
+            ? { id: listedRow.thread, surface: listedRow.surface, status: listedRow.status }
             : listed.stdout.slice(0, 200),
         ),
       )
@@ -127,12 +125,7 @@ await runScenario(
 )
 
 function registrySockets(scratch) {
-  return (
-    Bun.spawnSync(["sh", "-c", `cat ${scratch.agentDir}/rpc-host-daemon/*/endpoint.json 2>/dev/null`])
-      .stdout.toString()
-      .match(/"socket":"[^"]+"/g)
-      ?.map((match) => match.slice(10, -1)) ?? []
-  )
+  return registryEndpoints(scratch.agentDir).map((endpoint) => endpoint.socket)
 }
 
 /** Model requests that answered a delivery with this id (the delivery's header names it). */

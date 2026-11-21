@@ -20,7 +20,6 @@ import { categoryShadowedAgentNames, categoryShadowMessage } from "@oh-my-openco
 import type { ComponentContext, OmoSenpiComponent, SenpiExtensionAPI } from "../../extension/types"
 import { loadSenpiOmoConfig, type SenpiOmoConfigResult } from "../config-resolution"
 import { isMetadataOnlyLaunch } from "./metadata-launch"
-import { createOpenCodeRoutingNoticePlan } from "./opencode-routing-notice"
 
 export type SenpiStartupMigrationOptions = {
   readonly backupTimestamp?: string
@@ -99,7 +98,6 @@ export function runSenpiStartupMigration(options: SenpiStartupMigrationOptions):
   }
 
   const pathOperations = options.pathOperations ?? (options.platform === "win32" ? win32 : posix)
-  const environment = options.environment ?? process.env
   try {
     const batch = runMigrations({
       ...(options.clock === undefined ? {} : { clock: options.clock }),
@@ -108,15 +106,7 @@ export function runSenpiStartupMigration(options: SenpiStartupMigrationOptions):
       ...(options.isProcessAlive === undefined ? {} : { isProcessAlive: options.isProcessAlive }),
       ...(options.onBoundary === undefined ? {} : { onBoundary: options.onBoundary }),
       ...(options.pid === undefined ? {} : { pid: options.pid }),
-      discover: () => [
-        ...createLegacyConfigMigrationPlans(legacyPlanOptions(options, homeDir)),
-        // Native-only: what it reports is what the native harness ignores.
-        createOpenCodeRoutingNoticePlan({
-          environment,
-          homeDir,
-          targetPath: userConfigPath(homeDir, pathOperations, options.fileSystem),
-        }),
-      ],
+      discover: () => [...createLegacyConfigMigrationPlans(legacyPlanOptions(options, homeDir))],
     })
     return {
       ...(batch.status === "locked" ? { error: "Configuration migration is already running" } : {}),

@@ -133,7 +133,7 @@ it("never counts the omo-testing rules for minified bundle output", () => {
 
 it("still counts the omo-testing rules in real test files, and every other rule everywhere", () => {
   expect(countsTowardRatchet("omo-testing/no-flake-masking", "packages/omo-senpi/src/x.test.ts")).toBe(true)
-  expect(countsTowardRatchet("omo-testing/no-fixed-sleep", "packages/omo-native/test/x.test.ts")).toBe(true)
+  expect(countsTowardRatchet("omo-testing/no-fixed-sleep", "packages/omo-senpi/test/x.test.ts")).toBe(true)
   expect(countsTowardRatchet("typescript/no-explicit-any", "packages/omo-senpi/plugin/extensions/omo.js")).toBe(true)
   expect(countsTowardRatchet("typescript/no-non-null-assertion", "packages/omo-senpi/plugin/runtime/sdk.js")).toBe(true)
 })

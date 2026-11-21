@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 /** Isolates one machine-consumed workflow section for release integration tests. */
 export function sliceWorkflowSection(workflow: string, startMarker: string, endMarker: string): string {
   const start = workflow.indexOf(startMarker)
@@ -28,17 +30,20 @@ export type DesktopEngineLeg = {
   readonly binary: string
 }
 
-/**
- * The desktop-engine matrix legs GitHub Actions expands, for the hosted path (empty `operator_darwin_artifacts`)
- * or the operator path (#13921). The matrix is one `fromJSON(format('[{0}{1}]', <hosted-only darwin legs>, <legs
- * every path runs>))` expression, evaluated here the way Actions does.
- */
-export function desktopEngineLegs(workflow: string, operatorDarwinArtifacts = ""): DesktopEngineLeg[] {
-  const job = sliceWorkflowSection(workflow, "  desktop-engine:\n", "\n  keychain-helper:\n")
-  const match = job.match(
-    /^ {8}include: \$\{\{ fromJSON\(format\('\[\{0\}\{1\}\]', inputs\.operator_darwin_artifacts == '' && '(.*?)' \|\| '', '(.*?)'\)\) \}\}$/m,
-  )
-  if (!match) throw new Error("desktop-engine matrix is not the expected fromJSON(format(...)) expression")
-  const darwin = operatorDarwinArtifacts === "" ? (match[1] ?? "") : ""
-  return JSON.parse(`[${darwin}${match[2] ?? ""}]`) as DesktopEngineLeg[]
+export function desktopEngineLegs(workflow: string): DesktopEngineLeg[] {
+  const leg = z.object({
+    host: z.string(),
+    runner: z.string(),
+    rust_target: z.string(),
+    clang_arch: z.string().optional(),
+    binary: z.string(),
+  })
+  const parsed = z
+    .object({
+      jobs: z.object({
+        "desktop-engine": z.object({ strategy: z.object({ matrix: z.object({ include: z.array(leg) }) }) }),
+      }),
+    })
+    .parse(Bun.YAML.parse(workflow))
+  return parsed.jobs["desktop-engine"].strategy.matrix.include
 }

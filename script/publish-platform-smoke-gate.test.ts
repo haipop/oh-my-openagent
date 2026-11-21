@@ -54,64 +54,54 @@ afterEach(() => {
   for (const dir of scratchDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
 
-const PAYLOAD_CHECK = "Require this platform's smoked payload"
-const ARM64_GATE = "Require the linux-arm64 smoke for arm64 legs"
+const PAYLOAD_CHECK = "Require this platform's verified launcher payload"
 
-describe("publish leg refuses a platform whose smoke did not pass", () => {
-  test("#given the build leg's smoke failed so no payload was uploaded #when the publish leg checks its download #then it fails and names the reason", () => {
+test("publishes launcher packages without building the standalone agent", () => {
+  const source = readFileSync(new URL("../.github/workflows/publish-platform.yml", import.meta.url), "utf8")
+
+  expect(source).not.toMatch(/build-omo-binary|packages\/omo-native|smoke-linux-arm64/)
+  expect(source).toContain("node --check")
+  expect(source).toContain("release-binary-omo-keychain")
+  expect(source).toContain("name: desktop-engine-")
+  expect(source).toContain("prepared_release_sha")
+})
+
+describe("publish leg requires its verified launcher payload", () => {
+  test("reports a missing launcher artifact", () => {
     const outcome = runStep(PAYLOAD_CHECK, { PLATFORM: "windows-x64" }, scratchDir())
 
     expect(outcome.exitCode).not.toBe(0)
     expect(outcome.output).toContain("windows-x64 is not published")
-    expect(outcome.output).toContain("release-binary smoke did not pass")
+    expect(outcome.output).toContain("verified launcher payload was never uploaded")
   })
 
-  test("#given a smoked unix payload was downloaded #when the publish leg checks it #then publishing proceeds", () => {
+  test("accepts the matching Unix tarball", () => {
     const dir = scratchDir()
     writeFileSync(join(dir, "binary-linux-x64.tar.gz"), "payload")
 
     expect(runStep(PAYLOAD_CHECK, { PLATFORM: "linux-x64" }, dir).exitCode).toBe(0)
   })
 
-  test("#given a smoked windows payload was downloaded #when the publish leg checks it #then publishing proceeds", () => {
+  test("accepts the matching Windows zip", () => {
     const dir = scratchDir()
     writeFileSync(join(dir, "binary-windows-x64.zip"), "payload")
 
     expect(runStep(PAYLOAD_CHECK, { PLATFORM: "windows-x64" }, dir).exitCode).toBe(0)
   })
 
-  test("#given only another platform's payload is present #when this platform's publish leg checks #then it still refuses", () => {
+  test("refuses another platform's payload", () => {
     const dir = scratchDir()
     writeFileSync(join(dir, "binary-linux-x64.tar.gz"), "payload")
 
     expect(runStep(PAYLOAD_CHECK, { PLATFORM: "linux-x64-baseline" }, dir).exitCode).not.toBe(0)
   })
-})
+  test.each([
+    ["windows-x64", "tar.gz"],
+    ["linux-arm64", "zip"],
+  ])("refuses a %s payload with the wrong %s format", (platform, extension) => {
+    const dir = scratchDir()
+    writeFileSync(join(dir, `binary-${platform}.${extension}`), "payload")
 
-describe("arm64 publish legs wait on the linux-arm64 smoke", () => {
-  test("#given the linux-arm64 smoke failed #when an arm64 leg publishes #then it refuses and reports the smoke result", () => {
-    const outcome = runStep(ARM64_GATE, { PLATFORM: "linux-arm64", ARM64_SMOKE_RESULT: "failure" }, scratchDir())
-
-    expect(outcome.exitCode).not.toBe(0)
-    expect(outcome.output).toContain("linux-arm64 is not published")
-    expect(outcome.output).toContain("'failure'")
-  })
-
-  test("#given the linux-arm64 smoke was skipped #when the musl arm64 leg publishes #then it refuses", () => {
-    const outcome = runStep(ARM64_GATE, { PLATFORM: "linux-arm64-musl", ARM64_SMOKE_RESULT: "skipped" }, scratchDir())
-
-    expect(outcome.exitCode).not.toBe(0)
-  })
-
-  test("#given the linux-arm64 smoke passed #when an arm64 leg publishes #then it proceeds", () => {
-    expect(runStep(ARM64_GATE, { PLATFORM: "linux-arm64", ARM64_SMOKE_RESULT: "success" }, scratchDir()).exitCode).toBe(
-      0,
-    )
-  })
-
-  test("#given the linux-arm64 smoke failed #when a non-arm64 leg publishes #then that leg is unaffected", () => {
-    expect(runStep(ARM64_GATE, { PLATFORM: "windows-x64", ARM64_SMOKE_RESULT: "failure" }, scratchDir()).exitCode).toBe(
-      0,
-    )
+    expect(runStep(PAYLOAD_CHECK, { PLATFORM: platform }, dir).exitCode).not.toBe(0)
   })
 })

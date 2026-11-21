@@ -48,7 +48,9 @@ describe("ultrawork keyword detection", () => {
   test("#given text with code and prose #when the code is stripped #then the prose keeps the keyword", () => {
     const stripped = stripCodeSpans("`ulw` is the alias; ulw also works")
     expect(stripped).toContain("ulw also works")
-    expect(hasKeyword("Use it, do not type `ultrawork` in a fence:\n```sh\nultrawork\n```\nulw now", pattern)).toBe(true)
+    expect(hasKeyword("Use it, do not type `ultrawork` in a fence:\n```sh\nultrawork\n```\nulw now", pattern)).toBe(
+      true,
+    )
   })
 
   test("#given a custom keyword list #when matched #then only those keywords fire", () => {
@@ -90,11 +92,7 @@ describe("message inspection", () => {
   test("#given mixed content blocks #when text is collected #then only text blocks are joined", () => {
     const message = {
       role: "user",
-      content: [
-        { type: "text", text: "first" },
-        { type: "image" },
-        { type: "text", text: "second" },
-      ],
+      content: [{ type: "text", text: "first" }, { type: "image" }, { type: "text", text: "second" }],
     }
     expect(messageText(message)).toBe("first\nsecond")
   })

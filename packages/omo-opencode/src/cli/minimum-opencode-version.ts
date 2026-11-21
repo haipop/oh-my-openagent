@@ -1,14 +1,13 @@
-import { MIN_OPENCODE_VERSION } from "./doctor/framework/constants"
-import { compareVersions } from "../shared/opencode-version"
+export const VERIFIED_OPENCODE_VERSION = "2.3.2"
 
 export function getUnsupportedOpenCodeVersionMessage(openCodeVersion: string | null): string | null {
   if (!openCodeVersion) {
+    return `Could not determine the OpenCode version. This branch only supports the V2 plugin on OpenCode ${VERIFIED_OPENCODE_VERSION}.`
+  }
+
+  if (openCodeVersion.replace(/^v/, "") === VERIFIED_OPENCODE_VERSION) {
     return null
   }
 
-  if (compareVersions(openCodeVersion, MIN_OPENCODE_VERSION) >= 0) {
-    return null
-  }
-
-  return `Detected OpenCode ${openCodeVersion}, but ${MIN_OPENCODE_VERSION}+ is required. Update OpenCode, then rerun the installer.`
+  return `OpenCode ${openCodeVersion} is not supported by this branch. Use OpenCode ${VERIFIED_OPENCODE_VERSION} (V2).`
 }

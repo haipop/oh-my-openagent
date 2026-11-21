@@ -2,15 +2,15 @@
 // @bun
 
 // packages/omo-senpi/src/install/cli-local.ts
-import { existsSync as existsSync4, readFileSync as readFileSync2 } from "fs";
-import { dirname as dirname5, join as join6, resolve as resolve5 } from "path";
+import { existsSync as existsSync3, readFileSync } from "fs";
+import { dirname as dirname4, join as join5, resolve as resolve4 } from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
 
 // packages/omo-senpi/src/install/install-senpi.ts
 import { execFile } from "node:child_process";
-import { existsSync as existsSync3 } from "node:fs";
-import { homedir as homedir3 } from "node:os";
-import { dirname as dirname4, join as join5, resolve as resolve4 } from "node:path";
+import { existsSync as existsSync2 } from "node:fs";
+import { homedir as homedir2 } from "node:os";
+import { dirname as dirname3, join as join4, resolve as resolve3 } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -35,126 +35,11 @@ function resolveAgentHome(options) {
     return brandedHome;
   return join(homeDir, ".senpi", "agent");
 }
-// packages/omo-senpi/src/install/local-launcher.ts
-import { chmodSync, existsSync as existsSync2, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { homedir as homedir2 } from "node:os";
-import { dirname, join as join2, resolve as resolve2 } from "node:path";
-
-// packages/omo-native/bin/lib/brand-logo.generated.js
-var OMO_BRAND_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogIDxwYXRoIGZpbGw9IiNGNEY0RjQiIGQ9Ik01MTIuMDAgMTAwLjUwIEM1OTEuMTMgMTAwLjUwIDY5Ny42NiAxMDIuMzcgNzQ5LjM5IDEwNi4yNyBDODAxLjExIDExMC4xNyA4MDIuMzUgMTE1Ljg0IDgyMi4zNSAxMjMuOTAgQzg0Mi4zNCAxMzEuOTYgODU2LjQwIDE0MS42OCA4NjkuMzYgMTU0LjY0IEM4ODIuMzIgMTY3LjYwIDg5Mi4wNCAxODEuNjYgOTAwLjEwIDIwMS42NSBDOTA4LjE2IDIyMS42NSA5MTMuODMgMjIyLjg5IDkxNy43MyAyNzQuNjEgQzkyMS42MyAzMjYuMzQgOTIzLjUwIDQzMi44NyA5MjMuNTAgNTEyLjAwIEM5MjMuNTAgNTkxLjEzIDkyMS42MyA2OTcuNjYgOTE3LjczIDc0OS4zOSBDOTEzLjgzIDgwMS4xMSA5MDguMTYgODAyLjM1IDkwMC4xMCA4MjIuMzUgQzg5Mi4wNCA4NDIuMzQgODgyLjMyIDg1Ni40MCA4NjkuMzYgODY5LjM2IEM4NTYuNDAgODgyLjMyIDg0Mi4zNCA4OTIuMDQgODIyLjM1IDkwMC4xMCBDODAyLjM1IDkwOC4xNiA4MDEuMTEgOTEzLjgzIDc0OS4zOSA5MTcuNzMgQzY5Ny42NiA5MjEuNjMgNTkxLjEzIDkyMy41MCA1MTIuMDAgOTIzLjUwIEM0MzIuODcgOTIzLjUwIDMyNi4zNCA5MjEuNjMgMjc0LjYxIDkxNy43MyBDMjIyLjg5IDkxMy44MyAyMjEuNjUgOTA4LjE2IDIwMS42NSA5MDAuMTAgQzE4MS42NiA4OTIuMDQgMTY3LjYwIDg4Mi4zMiAxNTQuNjQgODY5LjM2IEMxNDEuNjggODU2LjQwIDEzMS45NiA4NDIuMzQgMTIzLjkwIDgyMi4zNSBDMTE1Ljg0IDgwMi4zNSAxMTAuMTcgODAxLjExIDEwNi4yNyA3NDkuMzkgQzEwMi4zNyA2OTcuNjYgMTAwLjUwIDU5MS4xMyAxMDAuNTAgNTEyLjAwIEMxMDAuNTAgNDMyLjg3IDEwMi4zNyAzMjYuMzQgMTA2LjI3IDI3NC42MSBDMTEwLjE3IDIyMi44OSAxMTUuODQgMjIxLjY1IDEyMy45MCAyMDEuNjUgQzEzMS45NiAxODEuNjYgMTQxLjY4IDE2Ny42MCAxNTQuNjQgMTU0LjY0IEMxNjcuNjAgMTQxLjY4IDE4MS42NiAxMzEuOTYgMjAxLjY1IDEyMy45MCBDMjIxLjY1IDExNS44NCAyMjIuODkgMTEwLjE3IDI3NC42MSAxMDYuMjcgQzMyNi4zNCAxMDIuMzcgNDMyLjg3IDEwMC41MCA1MTIuMDAgMTAwLjUwWiIvPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMC41KSI+CiAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCwyMDQ4LjAwMDAwMCkgc2NhbGUoMC4wNTAwMDAsLTAuMDUwMDAwKSI+CiAgICAgIDxwYXRoIGZpbGw9IiMwNDE2MTciIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTkyNzAgMzIxNjcgYy0zMDkgLTY0IC00NTYgLTE1MiAtNjIxIC0zNzMgLTU2MiAtNzQ4IC03NzYgLTI2ODkKLTU0NyAtNDk4NCAxMTggLTExODcgMzI1IC0yNjAwIDU3MCAtMzg5MCAxNDMgLTc1MyAxNTIgLTY1MyAtMTI4IC0xMzgwIC00MDMKLTEwNDUgLTY0MyAtMTg3MyAtODEyIC0yODAwIC04NTMgLTQ2ODkgMTk3OSAtNzk4NiA3ODU4IC05MTQ4IDExNDAgLTIyNSAyNTE0Ci0zOTcgMzIwMiAtNDAwIGwzNjEgLTIgNzkgNTUgYzI2NCAxODIgMjEwIDY0MiAtMTExIDk0MiAtMzg3IDM2MiAtOTUwIDUzMgotMjgwMSA4NDUgLTMwMDQgNTA3IC00MjQ5IDk2NSAtNTUyMCAyMDMwIC0xMzU4IDExMzggLTIwMTIgMjg3OCAtMTgwOSA0ODEwCjU0NSA1MTk1IDY2MTcgODcyNiAxMzUyOSA3ODY2IDU1MDYgLTY4NCA5NDgwIC00MjU1IDk0ODAgLTg1MTggMCAtMjYwNyAtMTQ2MgotNDUyMiAtNDE1NyAtNTQ0OCAtOTI3IC0zMTggLTE1MzQgLTQ1OSAtMzIwMyAtNzQwIC0xODUxIC0zMTMgLTI0MTQgLTQ4MwotMjgwMSAtODQ1IC0zMjEgLTMwMCAtMzc1IC03NjAgLTExMSAtOTQyIGw3OSAtNTUgMzYxIDIgYzY4OCAzIDIwNjIgMTc1IDMyMDIKNDAwIDU4NzkgMTE2MiA4NzExIDQ0NTkgNzg1OCA5MTQ4IC0xNjkgOTI3IC00MDkgMTc1NSAtODEyIDI4MDAgLTI4MCA3MjcKLTI3MSA2MjcgLTEyOCAxMzgwIDI0NSAxMjkwIDQ1MiAyNzAzIDU3MCAzODkwIDI3MSAyNzIwIC03NyA0ODYxIC04NTUgNTI1OQotNzU4IDM4OCAtMjMxMCAtMjM4IC01MDIxIC0yMDI0IC04NjggLTU3MSAtNzY0IC01NTcgLTE0ODkgLTIxMSAtMzI3MSAxNTU4Ci02NzU1IDE1NTggLTEwMDI2IDAgLTcyNSAtMzQ2IC02MjEgLTM2MCAtMTQ4OSAyMTEgLTIzNzEgMTU2MiAtMzk1OSAyMjc4Ci00NzA4IDIxMjJ6IG00MTMyIC0zMzQ1IGMxNzUgLTE3NSAxMjQgLTI2OCAtNDA5IC03MzkgLTEwMjggLTkxMCAtMTk5NSAtMjA1MwotMjcxMyAtMzIwOSAtOTcgLTE1NiAtMjAwIC0zMTggLTIyOCAtMzU5IC0yMjEgLTMyMSAtNjQ2IC03NiAtNDY5IDI3MCAxNTMKMzAxIDg4MyAxMzM0IDEzODggMTk2NSA1NzggNzIzIDE0NjYgMTYxNCAyMDI5IDIwMzUgMTkxIDE0MiAyODggMTUxIDQwMiAzN3oKbTE0NTA3IC0xIGM0OTYgLTM0MSAxNDgyIC0xMzIzIDIwODAgLTIwNzEgNTA1IC02MzEgMTIzNSAtMTY2NCAxMzg4IC0xOTY1CjE3NyAtMzQ2IC0yNDggLTU5MSAtNDY5IC0yNzAgLTI4IDQxIC0xMzEgMjAzIC0yMjggMzU5IC03MTggMTE1NiAtMTY4NSAyMjk5Ci0yNzEzIDMyMDkgLTUzNSA0NzMgLTU4NSA1NjQgLTQwNyA3NDIgMTAwIDEwMCAxOTkgOTkgMzQ5IC00eiBNMTk5MTAgMjUzMDggYy00MDM5IC0yMDUgLTcyMTIgLTE2NjYgLTkwODYgLTQxODQgLTE4NDAgLTI0NzMgLTE3NTMKLTU3OTQgMTk2IC03NTQwIDExNjEgLTEwNDAgMjQ0NyAtMTUxOCA1NDIwIC0yMDE1IDEzNzQgLTIyOSAxOTk4IC0zODAgMjQ1NgotNTkxIDc1NCAtMzQ4IDExNjMgLTEwMDAgMTAzMyAtMTY1MCAtMTAgLTQ5IC0xIC03MiA0NyAtMTI0IGw2MCAtNjQgNDQ0IDAKNDQ0IDAgNjAgNjQgYzQ4IDUyIDU3IDc1IDQ3IDEyNCAtMTMwIDY1MCAyNzkgMTMwMiAxMDMzIDE2NTAgNDU4IDIxMSAxMDgyCjM2MiAyNDU2IDU5MSAyOTczIDQ5NyA0MjU5IDk3NSA1NDIwIDIwMTUgMjA4NCAxODY2IDIwMjYgNTM3NCAtMTMxIDc5NTYKLTIwNjMgMjQ2OSAtNTk5NSAzOTY2IC05ODk5IDM3Njh6IG0tNDY0NCAtNDM3NCBjMTM1NiAtMzYwIDIyNzIgLTE5MDkgMTk5OAotMzM3OCAtNDI2IC0yMjc4IC0yODU2IC0zMTQ0IC00NDI0IC0xNTc2IC0xNDk3IDE0OTYgLTkyNCA0MjE4IDEwMzEgNDg5OSAzOTMKMTM3IDk5NiAxNjEgMTM5NSA1NXogbTExNDgwIDM1IGMxNDkxIC0yNjEgMjUwNCAtMTkyMSAyMTU0IC0zNTMyIC00ODcgLTIyNDcKLTMxMDggLTMwMjQgLTQ1MjUgLTEzNDEgLTE3MTkgMjA0MiAtMTI5IDUzMTAgMjM3MSA0ODczeiBtLTY5NDggLTI5ODAgYzE3MgotNDAgMzQxIC0xMzMgNDk1IC0yNzMgOTUgLTg2IDE0MyAtMTE2IDE4NyAtMTE2IDQ0IDAgOTIgMzAgMTg3IDExNiA3MTggNjUwCjE3MTYgMTg4IDE4NTQgLTg2MCAzNSAtMjY3IDE4IC05NjggLTI1IC0xMDQ4IC0xMTkgLTIxOSAtMzUwIC0yNTEgLTQ5MSAtNjgKLTY4IDg5IC03MyAxMjQgLTg1IDY3MCAtMTMgNjIzIC0yNSA2NzUgLTIwMCA4MzggLTIxMiAxOTggLTUxNiAxOTkgLTczNSAyCi0xODAgLTE2MSAtMTkyIC0yMTIgLTIwNSAtODQwIC0xMiAtNTQ2IC0xNyAtNTgxIC04NSAtNjcwIC0xMjIgLTE1OSAtMzA4Ci0xNTkgLTQzMCAwIC02OCA4OSAtNzMgMTI0IC04NSA2NzAgLTEzIDYyOCAtMjUgNjc5IC0yMDUgODQwIC0yMTkgMTk3IC01MjMKMTk2IC03MzUgLTIgLTE3NSAtMTYzIC0xODcgLTIxNSAtMjAwIC04MzggLTEyIC01NDYgLTE3IC01ODEgLTg1IC02NzAgLTE0MQotMTgzIC0zNzIgLTE1MSAtNDkxIDY4IC03NCAxMzYgLTU0IDEwMzkgMzAgMTMzMiAxNzAgNTk0IDc1OCA5NzggMTMwNCA4NDl6IE0xNDM0MCAyMDI5MCBjLTE4NTggLTM3MiAtMjIzMCAtMzIyOCAtNTQ2IC00MTkxIDEyODAgLTczMiAyNzg2IDMzOAoyNzg2IDE5ODEgMCAxMzkxIC0xMDY4IDI0NDUgLTIyNDAgMjIxMHogTTI1OTkwIDIwMjkxIGMtMTczMyAtMzQzIC0yMjA4IC0yOTgxIC03MzIgLTQwNjkgMTI4NyAtOTQ5IDI5ODEgMTA4CjI5ODIgMTg2MCAwIDEzOTIgLTEwNzAgMjQ0MyAtMjI1MCAyMjA5eiIvPgogICAgPC9nPgogIDwvZz4KPC9zdmc+Cg==";
-
-// packages/omo-senpi/src/install/local-launcher.ts
-var MARKER = "omo-local-launcher";
-function localLauncherPath(homeDir = homedir2()) {
-  return join2(homeDir, ".local", "bin", "omo");
-}
-function localLauncherCmdPath(homeDir = homedir2()) {
-  return join2(homeDir, ".local", "bin", "omo.cmd");
-}
-function releaseChannel(version) {
-  return version !== undefined && version.includes("-") ? "beta" : "latest";
-}
-function renderLocalLauncher(options) {
-  const channel = releaseChannel(options.version);
-  const updateCommand = channel === "beta" ? "bun add -g omo-ai@beta" : "bun add -g omo-ai";
-  const brand = {
-    name: "OmO",
-    logo: OMO_BRAND_LOGO,
-    command: "omo",
-    displayVersion: options.version ?? "local",
-    configDir: ".omo",
-    flatLayout: false,
-    envPrefix: "OMO",
-    userAgent: "omo",
-    originator: "omo",
-    changelog: {
-      path: join2(options.pluginPath, "CHANGELOG.md").replaceAll("\\", "/")
-    },
-    update: {
-      packageName: "omo-ai",
-      distTag: channel,
-      command: updateCommand,
-      changelogUrl: "https://github.com/code-yeongyu/oh-my-openagent/releases"
-    }
-  };
-  return `#!/usr/bin/env node
-// ${MARKER}: generated by the omo-senpi installer. Delete this file to remove the local launcher.
-import { spawn } from "node:child_process"
-import { homedir } from "node:os"
-import { join } from "node:path"
-
-const brand = ${JSON.stringify(brand)}
-const cli = process.env.OMO_SENPI_CLI_PATH ?? ${JSON.stringify(options.senpiCliPath)}
-const plugin = process.env.OMO_PLUGIN_ROOT ?? ${JSON.stringify(options.pluginPath)}
-// The same directory the published launcher pins, so a local install shares one state location
-// with the published one and with anything either of them spawns.
-const agentDir = process.env.OMO_CODING_AGENT_DIR ?? process.env.SENPI_CODING_AGENT_DIR
-  ?? process.env.PI_CODING_AGENT_DIR ?? join(homedir(), ".omo", "agent")
-const env = {
-  ...process.env,
-  // The plugin this launcher prepends with --extension is the engine's own, never a user flag (#14465).
-  SENPI_BRAND: JSON.stringify({ ...brand, extensions: [plugin] }),
-  OMO_NATIVE: "1",
-  OMO_CODING_AGENT_DIR: agentDir,
-  SENPI_CODING_AGENT_DIR: agentDir,
-}
-// Anything resolving the product by name must re-enter through this launcher, never the engine.
-env.OMO_BIN = process.argv[1]
-const selfUpdate = process.argv[2] === "update"
-  && process.argv.slice(3).every((arg) => arg.startsWith("-") || ["self", "senpi", "omo"].includes(arg))
-  && !process.argv.slice(3).some((arg) => arg === "--extensions" || arg === "--models")
-if (selfUpdate) {
-  console.log(${JSON.stringify(`omo is updated via bun: ${updateCommand}`)})
-  process.exit(0)
-}
-// windowsHide-exempt: this is the interactive foreground CLI, spawned with inherited stdio.
-// CREATE_NO_WINDOW would suppress the console a console-less launch needs to render the TUI,
-// so the launcher keeps the user's console instead of hiding it (#8501).
-const child = spawn(process.execPath, [cli, "--extension", plugin, ...process.argv.slice(2)], {
-  env,
-  stdio: "inherit",
-})
-child.on("close", (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal)
-    return
-  }
-  process.exitCode = code ?? 1
-})
-`;
-}
-function installLocalLauncher(options) {
-  const path = localLauncherPath(options.homeDir);
-  if (existsSync2(path) && !readFileSync(path, "utf8").includes(MARKER))
-    return;
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, renderLocalLauncher(options));
-  chmodSync(path, 493);
-  if ((options.platform ?? process.platform) === "win32") {
-    writeFileSync(localLauncherCmdPath(options.homeDir), `@echo off\r
-node "%~dp0omo" %*\r
-`);
-  }
-  return path;
-}
-function uninstallLocalLauncher(homeDir = homedir2()) {
-  const path = resolve2(localLauncherPath(homeDir));
-  if (!existsSync2(path))
-    return false;
-  if (!readFileSync(path, "utf8").includes(MARKER))
-    return false;
-  rmSync(path);
-  const cmd = localLauncherCmdPath(homeDir);
-  if (existsSync2(cmd))
-    rmSync(cmd);
-  return true;
-}
-
 // packages/omo-senpi/src/install/plugin-artifacts.ts
 import { createHash } from "node:crypto";
 import { constants as constants2 } from "node:fs";
 import { access as access2, readFile as readFile2, stat } from "node:fs/promises";
-import { dirname as dirname3, join as join4 } from "node:path";
+import { dirname as dirname2, join as join3 } from "node:path";
 
 // packages/memory-core/src/personas/manifest.ts
 var PERSONA_ASSET_FILENAMES = {
@@ -173,10 +58,10 @@ var PERSONA_ASSET_FILES = [
 // packages/omo-senpi/src/install/senpi-settings.ts
 import { constants } from "node:fs";
 import { access, copyFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { basename, dirname as dirname2, join as join3, resolve as resolve3 } from "node:path";
+import { basename, dirname, join as join2, resolve as resolve2 } from "node:path";
 var OMO_SENPI_PACKAGE_NAME = "@code-yeongyu/omo-senpi";
 var GENERATED_PLUGIN_BASENAME = /^omo-senpi-cli-plugin-[A-Za-z0-9]{6}$/;
-var LEGACY_BUILTIN_SHADOW_PACKAGES = [join3("packages", "pi-goal"), join3("packages", "pi-webfetch")];
+var LEGACY_BUILTIN_SHADOW_PACKAGES = [join2("packages", "pi-goal"), join2("packages", "pi-webfetch")];
 async function readSettings(settingsPath) {
   let raw;
   try {
@@ -204,13 +89,13 @@ function dedupePackages(packages) {
   return [...new Set(packages)];
 }
 function removeLegacyBuiltinShadows(packages, repoRoot, agentDir) {
-  const shadowPaths = new Set(LEGACY_BUILTIN_SHADOW_PACKAGES.map((path) => resolve3(repoRoot, path)));
-  return packages.filter((entry) => !shadowPaths.has(resolve3(agentDir, entry)));
+  const shadowPaths = new Set(LEGACY_BUILTIN_SHADOW_PACKAGES.map((path) => resolve2(repoRoot, path)));
+  return packages.filter((entry) => !shadowPaths.has(resolve2(agentDir, entry)));
 }
 async function removeSupersededOmoPackages(packages, currentPluginPath, agentDir) {
-  const currentPath = resolve3(currentPluginPath);
+  const currentPath = resolve2(currentPluginPath);
   const entries = await Promise.all(packages.map(async (entry) => {
-    const packagePath = resolve3(agentDir, entry);
+    const packagePath = resolve2(agentDir, entry);
     if (packagePath === currentPath)
       return currentPath;
     if (await readPackageName(packagePath) === OMO_SENPI_PACKAGE_NAME)
@@ -222,7 +107,7 @@ async function removeSupersededOmoPackages(packages, currentPluginPath, agentDir
   return entries.filter((entry) => entry !== undefined);
 }
 async function writeSettingsAtomically(settingsPath, settings) {
-  await mkdir(dirname2(settingsPath), { recursive: true });
+  await mkdir(dirname(settingsPath), { recursive: true });
   const backupPath = await nextBackupPath(settingsPath);
   if (await fileExists(settingsPath)) {
     await copyFile(settingsPath, backupPath);
@@ -254,7 +139,7 @@ function isRecord(value) {
 async function readPackageName(packagePath) {
   let raw;
   try {
-    raw = await readFile(join3(packagePath, "package.json"), "utf8");
+    raw = await readFile(join2(packagePath, "package.json"), "utf8");
   } catch (error) {
     if (isErrno(error, "ENOENT") || isErrno(error, "ENOTDIR"))
       return;
@@ -286,91 +171,91 @@ function isErrno(error, code) {
 
 // packages/omo-senpi/src/install/plugin-artifacts.ts
 var REQUIRED_PLUGIN_ARTIFACTS = [
-  join4("extensions", "omo.js"),
-  join4("extensions", "omo-task.js"),
-  join4("extensions", "omo-computer-use.js"),
-  join4("extensions", "omo-memory-doctor.js"),
-  join4("extensions", "omo-memory-memfs.js"),
-  join4("extensions", "omo-memory-palace.js"),
-  join4("extensions", "omo-device-account.js"),
-  join4("extensions", "omo-memory-commands.js"),
-  join4("extensions", "omo-session-history.js"),
-  join4("extensions", "omo-recall-store.js"),
-  join4("extensions", "omo-device-service.js"),
-  join4("extensions", "omo-telemetry-posthog.js"),
-  join4("extensions", "omo-telemetry-otlp.js"),
-  join4("extensions", "omo-memory-sync.js"),
-  join4("extensions", "loro_wasm_bg.wasm"),
-  join4("extensions", "CaseFolding.txt"),
-  join4("extensions", "omo-thread-client.js"),
-  join4("extensions", "omo-wake.js"),
-  join4("extensions", "omo-telemetry-recovery.js"),
-  join4("extensions", "omo-feedback.js"),
-  join4("extensions", "omo-desktop-toolkit.js"),
-  join4("extensions", "omo-claim-receipt.js"),
-  join4("extensions", "assets.generated.json"),
-  join4("extensions", "omo-member.js"),
-  join4("extensions", "memory-run-supervisor.mjs"),
-  join4("extensions", "gateway-store-worker.mjs"),
-  join4("extensions", "omo-computer-run-worker.mjs"),
-  join4("extensions", "quickjs.wasm"),
-  ...PERSONA_ASSET_FILES.map((filename) => join4("extensions", filename)),
-  join4("skills", "ast-grep", "SKILL.md"),
-  join4("skills", "browser", "SKILL.md"),
-  join4("skills", "browser", "runtime", "omowright", "index.js"),
-  join4("skills", "browser", "runtime", "omowright", "page-bundle.js"),
-  join4("skills", "coding-agent-sessions", "SKILL.md"),
-  join4("skills", "debugging", "SKILL.md"),
-  join4("skills", "frontend", "SKILL.md"),
-  join4("skills", "git-master", "SKILL.md"),
-  join4("skills", "init-deep", "SKILL.md"),
-  join4("skills", "lsp-setup", "SKILL.md"),
-  join4("skills", "programming", "SKILL.md"),
-  join4("skills", "refactor", "SKILL.md"),
-  join4("skills", "remove-ai-slops", "SKILL.md"),
-  join4("skills", "review-work", "SKILL.md"),
-  join4("skills", "ultimate-browsing", "SKILL.md"),
-  join4("skills", "ultrawork", "SKILL.md"),
-  join4("skills", "ulw-execute", "SKILL.md"),
-  join4("skills", "ulw-loop", "SKILL.md"),
-  join4("skills", "ulw-plan", "SKILL.md"),
-  join4("skills", "ulw-research", "SKILL.md"),
-  join4("skills", "visual-qa", "SKILL.md"),
-  join4("skills-conditional", "x-search", "SKILL.md"),
-  join4("runtime", "agent-toolkit-sdk", "sdk.js"),
-  join4("runtime", "bunshin-ts", "sdk.js"),
-  join4("runtime", "omo-sdk", "sdk.js"),
-  join4("runtime", "thread-sdk", "sdk.js"),
-  join4("runtime", "ast-grep-mcp", "cli.js"),
-  join4("runtime", "lsp-daemon", "dist", "cli.js"),
-  join4("runtime", "lsp-daemon", "dist", "index.js"),
-  join4("runtime", "lsp-daemon", "dist", "index.d.ts"),
-  join4("runtime", "lsp-daemon", "dist", "daemon-client.js"),
-  join4("runtime", "lsp-daemon", "dist", "daemon-client.d.ts"),
-  join4("runtime", "lsp-daemon", "dist", "package.json"),
-  join4("runtime", "lsp-daemon", "dist", ".omo-runtime-manifest.json"),
-  join4("scripts", "install.mjs"),
+  join3("extensions", "omo.js"),
+  join3("extensions", "omo-task.js"),
+  join3("extensions", "omo-computer-use.js"),
+  join3("extensions", "omo-memory-doctor.js"),
+  join3("extensions", "omo-memory-memfs.js"),
+  join3("extensions", "omo-memory-palace.js"),
+  join3("extensions", "omo-device-account.js"),
+  join3("extensions", "omo-memory-commands.js"),
+  join3("extensions", "omo-session-history.js"),
+  join3("extensions", "omo-recall-store.js"),
+  join3("extensions", "omo-device-service.js"),
+  join3("extensions", "omo-telemetry-posthog.js"),
+  join3("extensions", "omo-telemetry-otlp.js"),
+  join3("extensions", "omo-memory-sync.js"),
+  join3("extensions", "loro_wasm_bg.wasm"),
+  join3("extensions", "CaseFolding.txt"),
+  join3("extensions", "omo-thread-client.js"),
+  join3("extensions", "omo-wake.js"),
+  join3("extensions", "omo-telemetry-recovery.js"),
+  join3("extensions", "omo-feedback.js"),
+  join3("extensions", "omo-desktop-toolkit.js"),
+  join3("extensions", "omo-claim-receipt.js"),
+  join3("extensions", "assets.generated.json"),
+  join3("extensions", "omo-member.js"),
+  join3("extensions", "memory-run-supervisor.mjs"),
+  join3("extensions", "gateway-store-worker.mjs"),
+  join3("extensions", "omo-computer-run-worker.mjs"),
+  join3("extensions", "quickjs.wasm"),
+  ...PERSONA_ASSET_FILES.map((filename) => join3("extensions", filename)),
+  join3("skills", "ast-grep", "SKILL.md"),
+  join3("skills", "browser", "SKILL.md"),
+  join3("skills", "browser", "runtime", "omowright", "index.js"),
+  join3("skills", "browser", "runtime", "omowright", "page-bundle.js"),
+  join3("skills", "coding-agent-sessions", "SKILL.md"),
+  join3("skills", "debugging", "SKILL.md"),
+  join3("skills", "frontend", "SKILL.md"),
+  join3("skills", "git-master", "SKILL.md"),
+  join3("skills", "init-deep", "SKILL.md"),
+  join3("skills", "lsp-setup", "SKILL.md"),
+  join3("skills", "programming", "SKILL.md"),
+  join3("skills", "refactor", "SKILL.md"),
+  join3("skills", "remove-ai-slops", "SKILL.md"),
+  join3("skills", "review-work", "SKILL.md"),
+  join3("skills", "ultimate-browsing", "SKILL.md"),
+  join3("skills", "ultrawork", "SKILL.md"),
+  join3("skills", "ulw-execute", "SKILL.md"),
+  join3("skills", "ulw-loop", "SKILL.md"),
+  join3("skills", "ulw-plan", "SKILL.md"),
+  join3("skills", "ulw-research", "SKILL.md"),
+  join3("skills", "visual-qa", "SKILL.md"),
+  join3("skills-conditional", "x-search", "SKILL.md"),
+  join3("runtime", "agent-toolkit-sdk", "sdk.js"),
+  join3("runtime", "bunshin-ts", "sdk.js"),
+  join3("runtime", "omo-sdk", "sdk.js"),
+  join3("runtime", "thread-sdk", "sdk.js"),
+  join3("runtime", "ast-grep-mcp", "cli.js"),
+  join3("runtime", "lsp-daemon", "dist", "cli.js"),
+  join3("runtime", "lsp-daemon", "dist", "index.js"),
+  join3("runtime", "lsp-daemon", "dist", "index.d.ts"),
+  join3("runtime", "lsp-daemon", "dist", "daemon-client.js"),
+  join3("runtime", "lsp-daemon", "dist", "daemon-client.d.ts"),
+  join3("runtime", "lsp-daemon", "dist", "package.json"),
+  join3("runtime", "lsp-daemon", "dist", ".omo-runtime-manifest.json"),
+  join3("scripts", "install.mjs"),
   "daemon-launch-spec.json"
 ];
 async function ensurePluginArtifacts(context) {
   if (context.allowBuild) {
-    await context.runCommand("node", [join4(context.pluginPath, "scripts", "build-extension.mjs")], {
+    await context.runCommand("node", [join3(context.pluginPath, "scripts", "build-extension.mjs")], {
       cwd: context.repoRoot
     });
-    await context.runCommand("node", [join4("packages", "omo-codex", "plugin", "scripts", "materialize-shared-upstreams.mjs")], { cwd: context.repoRoot });
-    await context.runCommand("node", [join4(context.pluginPath, "scripts", "sync-skills.mjs")], {
+    await context.runCommand("node", [join3("packages", "omo-codex", "plugin", "scripts", "materialize-shared-upstreams.mjs")], { cwd: context.repoRoot });
+    await context.runCommand("node", [join3(context.pluginPath, "scripts", "sync-skills.mjs")], {
       cwd: context.repoRoot
     });
-    await context.runCommand("node", [join4(context.pluginPath, "scripts", "build-install.mjs")], {
+    await context.runCommand("node", [join3(context.pluginPath, "scripts", "build-install.mjs")], {
       cwd: context.repoRoot
     });
-    await context.runCommand("node", [join4(context.pluginPath, "scripts", "stage-lsp-daemon-runtime.mjs")], {
+    await context.runCommand("node", [join3(context.pluginPath, "scripts", "stage-lsp-daemon-runtime.mjs")], {
       cwd: context.repoRoot
     });
-    await context.runCommand("node", [join4(context.pluginPath, "scripts", "stage-ast-grep-mcp-runtime.mjs")], {
+    await context.runCommand("node", [join3(context.pluginPath, "scripts", "stage-ast-grep-mcp-runtime.mjs")], {
       cwd: context.repoRoot
     });
-    await context.runCommand("node", [join4(context.pluginPath, "scripts", "stage-x-search-skill.mjs")], {
+    await context.runCommand("node", [join3(context.pluginPath, "scripts", "stage-x-search-skill.mjs")], {
       cwd: context.repoRoot
     });
   }
@@ -381,14 +266,14 @@ async function ensurePluginArtifacts(context) {
 }
 async function hasMissingPluginArtifact(pluginPath) {
   for (const artifact of REQUIRED_PLUGIN_ARTIFACTS) {
-    if (!await fileExists2(join4(pluginPath, artifact)))
+    if (!await fileExists2(join3(pluginPath, artifact)))
       return true;
   }
   return false;
 }
 async function verifyAstGrepRuntimeIntegrity(pluginPath, platform) {
-  const runtimeEntry = join4(pluginPath, "runtime", "ast-grep-mcp", "cli.js");
-  const manifestPath = join4(dirname3(runtimeEntry), "manifest.json");
+  const runtimeEntry = join3(pluginPath, "runtime", "ast-grep-mcp", "cli.js");
+  const manifestPath = join3(dirname2(runtimeEntry), "manifest.json");
   let runtimeStat;
   try {
     runtimeStat = await stat(runtimeEntry);
@@ -461,18 +346,12 @@ async function runSenpiInstaller(options = {}) {
     packages.push(context.pluginPath);
   settings.packages = packages;
   const backupPath = await writeSettingsAtomically(context.settingsPath, settings);
-  const launcherPath = installLocalLauncher({
-    pluginPath: context.pluginPath,
-    senpiCliPath: join5(context.repoRoot, "packages", "coding-agent", "dist", "cli.js"),
-    homeDir: context.homeDir
-  });
   return {
     ok: true,
     action: "install",
     agentDir: context.agentDir,
     settingsPath: context.settingsPath,
     pluginPath: context.pluginPath,
-    launcherPath,
     changed: JSON.stringify(settings) !== before,
     backupPath
   };
@@ -485,14 +364,12 @@ async function runSenpiUninstaller(options = {}) {
   const nextPackages = packages.filter((entry) => entry !== context.pluginPath);
   settings.packages = nextPackages;
   const backupPath = await writeSettingsAtomically(context.settingsPath, settings);
-  uninstallLocalLauncher(context.homeDir);
   return {
     ok: true,
     action: "uninstall",
     agentDir: context.agentDir,
     settingsPath: context.settingsPath,
     pluginPath: context.pluginPath,
-    launcherPath: undefined,
     changed: JSON.stringify(settings) !== before,
     backupPath,
     removed: nextPackages.length !== packages.length
@@ -501,16 +378,16 @@ async function runSenpiUninstaller(options = {}) {
 function resolveInstallContext(options) {
   const env = options.env ?? process.env;
   const allowBuild = options.pluginPath === undefined;
-  const repoRoot = resolve4(options.repoRoot ?? (allowBuild ? findRepoRoot(dirname4(fileURLToPath(import.meta.url))) : dirname4(resolve4(options.pluginPath))));
-  const homeDir = options.homeDir ?? env.HOME ?? homedir3();
-  const agentDir = resolve4(options.agentDir ?? resolveAgentHome({ env, homeDir }));
-  const pluginPath = resolve4(options.pluginPath ?? join5(repoRoot, "packages", "omo-senpi", "plugin"));
+  const repoRoot = resolve3(options.repoRoot ?? (allowBuild ? findRepoRoot(dirname3(fileURLToPath(import.meta.url))) : dirname3(resolve3(options.pluginPath))));
+  const homeDir = options.homeDir ?? env.HOME ?? homedir2();
+  const agentDir = resolve3(options.agentDir ?? resolveAgentHome({ env, homeDir }));
+  const pluginPath = resolve3(options.pluginPath ?? join4(repoRoot, "packages", "omo-senpi", "plugin"));
   return {
     env,
     repoRoot,
     agentDir,
     homeDir,
-    settingsPath: join5(agentDir, "settings.json"),
+    settingsPath: join4(agentDir, "settings.json"),
     pluginPath,
     platform: options.platform ?? process.platform,
     allowBuild,
@@ -527,14 +404,14 @@ async function defaultRunCommand(command, args, options) {
 function findRepoRoot(importerDir) {
   let current = importerDir;
   for (let depth = 0;depth <= 7; depth += 1) {
-    if (fileExistsSync(join5(current, "packages", "omo-senpi", "plugin", "package.json")))
+    if (fileExistsSync(join4(current, "packages", "omo-senpi", "plugin", "package.json")))
       return current;
-    current = resolve4(current, "..");
+    current = resolve3(current, "..");
   }
   throw new Error("Unable to locate packages/omo-senpi/plugin/package.json from installer module");
 }
 function fileExistsSync(path) {
-  return existsSync3(path);
+  return existsSync2(path);
 }
 
 // packages/omo-senpi/src/install/cli-local.ts
@@ -561,15 +438,15 @@ function printJson(result) {
 `);
 }
 function resolvePackagedPluginPath(importerUrl) {
-  const scriptDir = dirname5(fileURLToPath2(importerUrl));
-  const candidate = resolve5(scriptDir, "..");
-  const manifestPath = join6(candidate, "package.json");
-  if (!existsSync4(manifestPath))
+  const scriptDir = dirname4(fileURLToPath2(importerUrl));
+  const candidate = resolve4(scriptDir, "..");
+  const manifestPath = join5(candidate, "package.json");
+  if (!existsSync3(manifestPath))
     return;
-  const parsed = JSON.parse(readFileSync2(manifestPath, "utf8"));
+  const parsed = JSON.parse(readFileSync(manifestPath, "utf8"));
   if (!isRecord2(parsed) || parsed.name !== "@code-yeongyu/omo-senpi")
     return;
-  if (!existsSync4(join6(candidate, "extensions", "omo.js")))
+  if (!existsSync3(join5(candidate, "extensions", "omo.js")))
     return;
   return candidate;
 }

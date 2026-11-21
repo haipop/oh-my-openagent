@@ -178,7 +178,9 @@ export function hasKeyword(text, pattern, keywords = DEFAULT_KEYWORDS) {
  */
 export function findKeywordMessages(messages, pattern, keywords = DEFAULT_KEYWORDS) {
   if (!Array.isArray(messages)) return []
-  return messages.filter((message) => isUserAuthoredMessage(message) && hasKeyword(messageText(message), pattern, keywords))
+  return messages.filter(
+    (message) => isUserAuthoredMessage(message) && hasKeyword(messageText(message), pattern, keywords),
+  )
 }
 
 /**

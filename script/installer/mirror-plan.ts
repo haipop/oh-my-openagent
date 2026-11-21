@@ -1,3 +1,10 @@
+import {
+  DESKTOP_ENGINE_CHECKSUMS_ASSET,
+  DESKTOP_ENGINE_RELEASE_HOSTS,
+  desktopEngineReleaseAssetName,
+} from "../../packages/senpi-desktop-engine/src/release-assets"
+import { KEYCHAIN_HELPER_RELEASE_ASSET } from "../release-keychain-helper-target"
+
 export const VERSION_PATTERN = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*))?$/
 export const KEEP_BETAS = 20
 const MIRRORED_ASSET =
@@ -38,11 +45,53 @@ function githubSha256(asset: ReleaseAsset): string | null {
   return hex !== null && HEX64.test(hex) ? hex : null
 }
 
-/**
- * Every mirrored asset must carry a GitHub sha256 digest; every omo binary must also appear in SHA256SUMS
- * with the same hash, and SHA256SUMS may not list a binary the release does not have.
- */
-export function planMirrorAssets(assets: readonly ReleaseAsset[], sums: ReadonlyMap<string, string>): MirrorAsset[] {
+function planDesktopAssets(
+  assets: readonly ReleaseAsset[],
+  helperSums: ReadonlyMap<string, string>,
+  engineSums: ReadonlyMap<string, string> | undefined,
+): MirrorAsset[] {
+  if (engineSums === undefined) throw new MirrorPlanError(`release has no ${DESKTOP_ENGINE_CHECKSUMS_ASSET}`)
+  const engineNames = DESKTOP_ENGINE_RELEASE_HOSTS.map((host) => {
+    const name = desktopEngineReleaseAssetName(host)
+    if (name === null) throw new MirrorPlanError(`invalid desktop engine host ${host}`)
+    return name
+  })
+  const expected = new Map<string, string | undefined>([
+    ["SHA256SUMS", undefined],
+    [DESKTOP_ENGINE_CHECKSUMS_ASSET, undefined],
+    [KEYCHAIN_HELPER_RELEASE_ASSET, requireChecksum(helperSums, KEYCHAIN_HELPER_RELEASE_ASSET)],
+    ...engineNames.map((name): [string, string] => [name, requireChecksum(engineSums, name)]),
+  ])
+  if (helperSums.size !== 1 || engineSums.size !== engineNames.length) {
+    throw new MirrorPlanError("release checksum manifests list unexpected assets")
+  }
+  const planned = assets.map((asset) => {
+    if (!expected.has(asset.name)) throw new MirrorPlanError(`unexpected release asset ${asset.name}`)
+    const listed = expected.get(asset.name)
+    expected.delete(asset.name)
+    const digest = githubSha256(asset)
+    if (digest === null) throw new MirrorPlanError(`${asset.name} has no GitHub sha256 digest`)
+    if (listed !== undefined && listed !== digest) {
+      throw new MirrorPlanError(`${asset.name}: checksum manifest says ${listed} but GitHub says ${digest}`)
+    }
+    return { name: asset.name, size: asset.size, sha256: digest }
+  })
+  if (expected.size > 0) throw new MirrorPlanError(`missing release assets: ${[...expected.keys()].join(", ")}`)
+  return planned
+}
+
+function requireChecksum(sums: ReadonlyMap<string, string>, name: string): string {
+  const hash = sums.get(name)
+  if (hash === undefined) throw new MirrorPlanError(`missing checksum for ${name}`)
+  return hash
+}
+
+export function planMirrorAssets(
+  assets: readonly ReleaseAsset[],
+  sums: ReadonlyMap<string, string>,
+  engineSums?: ReadonlyMap<string, string>,
+): MirrorAsset[] {
+  if (![...sums.keys()].some((name) => BINARY.test(name))) return planDesktopAssets(assets, sums, engineSums)
   const mirrored = assets.filter((asset) => MIRRORED_ASSET.test(asset.name))
   const binaries = mirrored.filter((asset) => BINARY.test(asset.name))
   if (binaries.length === 0) throw new MirrorPlanError("release has no omo binaries to mirror")

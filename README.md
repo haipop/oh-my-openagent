@@ -1,111 +1,91 @@
-[English](README.md) | [简体中文](README.zh-cn.md) | [日本語](README.ja.md) | [Русский](README.ru.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Português (Brasil)](README.pt-br.md) | [Italiano](README.it.md)
+# Oh My OpenAgent: DeepSeek Harness fork
 
-> [!NOTE]
-> **OmO 5.0: OmO ❤️ Pi**
-> Install it with `curl -fsSL https://get.omo.dev/install.sh | bash`. Memory system, CodeMode, Anthropic subscriptions, all covered.
-> [![OmO Herdr DAG - live OmO workflow DAGs in a Herdr side pane](./.github/assets/omo-herdr-dag.png)](https://github.com/jc01rho/omo-herdr-dag)
-> *Just type "mass ulw" with your prompt - now you are the master of graph engineering. Multi-model ultracode, together with a better memory system. (The right panel is [omo-herdr-dag](https://github.com/jc01rho/omo-herdr-dag).)*
+本仓库 fork 自 [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent)。`dev` 只同步上游；`feat/deepseek-harness` 保存本 fork 的改动。本页只描述功能分支，不适用于上游 npm 发行版。
 
-> [!TIP]
-> Be with us!
->
-> | [<img alt="Discord link" src="https://img.shields.io/discord/1452487457085063218?color=5865F2&label=discord&labelColor=black&logo=discord&logoColor=white&style=flat-square" width="156px" />](https://discord.gg/PUwSMR9XNk) | Join our [Discord community](https://discord.gg/PUwSMR9XNk) to connect with contributors and fellow OmO users. |
-> | :-----| :----- |
-> | [<img alt="X link" src="https://img.shields.io/badge/Follow-%40justsisyphus-00CED1?style=flat-square&logo=x&labelColor=black" width="156px" />](https://x.com/justsisyphus) | Updates for OmO used to be posted on my X account. <br /> Since it was mistakenly suspended, [@justsisyphus](https://x.com/justsisyphus) now posts updates on my behalf. |
-> | [<img alt="GitHub Follow" src="https://img.shields.io/github/followers/code-yeongyu?style=flat-square&logo=github&labelColor=black&color=24292f" width="156px" />](https://github.com/code-yeongyu) | Follow [@code-yeongyu](https://github.com/code-yeongyu) on GitHub for more projects. |
+`feat/deepseek-harness` 的 CI 和发布前验收仅覆盖 macOS，不运行 Linux 或 Windows 测试。安装、运行和验收都不需要 Docker；实机验收使用 macOS 上的真实宿主、临时配置目录和本地模型服务。
 
-<!-- <CENTERED SECTION FOR GITHUB DISPLAY> -->
+| 宿主 | 功能分支范围 |
+| --- | --- |
+| DeepSeek Harness | `omo-dsh` Host bundle：工作模式、角色预设、规则注入和只读状态工具。预设取决于 profile；默认 headless 不注册这些预设。 |
+| OpenCode | 目标宿主及插件 SDK 为 `2.3.2`。V2 首期仅包含 Sisyphus、当前轮的 `ulw` / `ultrawork` 指令和只读 `omo_status`；不提供 V1、OmO TUI、团队或后台代理功能。 |
+| Senpi / Codex | 保留宿主插件与共享库，不再提供基于 Pi/Senpi 的 OmO 独立 Agent。 |
 
-<div align="center">
+## DeepSeek Harness
 
-<a href="https://omo.dev"><img src="./.github/assets/omo-icon-light.svg" alt="OmO" width="200" /></a>
+在功能分支的 checkout 中，将本地 bundle 添加到指定 profile。把 `your-profile` 替换为 CLI 管理的实际 profile，不要对默认 profile 试装或重装。
 
-# OmO
-
-**Your tool for real work. But it's an agent.**
-
-[![GitHub Release](https://img.shields.io/github/v/release/code-yeongyu/oh-my-openagent?color=369eff&labelColor=black&logo=github&style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent/releases)
-[![downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fomo.dev%2Fapi%2Fdownloads&style=flat-square)](https://omo.dev)
-[![GitHub Contributors](https://img.shields.io/github/contributors/code-yeongyu/oh-my-openagent?color=c4f042&labelColor=black&style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent/graphs/contributors)
-[![GitHub Stars](https://img.shields.io/github/stars/code-yeongyu/oh-my-openagent?color=ffcb47&labelColor=black&style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent/stargazers)
-[![License](https://img.shields.io/badge/license-SUL--1.0-white?labelColor=black&style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent/blob/dev/LICENSE.md)
-[![Docs](https://img.shields.io/badge/docs-omo.dev-369eff?labelColor=black&logo=readthedocs&logoColor=white&style=flat-square)](https://omo.dev/docs)
-
-
-</div>
-
-<!-- </CENTERED SECTION FOR GITHUB DISPLAY> -->
-
-OmO is one `omo` command that turns your tokens into finished work: research across ten thousand sources, a deck people actually get, backends, frontends, code. It runs on senpi, our fork of [pi](https://github.com/badlogic/pi-mono), with everything below built in.
-
-## Install
-
-```bash
-curl -fsSL https://get.omo.dev/install.sh | bash
-omo
+```sh
+dsh plugin --profile your-profile add "$(pwd)/packages/omo-dsh"
 ```
 
-On Windows, in PowerShell: `irm https://get.omo.dev/install.ps1 | iex`. The script installs the native `omo` binary for your OS and CPU into `~/.local/bin`, checks it against the release checksums, and falls back to GitHub Releases when the mirror is unreachable. Add `-s -- beta` (or a version such as `-s -- 5.1.1`) after `bash` to pick another channel. Windows CMD, fixing your `PATH`, updating and uninstalling are covered at [omo.dev/docs/install](https://omo.dev/docs/install).
+Desktop 使用其 Plugin Manager 添加同一个目录。安装前备份目标 profile 的配置；已有 `include:mnemon` 时保留官方插件及其配置和顺序，不重复展开 include，也不清空记忆目录。兼容性以同一 profile 中的实际写入、重启读回和模型请求为准，不能用插件列表代替。
 
-Prefer a package manager? `bun add -g omo-ai` (or `npm i -g omo-ai`) installs the same OmO. The package is `omo-ai`; the unrelated `omo` package on npm is someone else's.
+如果 DSH Desktop `0.2.2-rc.5` 的「设置 → 内置插件 → 全局插件」把 `include:mnemon` 标为「启动失败」，先检查已安装的 `dsh-mnemon` 版本。隔离 Desktop 上，`0.5.32` 即使未装 OmO，也会在初始化时调用当前宿主不再提供的 `agents.roots()` 而失败；`0.5.50` 已验证可与本分支 OmO 一起启动。备份目标 profile 和记忆后，在插件管理器中原位更新 Mnemon，不要先卸载或重建记忆。重启后在同一位置检查插件状态，再确认已有记忆能读回。
 
-Open your project, run `omo`, describe the job. That's the whole setup.
+如果用终端管理 `desktop` profile，先退出 DSH Desktop，再原位升级：
 
-In a session, `/thinking <level>` sets how hard the model thinks (`/thinking` alone opens a picker), `Shift+Tab` cycles through the levels, and `/efforts <level>` sets the reasoning effort directly on models with effort grades. To pick up earlier work, `/resume` (or `/sessions`) opens your past sessions; from the shell, `omo -c` continues the last one and `omo -r` opens the picker. `/help` lists everything else.
+```sh
+dsh plugin --profile desktop add dsh-mnemon@0.5.50
+```
 
-Coming from the OpenCode edition or LazyCodex? Run `omo setup` once. It carries your provider keys, custom providers, MCP servers, skills and model picks across. `omo doctor` then shows which task categories your providers can run and what the old install left behind, and `omo doctor --models` shows which model each category and agent runs and in what order (keep one out everywhere with [`exclude_models`](docs/reference/omo-json.md#exclude_models-native-harness)). The full walkthrough is [Migrating from OpenCode](docs/guide/migrating-from-opencode.md).
+在启用 OmO 的 profile 新开会话，检查 `omo_status`，再发送含 `ulw` 的提示检查 OmO 模式标记。支持预设的 profile 可选择 Sisyphus 或 Atlas。撤回时只删除新增的 OmO 插件项：CLI 使用 `dsh plugin --profile your-profile remove @oh-my-opencode/omo-dsh`，Desktop 从 Plugin Manager 移除 OmO；有手工配置改动时按备份还原。保留其他插件与记忆。
 
-To update, run the install line again (a package-manager install updates with `omo update`). `rm ~/.local/bin/omo` removes the binary install; `bun remove -g omo-ai` (or `npm uninstall -g omo-ai`) removes the package install.
+## OpenCode V2
 
-## Why OmO
+`brew install opencode` 安装的是宿主，不是 OmO。用 `opencode --version` 检查版本；本分支针对 `2.3.2`，不把 Homebrew 后续提供的版本视为已验证。
 
-**ultrawork.** Skip the study. If a task feels hard, add `ultrawork` (or `ulw`) to your prompt. The agent reads the codebase before touching a line, plans, proves each step before moving on, checks the result on the real surface, and stops when it's done.
+从 fork 构建本地归档，勿用同名上游 npm 包替代：
 
-**Hundreds of agents, one keyword.** Type `mass ulw` and the whole job becomes a graph of agents: deep research over thousands of sources, a full machine-learning pipeline, a migration nobody wants to do. Each part runs on the model that fits it, in parallel, and gets checked before anything is called done.
+```sh
+git clone --branch feat/deepseek-harness --recurse-submodules https://github.com/haipop/oh-my-openagent.git
+cd oh-my-openagent
+bun install --frozen-lockfile
+bun pm pack --ignore-scripts --filename omo-opencode-v2.tgz
+package_dir="$(mktemp -d)"
+tar -xzf omo-opencode-v2.tgz -C "$package_dir"
+printf '%s\n' "$package_dir/package"
+```
 
-**Kibitzer. Your agent doesn't forget you, or your work.** Memory lives in a git repository of markdown files. A small, cheap model sits beside the expensive main agent, reads what you've done before, and nudges the main agent before it repeats a mistake. You stop re-explaining yourself.
+在**目标项目**的 `opencode.json` 中，将下列对象追加到原有 `plugins` 数组。使用上一步输出的包根目录，不要指向 `dist/index.js`；启用期间保留解包目录。若从旧版迁移，先备份相关配置，只移除旧 OmO 的 V1 注册项，不改其它插件。以下是没有其它设置时的完整示例：
 
-**Mix models without thinking about it.** Use the frontier models you love together with the cheap ones. Just sign in: `/login` covers Claude, ChatGPT, Kimi and GLM subscriptions. Every model ships with a system prompt tuned for it, so you never pick the wrong one.
+```json
+{
+  "plugins": [{ "package": "/absolute/path/to/unpacked/package" }]
+}
+```
 
-**High-quality skills, only the ones you need.** Your model is smart, but it still doesn't know a lot about solving real-world problems. OmO ships the missing knowledge as skills, browser use included, and loads only what the task needs.
+把 `package_dir` 设为解包时创建的目录。在目标项目根目录安装随包提供的主代理；已有同名文件时保留原文件，先检查差异。
 
-**Everything else is crafted.** Independent tool calls run together in one small program, so twenty reads are one round trip. Malformed tool arguments are repaired before they run. Waiting on a build or a deploy is a subscription, not polling. Long work keeps a record of what was checked, so a restarted session picks up where it stopped. Config, skills and prompts reload live.
+```sh
+mkdir -p .opencode/agents
+cp -n "$package_dir/package/packages/omo-opencode/.opencode/agents/sisyphus.md" .opencode/agents/sisyphus.md
+```
 
-## Configuration
+配置 OpenCode 自己的模型提供方后，从目标项目运行：
 
-Opinionated defaults, adjustable if you insist. Your settings live in `~/.omo/omo.jsonc`, and a project can add its own `.omo/omo.jsonc`; the closest file wins. Every key is in the [configuration reference](docs/reference/configuration.md).
+```sh
+opencode run --standalone --format json --agent sisyphus 'ulw 请调用 omo_status 并报告当前轮的 mode'
+```
 
-## Docs
+检查 JSON 输出中的 `omo_status` 工具结果：命中轮应为 `ultrawork`。取出输出中的 `sessionID`，在同一个会话验证普通轮回复 `standard`：
 
-- [omo.dev/docs](https://omo.dev/docs)
-- [Migrating from OpenCode](docs/guide/migrating-from-opencode.md)
-- [Configuration reference](docs/reference/configuration.md)
-- [Features](docs/reference/features.md)
-- [Computer use](docs/guide/computer-use.md) (experimental)
-- [Ultrawork Manifesto](docs/manifesto.md)
+```sh
+opencode run --standalone --format json --agent sisyphus --session '<sessionID>' '请调用 omo_status 并报告当前轮的 mode'
+```
 
-## Reporting a bug
+撤回时，从 `plugins` 删除本地包这一项，只移除本次装入的 Sisyphus 文件，然后再删除解包目录或恢复备份。
 
-The fastest way to report a bug is `/bug` inside a session (available in the omo app). It lists what it includes and lets you see the exact report before you send it, then sends it to the OmO team: the recent engine log, your environment and config with secrets blanked, the session transcript, and identity lines - your device name and, when telemetry is on, an install id and a session hash, plus your account details (email, name, account, user and device ids, plan, device name) when you report from the desktop app, so we can reply. Everything but the identity lines goes through the upload redactor. GitHub issues stay open for anyone who cannot use the in-app report.
+## Senpi 插件
 
-## Reviews
+本分支保留本地路径插件，不安装独立 OmO launcher。已有 Senpi 的情况下，在功能分支的 checkout 根目录构建并安装：
 
-> "It made me cancel my Cursor subscription. Unbelievable things are happening in the open source community." - [Arthur Guiot](https://x.com/arthur_guiot/status/2008736347092382053?s=20)
+```sh
+bun run build:senpi-plugin
+senpi install "$(pwd)/packages/omo-senpi/plugin"
+```
 
-> "If Claude Code does in 7 days what a human does in 3 months, OmO does it in 1 hour." <br/>- B, Quant Researcher
+使用 `senpi list` 确认安装项。撤回时在同一 checkout 运行 `senpi remove "$(pwd)/packages/omo-senpi/plugin"`。
 
-> "You guys should pull this into core and recruit him. Seriously. It's really, really, really good." <br/>- Henning Kilset
+## 项目与许可
 
-## Author's Note
-
-When I have to take the wheel back from an agent, that isn't teamwork. The system failed. OmO is built on that idea. You say what you want; the agent researches, plans, writes code you couldn't tell from a senior engineer's, verifies it, and keeps going until it's finished. It spends tokens when they buy real speed and routes the easy parts to cheap models.
-
-I'm this project's most obsessive user. Which model has the sharpest logic? Who writes the best prose? What did everyone else ship this week? OmO is where those answers land. Have a better way? PRs welcome.
-
-The goal is an agent you stop noticing. You flip the switch, the light turns on. The long version is the [Ultrawork Manifesto](docs/manifesto.md).
-
-No affiliation with any project or model mentioned. The Ultragoal and UltraQA ideas come from [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex), reimplemented from concept for OmO.
-
-## Loved by professionals at
-
-[Indent](https://indentcorp.com), makers of Spray (influencer marketing solution), vovushop (cross-border commerce platform) and vreview (AI commerce review marketing solution). [Google](https://google.com). [Microsoft](https://microsoft.com). [Vercel](https://vercel.com). [ELESTYLE](https://elestyle.jp), makers of elepay (multi-mobile payment gateway) and OneQR (mobile application SaaS for cashless solutions). [Deepgram](https://deepgram.com).
+[功能分支需求](packages/omo-dsh/REQUIREMENTS.md) · [许可证](LICENSE.md) · [第三方声明](THIRD-PARTY-NOTICES.md)

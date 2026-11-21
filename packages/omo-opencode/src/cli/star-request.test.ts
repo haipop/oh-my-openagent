@@ -15,20 +15,6 @@ describe("star-request", () => {
     )
   })
 
-  test("stars only the OpenCode repository for opencode platform", async () => {
-    // given
-    const starred: string[] = []
-
-    // when
-    const results = await starGitHubRepositories("opencode", async (repository) => {
-      starred.push(repository)
-    })
-
-    // then
-    expect(starred).toEqual(["code-yeongyu/oh-my-openagent"])
-    expect(results).toEqual([{ repository: "code-yeongyu/oh-my-openagent", ok: true }])
-  })
-
   test("stars both repositories for codex platform (lazycodex is built on oh-my-openagent)", async () => {
     // given
     const starred: string[] = []
@@ -46,26 +32,12 @@ describe("star-request", () => {
     ])
   })
 
-  test("stars both repositories in STAR_REPOSITORIES order for both platform", async () => {
+  test("stars both repositories in STAR_REPOSITORIES order by default", async () => {
     // given
     const starred: string[] = []
 
     // when
-    const results = await starGitHubRepositories("both", async (repository) => {
-      starred.push(repository)
-    })
-
-    // then
-    expect(starred).toEqual([...STAR_REPOSITORIES])
-    expect(results).toEqual(STAR_REPOSITORIES.map((repository) => ({ repository, ok: true })))
-  })
-
-  test("stars the default repositories for the native-dev platform without adding a new repo", async () => {
-    // given
-    const starred: string[] = []
-
-    // when
-    const results = await starGitHubRepositories("native-dev", async (repository) => {
+    const results = await starGitHubRepositories(undefined, async (repository) => {
       starred.push(repository)
     })
 
@@ -77,7 +49,7 @@ describe("star-request", () => {
   test("keeps going when one repository cannot be starred", async () => {
     // given
     // when
-    const results = await starGitHubRepositories("both", async (repository) => {
+    const results = await starGitHubRepositories("codex", async (repository) => {
       if (repository === "code-yeongyu/lazycodex") throw new Error("gh auth missing")
     })
 

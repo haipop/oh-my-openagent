@@ -31,15 +31,6 @@ function killTree(child: ReturnType<typeof spawn>): void {
   }
 }
 
-// Every node writes to a disjoint output path, so ordering only matters where one node
-// reads another's output. The three real edges: index -> node-require-shim (patches
-// dist/index.js), materialize -> skills-assets and materialize -> codex-plugin (both read
-// the materialized packages/shared-skills/skills). materialize is hoisted to run exactly
-// once up front; OMO_SKIP_MATERIALIZE=1 makes the downstream copies inside codex-plugin and
-// shared-skills-assets no-ops, avoiding a git submodule index.lock and torn writes.
-//
-// The graph itself, its dependency edges and the consumer profiles live in build-nodes.ts so
-// they can be inspected without running a build.
 const nodes: BuildNode[] = selectBuildNodes(BUILD_NODES, process.env.OMO_BUILD_PROFILE)
 
 async function run() {

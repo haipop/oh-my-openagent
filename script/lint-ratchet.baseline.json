@@ -529,117 +529,6 @@
   "packages/omo-codex/src/telemetry/posthog.test.ts": {
     "typescript/no-explicit-any": 1
   },
-  "packages/omo-native/test/account-cli-entry.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/account-cli.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/bun-global-upgrade.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/child-process-signal.test.ts": {
-    "omo-testing/no-fixed-sleep": 1,
-    "omo-testing/no-flake-masking": 6
-  },
-  "packages/omo-native/test/compile-entry-exit-status.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/compile-entry.test.ts": {
-    "typescript/no-explicit-any": 5
-  },
-  "packages/omo-native/test/compile-prebuilds.test.ts": {
-    "omo-testing/no-flake-masking": 1,
-    "typescript/no-non-null-assertion": 3
-  },
-  "packages/omo-native/test/compiled-ca-trust.test.ts": {
-    "omo-testing/no-flake-masking": 2
-  },
-  "packages/omo-native/test/compiled-kill-guard-dispatch.test.ts": {
-    "omo-testing/no-flake-masking": 3
-  },
-  "packages/omo-native/test/compiled-setup-binary.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/computer-use-doctor.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/daemon-real-engine.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/device-service-pin-served.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/doctor-migration.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/keychain-helper-build.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/keychain-helper-session.test.ts": {
-    "omo-testing/no-flake-masking": 3
-  },
-  "packages/omo-native/test/launcher-private-fd-pair.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/launcher.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/linux-trust-containers.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/memory-sync-boot-claim.test.ts": {
-    "omo-testing/no-flake-masking": 2
-  },
-  "packages/omo-native/test/openssl-default-file.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/openssl-hash-dir.test.ts": {
-    "omo-testing/no-flake-masking": 2
-  },
-  "packages/omo-native/test/packed-install.test.ts": {
-    "omo-testing/no-flake-masking": 2,
-    "typescript/no-non-null-assertion": 6
-  },
-  "packages/omo-native/test/payload.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/provisioned-handoff-private-fds.test.ts": {
-    "omo-testing/no-flake-masking": 2
-  },
-  "packages/omo-native/test/provisioned-handoff-startup-pipe.test.ts": {
-    "omo-testing/no-flake-masking": 3
-  },
-  "packages/omo-native/test/provisioned-handoff.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/self-update-held-package.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/setup-detect.test.ts": {
-    "typescript/no-non-null-assertion": 2
-  },
-  "packages/omo-native/test/setup-import.test.ts": {
-    "typescript/no-non-null-assertion": 1
-  },
-  "packages/omo-native/test/setup-model-choices.test.ts": {
-    "typescript/no-non-null-assertion": 1
-  },
-  "packages/omo-native/test/setup-opencode-providers.test.ts": {
-    "typescript/no-explicit-any": 9
-  },
-  "packages/omo-native/test/setup-summary.test.ts": {
-    "typescript/no-explicit-any": 1
-  },
-  "packages/omo-native/test/sync-cli-phrase-pty.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/sync-phrase-tty-pty.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "packages/omo-native/test/trust-stage.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
   "packages/omo-opencode/src/agents/per-agent-prompt-parity.test.ts": {
     "omo-testing/no-flake-masking": 1
   },
@@ -2191,19 +2080,6 @@
   "script/build-cli-node.test.ts": {
     "omo-testing/no-flake-masking": 3
   },
-  "script/build-omo-binary.test.ts": {
-    "omo-testing/no-flake-masking": 5,
-    "typescript/no-non-null-assertion": 11
-  },
-  "script/build-omo-binary.ts": {
-    "typescript/no-non-null-assertion": 1
-  },
-  "script/build-omo-native.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "script/build-omob.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
   "script/changelog-backfill-verify.ts": {
     "typescript/no-explicit-any": 1
   },
@@ -2223,12 +2099,6 @@
     "omo-testing/no-flake-masking": 1
   },
   "script/ci-test-timeout.test.ts": {
-    "omo-testing/no-flake-masking": 1
-  },
-  "script/embedded-payload-probe.test.ts": {
-    "omo-testing/no-flake-masking": 2
-  },
-  "script/engine-sidecar-sources.test.ts": {
     "omo-testing/no-flake-masking": 1
   },
   "script/fixtures/senpi-hooks-state-error-runner.ts": {
@@ -2267,12 +2137,6 @@
   "script/no-raw-tls-client.test.ts": {
     "omo-testing/no-flake-masking": 1
   },
-  "script/omo-native-trust-mutations.test.ts": {
-    "omo-testing/no-flake-masking": 4
-  },
-  "script/omob-refresh.test.ts": {
-    "omo-testing/no-flake-masking": 3
-  },
   "script/package-layout-exclusion.test.ts": {
     "omo-testing/no-flake-masking": 2
   },
@@ -2308,9 +2172,6 @@
   },
   "script/qa/computer/replay.test.ts": {
     "omo-testing/no-flake-masking": 18
-  },
-  "script/qa/omo-native-telemetry-drive.test.mjs": {
-    "omo-testing/no-flake-masking": 1
   },
   "script/qa/omp-item2-measure.ts": {
     "typescript/no-non-null-assertion": 1

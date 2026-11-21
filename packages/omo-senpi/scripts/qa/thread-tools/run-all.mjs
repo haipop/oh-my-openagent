@@ -5,7 +5,7 @@
  * and running them concurrently would make resource allocation the thing under test.
  *
  * Two suites:
- * - `gateway` (todo 16): real pty OmO TUIs, shard hosts and the `omo` CLI on the RELEASED engine
+ * - `gateway` (todo 16): OmO plugin in the released Senpi's pty and shard hosts, plus the built thread SDK
  *   (`lib/gateway.mjs`). `THREAD_QA_SENPI_VERSION` is REQUIRED for this suite and for `all`: the engine
  *   under test. Unset or empty, run-all exits 2 before running anything and names the engine omo pins.
  *   Needs only bun, node and the network for the first kit install.

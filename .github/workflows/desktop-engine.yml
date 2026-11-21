@@ -124,7 +124,7 @@ jobs:
           OMO_ENGINE_TRUST_HELPER_TARGET_DIR: ${{ github.workspace }}/target/debug
         run: |
           cargo build -p omo-engine-trust-helper --bins --examples --locked
-          bun test packages/omo-native/test/macos-trust-helper.macos.test.ts
+          bun test script/engine-trust/test/macos-trust-helper.macos.test.ts
 
       # The runner is disposable, so the live clipboard round-trip may overwrite its clipboard.
       - name: System clipboard round-trip

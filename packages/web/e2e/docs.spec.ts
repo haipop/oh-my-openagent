@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test"
 
+const FORK_README = "https://github.com/haipop/oh-my-openagent/blob/feat/deepseek-harness/README.md"
+
 test.describe("Docs Page", () => {
   test("renders sidebar and config reference", async ({ page }) => {
     // given
@@ -101,24 +103,10 @@ test.describe("Docs Page", () => {
     expect(overflow).toBeLessThanOrEqual(1)
   })
 
-  test("the install page shows the commands, the guide and its own sidebar", async ({ page }) => {
-    // given
-    await page.goto("/docs/install")
-
-    // then
-    await expect(page).toHaveTitle(/Install OmO/)
-    await expect(page.getByRole("heading", { name: "Install OmO", level: 1 })).toBeVisible()
-    await expect(page.getByRole("tab")).toHaveCount(3)
-    for (const section of ["Check the install", "Fix your PATH", "Uninstall"]) {
-      await expect(page.getByRole("button", { name: section })).toBeVisible()
-    }
-
-    // when
-    await page.getByRole("button", { name: "Fix your PATH" }).click()
-
-    // then
-    await expect(page).toHaveURL(/\/docs\/install#fix-your-path$/)
-    await expect(page.locator("#fix-your-path")).toBeInViewport()
+  test("the install page redirects to the feature branch README", async ({ request }) => {
+    const response = await request.get("/docs/install", { maxRedirects: 0 })
+    expect(response.status()).toBe(307)
+    expect(response.headers().location).toBe(FORK_README)
   })
 
   test("each guide page OmO Desktop links to renders its title and sidebar", async ({ page }) => {
@@ -139,12 +127,9 @@ test.describe("Docs Page", () => {
     }
   })
 
-  test("the old get.omo.dev docs link lands on the install page", async ({ page }) => {
-    // given
-    await page.goto("/docs/guide/installation")
-
-    // then
-    await expect(page).toHaveURL(/\/docs\/install$/)
-    await expect(page.getByRole("heading", { name: "Install OmO", level: 1 })).toBeVisible()
+  test("the old get.omo.dev docs link forwards to the fork installation route", async ({ request }) => {
+    const response = await request.get("/docs/guide/installation", { maxRedirects: 0 })
+    expect(response.status()).toBe(308)
+    expect(response.headers().location).toMatch(/\/docs\/install$/)
   })
 })

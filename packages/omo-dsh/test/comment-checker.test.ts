@@ -21,7 +21,7 @@ describe("comment extraction", () => {
     'const url = "https://example.com/docs#note that this is obvious"',
     'print("# note that this is obvious")',
     "SELECT '-- note that this is obvious'",
-    'const label = `// just note that this is obvious`',
+    "const label = `// just note that this is obvious`",
   ])("#given a quoted comment marker (%s) #when read #then it is ignored", (line) => {
     expect(commentTextOf(line)).toBeUndefined()
   })
@@ -75,11 +75,17 @@ describe("slop detection", () => {
 
 describe("added text extraction", () => {
   test("#given a write call #when extracted #then the content is used", () => {
-    expect(extractAddedText("write", { file_path: "a.ts", content: "// note that x" })).toEqual({ path: "a.ts", text: "// note that x" })
+    expect(extractAddedText("write", { file_path: "a.ts", content: "// note that x" })).toEqual({
+      path: "a.ts",
+      text: "// note that x",
+    })
   })
 
   test("#given an edit call #when extracted #then the new string is used", () => {
-    expect(extractAddedText("edit", { file_path: "a.py", old_string: "x", new_string: "# loop" })).toEqual({ path: "a.py", text: "# loop" })
+    expect(extractAddedText("edit", { file_path: "a.py", old_string: "x", new_string: "# loop" })).toEqual({
+      path: "a.py",
+      text: "# loop",
+    })
   })
 
   test("#given a non-code file #when extracted #then nothing is checked", () => {
@@ -93,7 +99,10 @@ describe("added text extraction", () => {
 
 describe("warning message", () => {
   test("#given findings #when rendered #then path and finding lines are present", () => {
-    const text = buildCommentWarning({ path: "src/a.ts", findings: [{ line: 3, comment: "loop over rows", pattern: "restates-obvious" }] })
+    const text = buildCommentWarning({
+      path: "src/a.ts",
+      findings: [{ line: 3, comment: "loop over rows", pattern: "restates-obvious" }],
+    })
     expect(text.startsWith("<comment-checker>")).toBe(true)
     expect(text).toContain("src/a.ts")
     expect(text).toContain("line 3")

@@ -1,5 +1,7 @@
 # omo remote - sessions on your other devices
 
+The terminal commands below describe the upstream standalone launcher, which this feature branch does not ship. For current fork installation, see the [fork README](../../README.md).
+
 `omo remote` lists, starts, watches and commands the OmO sessions running on the other devices signed
 in to your account. It talks to the OmO device service on this device, which holds the connection to your other
 devices; `omo remote` never connects to another machine itself. `status`, `devices`, `sessions` and
