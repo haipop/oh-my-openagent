@@ -8,7 +8,9 @@
 // plan carries the working text a §5 capture applies (each register with the values the space
 // already holds, or a new key's first value) and extraRegisterValues, the differing whole
 // values, each a register entry superseding nothing. The caller commits both as ONE update
-// (commitAdoption). `rendered` is the predicted item text. No marker or conflict text is ever
+// through the capture entry point, captureOnDevice(device, itemKey, doc, base, frontier,
+// plan.workingText, plan.extraRegisterValues): its optional registerValues argument is the only
+// way to commit a plan, under the capture's receipts and replay guard. `rendered` is the predicted item text. No marker or conflict text is ever
 // written into the body (§10).
 //
 // Every file is read as LF text without a leading UTF-8 BOM (normalizeInput). The body shortcut is a
@@ -25,7 +27,14 @@
 import { splitItem } from "../item/frontmatter"
 import type { RegisterValue } from "../item/index"
 
-import { adoptFields, extraValues, registersOf, renderFields, seedFields, type AdoptedFields } from "./adopt-frontmatter"
+import {
+  adoptFields,
+  extraValues,
+  registersOf,
+  renderFields,
+  seedFields,
+  type AdoptedFields,
+} from "./adopt-frontmatter"
 import { parseSyncConflictName, stripT2Blocks } from "./hub-trace"
 import { isOrderedSubsequence, mergeInsertions } from "./merge"
 import { firstMissingFact, normalizeInput } from "./read-back"
@@ -65,7 +74,11 @@ interface PlanResult {
 
 export type AdoptionPlan =
   | (PlanResult & { readonly action: "none" | "remove" })
-  | (PlanResult & { readonly action: "capture"; readonly workingText: string; readonly extraRegisterValues: readonly RegisterValue[] })
+  | (PlanResult & {
+      readonly action: "capture"
+      readonly workingText: string
+      readonly extraRegisterValues: readonly RegisterValue[]
+    })
 
 export function planAdoption(
   files: readonly Snapshot[],
@@ -87,7 +100,13 @@ export function planAdoption(
     first.text === item.lastMaterialised
   const base = normalizeInput(item.currentText ?? "")
   if (unchanged) {
-    return { action: item.tombstoned ? "remove" : "none", rendered: base, registers: item.registers, removalCandidates: [], retainedSources: [] }
+    return {
+      action: item.tombstoned ? "remove" : "none",
+      rendered: base,
+      registers: item.registers,
+      removalCandidates: [],
+      retainedSources: [],
+    }
   }
   const fields: AdoptedFields = new Map()
   const baseParsed = splitItem(base)
@@ -121,5 +140,13 @@ export function planAdoption(
   if (workingText === base && extraRegisterValues.length === 0) {
     return { action: item.tombstoned ? "remove" : "none", rendered, registers, removalCandidates, retainedSources }
   }
-  return { action: "capture", workingText, extraRegisterValues, rendered, registers, removalCandidates, retainedSources }
+  return {
+    action: "capture",
+    workingText,
+    extraRegisterValues,
+    rendered,
+    registers,
+    removalCandidates,
+    retainedSources,
+  }
 }

@@ -45,6 +45,16 @@ describe("Senpi category routing policy", () => {
         variant: "xhigh",
       },
       {
+        providers: ["zai", "zai-coding-cn", "opencode-go"],
+        model: "glm-5.3",
+        variant: "high",
+      },
+      {
+        providers: ["chatgpt-subscription", "openai"],
+        model: "gpt-6.2-sol",
+        variant: "medium",
+      },
+      {
         providers: ["chatgpt-subscription", "openai"],
         model: "gpt-6.1-sol",
         variant: "medium",
@@ -73,7 +83,7 @@ describe("Senpi category routing policy", () => {
         providers: ["xiaomi", "opencode-go"],
         model: "mimo-v2.5-pro",
         variant: "high",
-      }
+      },
     ])
   })
 })

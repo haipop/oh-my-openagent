@@ -1,6 +1,10 @@
 const deep = new WeakSet<object>()
 
-/** A read-only map with no mutating method; its entries live in a private field, so Map.prototype.set cannot reach them. */
+/**
+ * A read-only map with no mutating method; its entries live in a private field, so Map.prototype.set cannot reach them.
+ * It is not a Map: `instanceof Map` is false and structuredClone copies it as an empty object. Test for one with
+ * isReadonlyMap.
+ */
 class ClosedMap<K, V> implements ReadonlyMap<K, V> {
   readonly #inner: Map<K, V>
 
@@ -42,6 +46,7 @@ class ClosedMap<K, V> implements ReadonlyMap<K, V> {
   }
 }
 
+/** The set counterpart of ClosedMap, with the same caveats: test for one with isReadonlySet. */
 class ClosedSet<T> implements ReadonlySet<T> {
   readonly #inner: Set<T>
 
@@ -107,6 +112,14 @@ class ClosedSet<T> implements ReadonlySet<T> {
   }
 }
 
+/** True for a native Map and for the closed map a frozen copy holds in its place. */
+export const isReadonlyMap = (value: unknown): value is ReadonlyMap<unknown, unknown> =>
+  value instanceof Map || value instanceof ClosedMap
+
+/** True for a native Set and for the closed set a frozen copy holds in its place. */
+export const isReadonlySet = (value: unknown): value is ReadonlySet<unknown> =>
+  value instanceof Set || value instanceof ClosedSet
+
 const registered = <T extends object>(value: T): T => {
   deep.add(value)
   return value
@@ -122,13 +135,17 @@ const freezeDeep = (value: unknown, keep: (value: object) => boolean): unknown =
   if (typeof value !== "object" || value === null) return value
   if (deep.has(value) || keep(value)) return value
   if (Array.isArray(value)) return registered(Object.freeze(value.map((item) => freezeDeep(item, keep))))
-  if (value instanceof Map) return registered(new ClosedMap([...value].map(([key, item]) => [freezeDeep(key, keep), freezeDeep(item, keep)])))
+  if (value instanceof Map)
+    return registered(new ClosedMap([...value].map(([key, item]) => [freezeDeep(key, keep), freezeDeep(item, keep)])))
   if (value instanceof Set) return registered(new ClosedSet([...value].map((item) => freezeDeep(item, keep))))
   if (!isPlain(value)) throw new TypeError("a verified state holds only plain data")
-  return registered(Object.freeze(Object.fromEntries(Object.entries(value).map(([key, item]) => [key, freezeDeep(item, keep)]))))
+  return registered(
+    Object.freeze(Object.fromEntries(Object.entries(value).map(([key, item]) => [key, freezeDeep(item, keep)]))),
+  )
 }
 
-const isCopyOf = <T>(copy: unknown, original: T): copy is T => copy === original || (typeof copy === "object" && copy !== null && deep.has(copy))
+const isCopyOf = <T>(copy: unknown, original: T): copy is T =>
+  copy === original || (typeof copy === "object" && copy !== null && deep.has(copy))
 
 /**
  * A copy of `value` in which nothing reachable can change: objects and arrays are frozen, maps and
