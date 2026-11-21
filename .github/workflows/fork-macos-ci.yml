@@ -53,10 +53,15 @@ jobs:
           script/ci-platform-runner-allocation.test.ts
       - name: Test Codex
         if: matrix.suite == 'codex'
-        run: bun run test:codex
+        run: |
+          temp_dir=$(cd "$RUNNER_TEMP" && pwd -P)
+          TMPDIR="$temp_dir" bun run test:codex
       - name: Test Senpi
         if: matrix.suite == 'senpi'
         run: bun run test:senpi
+      - name: Build desktop engine
+        if: matrix.suite == 'desktop'
+        run: cargo build --release --locked -p senpi-desktop-engine
       - name: Test Desktop
         if: matrix.suite == 'desktop'
         run: bun run test:desktop

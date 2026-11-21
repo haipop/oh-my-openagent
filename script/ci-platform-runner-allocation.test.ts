@@ -234,6 +234,26 @@ describe("#given the fork branch only validates macOS", () => {
     expect(scheduledRunners(file, pullRequest([OPT_IN_LABEL]), "true")).toEqual([])
   })
 
+  test("#then the Desktop leg builds its native engine before running the package tests", () => {
+    const steps = job("fork-macos-ci.yml", "test")["steps"]
+    if (!Array.isArray(steps)) throw new Error("fork CI must define test steps")
+    const runSteps = steps.filter(isRecord)
+    const build = runSteps.findIndex((step) => step["run"] === "cargo build --release --locked -p senpi-desktop-engine")
+    const testDesktop = runSteps.findIndex((step) => step["run"] === "bun run test:desktop")
+    expect(build).toBeGreaterThanOrEqual(0)
+    expect(testDesktop).toBeGreaterThan(build)
+    expect(runSteps[build]?.["if"]).toBe("matrix.suite == 'desktop'")
+  })
+
+  test("#then the Codex leg uses the physical runner temp path", () => {
+    const steps = job("fork-macos-ci.yml", "test")["steps"]
+    if (!Array.isArray(steps)) throw new Error("fork CI must define test steps")
+    const codex = steps.filter(isRecord).find((step) => step["name"] === "Test Codex")
+    expect(codex?.["if"]).toBe("matrix.suite == 'codex'")
+    expect(codex?.["run"]).toContain('temp_dir=$(cd "$RUNNER_TEMP" && pwd -P)')
+    expect(codex?.["run"]).toContain('TMPDIR="$temp_dir" bun run test:codex')
+  })
+
   test("#then the inherited CI cannot allocate testing jobs for the fork's merge group", () => {
     for (const name of ["lint-ratchet", "ci-mode"]) {
       for (const github of [forkPush, forkPullRequest, forkMerge]) {
