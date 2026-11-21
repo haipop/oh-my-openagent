@@ -41,7 +41,7 @@ describe("remote import guard G1 over packages/**", () => {
   })
 
   test("#given S3 #then a remote surface reaches the remote layer only through components/remote/index.ts", () => {
-    // The import boundary of #13414: thread tools, the omo remote CLI and the TUI are thin callers of the one module.
+    // The import boundary of #13414: thread tools and the TUI are thin callers of the one module.
     expect(asRecord(repo.s3)).toEqual(usesOf(S3_OFFENDERS))
   })
 
@@ -114,10 +114,14 @@ describe("remote import guard G1 matcher", () => {
   )
   write(`${senpi}/src/components/thread/tool.test.ts`, 'import { sessions } from "../remote/sessions.ts"\n')
   write(
-    "packages/omo-native/remote-verb.ts",
-    'import { sessions } from "../omo-senpi/src/components/remote/sessions.ts"\n',
+    "packages/omo-opencode/src/cli/service-auth/device-service-handoff.ts",
+    'import { connectDeviceService } from "@oh-my-opencode/device-service-core"\nconnectDeviceService()\n',
   )
-  write("packages/omo-native/other.ts", 'import { sessions } from "../omo-senpi/src/components/remote/sessions.ts"\n')
+  write(
+    "packages/omo-opencode/src/cli/service-auth/other.ts",
+    'import { connectDeviceService } from "@oh-my-opencode/device-service-core"\nconnectDeviceService()\n',
+  )
+  write(`${senpi}/src/other.ts`, 'import { sessions } from "./components/remote/sessions.ts"\n')
   write(
     `${senpi}/src/components/remote/tui/command.ts`,
     'import { sessions } from "../sessions.ts"\nimport { run } from "./run.ts"\n',
@@ -138,6 +142,7 @@ describe("remote import guard G1 matcher", () => {
 
   test("#given each import shape #then S2 matches value uses by source and exempts types, tests and L2", () => {
     expect(asRecord(fixture.s2)).toEqual({
+      "packages/omo-opencode/src/cli/service-auth/other.ts": ["connectDeviceService"],
       [`${senpi}/src/alias-user.ts`]: ["connectDeviceService"],
       [`${senpi}/src/lazy-user.ts`]: ["connectDeviceService"],
       [`${senpi}/src/machine.ts`]: ["createRelayTransport"],
@@ -152,7 +157,6 @@ describe("remote import guard G1 matcher", () => {
       [`${senpi}/src/components/thread/tool-l1.ts`]: ["packages/device-service-core/src/"],
       [`${senpi}/src/components/thread/tool-member.ts`]: ["packages/omo-senpi/src/components/remote/"],
       [`${senpi}/src/components/thread/tool-port.ts`]: ["packages/omo-senpi/src/components/remote/"],
-      "packages/omo-native/remote-verb.ts": ["packages/omo-senpi/src/components/remote/"],
       [`${senpi}/src/components/remote/tui/command.ts`]: ["packages/omo-senpi/src/components/remote/"],
       [`${senpi}/src/components/remote/tui/run.ts`]: ["packages/device-service-core/src/"],
     })

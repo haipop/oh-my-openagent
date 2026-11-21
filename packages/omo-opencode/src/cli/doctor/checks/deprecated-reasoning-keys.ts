@@ -1,9 +1,7 @@
-import { hasMigrationMarker } from "@oh-my-opencode/omo-config-core"
 import { parse } from "jsonc-parser/lib/esm/main.js"
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { REASONING_UNIFICATION_MIGRATION_ID } from "../../../config-migration"
 import { CHECK_IDS, CHECK_NAMES } from "../framework/constants"
 import type { CheckResult, DoctorIssue } from "../framework/types"
 
@@ -16,8 +14,6 @@ const CANONICAL_REPLACEMENT = new Map([
   // `fallback_models` list would promote the first fallback; the hint must say so.
   ["fallback_models", "models: [<primary>, ...fallbacks] (the first entry becomes the primary model)"],
 ])
-
-const MIGRATE_SUFFIX = ", or run: oh-my-openagent config migrate"
 
 const TUNING_CONTAINERS = new Set(["agents", "categories", "models"])
 // Canonical migration output nests provider-native keys (thinking, textVerbosity) under these
@@ -32,7 +28,7 @@ function isHarnessBlock(key: string): boolean {
   return key.startsWith("[") && key.endsWith("]")
 }
 
-function collectIssues(configPath: string, value: unknown, prefix: string, fixSuffix: string): DoctorIssue[] {
+function collectIssues(configPath: string, value: unknown, prefix: string): DoctorIssue[] {
   if (!isRecord(value)) return []
   const issues: DoctorIssue[] = []
 
@@ -43,7 +39,7 @@ function collectIssues(configPath: string, value: unknown, prefix: string, fixSu
       issues.push({
         title: "Deprecated config key",
         description: `${configPath}: ${path}`,
-        fix: `Replace ${key} with ${replacement}${fixSuffix}`,
+        fix: `Replace ${key} with ${replacement}`,
         severity: "warning",
         affects: [path],
       })
@@ -54,24 +50,17 @@ function collectIssues(configPath: string, value: unknown, prefix: string, fixSu
     // A profile only scopes overrides; its own name is not part of the key path users edit.
     if (prefix.length === 0 && key === "profiles") {
       for (const profile of Object.values(child)) {
-        issues.push(...collectIssues(configPath, profile, "", fixSuffix))
+        issues.push(...collectIssues(configPath, profile, ""))
       }
       continue
     }
     if (key === "[opencode]") continue
     if (TUNING_CONTAINERS.has(key) || isHarnessBlock(key) || prefix.length > 0) {
-      issues.push(...collectIssues(configPath, child, path, fixSuffix))
+      issues.push(...collectIssues(configPath, child, path))
     }
   }
 
   return issues
-}
-
-// The reasoning-unification migration is one-shot: once its marker is recorded in the file,
-// `config migrate` answers "Nothing to migrate", so advertising it would send users in a loop.
-function migrateFixSuffix(parsed: unknown): string {
-  if (isRecord(parsed) && hasMigrationMarker(parsed, REASONING_UNIFICATION_MIGRATION_ID)) return ""
-  return MIGRATE_SUFFIX
 }
 
 function userConfigPaths(): readonly string[] {
@@ -88,7 +77,7 @@ export async function checkDeprecatedReasoningKeys(): Promise<CheckResult> {
     if (!existsSync(configPath)) continue
     scanned.push(configPath)
     const parsed: unknown = parse(readFileSync(configPath, "utf-8"))
-    issues.push(...collectIssues(configPath, parsed, "", migrateFixSuffix(parsed)))
+    issues.push(...collectIssues(configPath, parsed, ""))
   }
 
   return {

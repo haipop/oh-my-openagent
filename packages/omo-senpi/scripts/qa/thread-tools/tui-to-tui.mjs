@@ -18,7 +18,7 @@ import {
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
-  omo,
+  threadSdk,
   runScenario,
   waitFor,
 } from "./lib/gateway.mjs"
@@ -41,13 +41,13 @@ await runScenario("tui-to-tui", async ({ report, fake, scratch, install, startTu
   await beta.submit("/name tui-beta")
   const listed = await waitFor(
     async () => {
-      const result = await omo(scratch, install, ["thread", "list", "--json"])
+      const result = await threadSdk(scratch, install, "list")
       const rows = Array.isArray(result.json?.threads) ? result.json.threads : []
       const a = rows.find((row) => row.thread === alphaEndpoint.durableId)
       const b = rows.find((row) => row.thread === betaEndpoint.durableId)
       return a?.name === "tui-alpha" && b?.name === "tui-beta" ? rows : undefined
     },
-    { label: "omo thread list shows both names", timeoutMs: 30_000 },
+    { label: "thread SDK lists both names", timeoutMs: 30_000 },
   )
   const realTimes = (row) =>
     [row.created_at, row.updated_at].every(
@@ -56,13 +56,15 @@ await runScenario("tui-to-tui", async ({ report, fake, scratch, install, startTu
   const rows = listed.filter((row) => row.thread === alphaEndpoint.durableId || row.thread === betaEndpoint.durableId)
   report.assert(
     "list-both-terminals-named",
-    rows.length === 2 && rows.every((row) => row.surface === "tui" && row.endpoint?.kind === "tui" && realTimes(row)),
+    rows.length === 2 &&
+      alphaEndpoint.socket !== betaEndpoint.socket &&
+      rows.every((row) => row.surface === "tui" && realTimes(row)),
     JSON.stringify(
       rows.map((row) => ({
         id: row.thread,
         name: row.name,
         surface: row.surface,
-        endpoint: row.endpoint?.kind,
+        socket: row.thread === alphaEndpoint.durableId ? alphaEndpoint.socket : betaEndpoint.socket,
         created_at: row.created_at,
         updated_at: row.updated_at,
       })),

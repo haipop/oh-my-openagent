@@ -5,7 +5,7 @@ import { fakeKeychain } from "./fake-keychain.test-support"
 
 /**
  * The login keychain and OmO's own keychain behind one fake helper, with the routing the real helper enforces
- * (packages/omo-native/keychain-helper/src/store-select.c, proven against the real helper by
+ * (src/cli/service-auth/keychain-helper/src/store-select.c, proven against the real helper by
  * keychain-helper-dedicated.test.ts): no store field is refused while active, "omo" is refused while inactive,
  * "omo-migrate" and "login" are the copy steps, and store-erase keeps a sign-in.
  */

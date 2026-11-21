@@ -19,9 +19,7 @@ describe("shipped path classifier", () => {
     "packages/omo-senpi/src/components/onboarding/component.ts",
     "crates/senpi-desktop-backend-macos/src/ax/menus/select.rs",
     "crates/senpi-desktop-core/src/menus/mod.rs",
-    "packages/omo-native/compile-entry.ts",
-    "packages/omo-native/compiled-update.ts",
-    "packages/omo-native/bin/lib/daemon-operations.js",
+    "packages/omo-opencode/src/opencode-v2/server-entry.ts",
     "packages/omo-senpi/plugin/runtime/dag/sdk.js",
     "packages/omo-senpi/plugin/package.json",
     "packages/omo-senpi/plugin/daemon-launch-spec.json",
@@ -35,8 +33,6 @@ describe("shipped path classifier", () => {
     "postinstall.mjs",
     "package.json",
     "script/build-binaries.ts",
-    "script/build-omo-binary.ts",
-    "script/build-omo-native.ts",
     "script/build.ts",
     "script/qa/strip-ansi.mjs",
   ])("requires a note for %s", (path) => {
@@ -60,8 +56,6 @@ describe("shipped path classifier", () => {
     "AGENTS.md",
     "changes.md",
     "scripts/check-third-party-notices.mjs",
-    "script/qa/omo-native-eval-smoke-stop.mjs",
-    "script/qa/omo-native-eval-smoke.mjs",
     ".github/workflows/ci.yml",
     "bun.lock",
   ])("does not require a note for %s", (path) => {

@@ -1,4 +1,6 @@
-# Installing the compiled `omo` binary
+# Historical: Installing the compiled `omo` binary
+
+The `feat/deepseek-harness` branch no longer ships this standalone binary. The commands below describe historical releases and do not install this branch. See the [host plugin installation guide](install.md).
 
 Each GitHub Release of oh-my-openagent attaches per-OS/arch single-file `omo` executables plus a `SHA256SUMS` checksum file. The binary is self-contained: it embeds the senpi engine, the omo plugin payload, and every runtime resource, and provisions them into `~/.omo/binary-runtime/<version>/` on first run. No node, npm, or bun install is required.
 

@@ -2,7 +2,7 @@ import { expect, onTestFinished, test } from "bun:test"
 import { join, resolve } from "node:path"
 import { fakeApi, minted, temporaryHome } from "./test-support"
 
-const launcher = join(resolve(import.meta.dir, "../../../../.."), "packages", "omo-native", "bin", "omo.js")
+const cli = resolve(import.meta.dir, "../index.ts")
 
 async function unreachableOrigin(): Promise<string> {
   const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: () => new Response(null) })
@@ -15,7 +15,7 @@ async function omo(args: string[], api: string) {
   const home = await temporaryHome()
   const keystore = fakeApi(() => Response.json(null))
   const child = Bun.spawn(
-    [process.execPath, "--preload", join(import.meta.dir, "cli-keystore.fixture.ts"), launcher, ...args],
+    [process.execPath, "--preload", join(import.meta.dir, "cli-keystore.fixture.ts"), cli, ...args],
     {
       cwd: home,
       env: {

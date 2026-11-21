@@ -8,7 +8,6 @@ import { checkTools, gatherToolsSummary } from "./tools"
 import { checkModels } from "./model-resolution"
 import { checkTelemetry } from "./telemetry"
 import { checkTeamMode } from "./team-mode"
-import { checkTuiPluginConfig } from "./tui-plugin-config"
 import { checkCodex, gatherCodexSummary } from "./codex"
 import { gatherEditionDistTags, resolveLatestVersion } from "./latest-version"
 import { CODEX_COMPONENTS_CHECK_ID, CODEX_COMPONENTS_CHECK_NAME, checkCodexComponents } from "./codex-components"
@@ -33,11 +32,6 @@ export function getAllCheckDefinitions(): CheckDefinition[] {
       id: CHECK_IDS.CONFIG,
       name: CHECK_NAMES[CHECK_IDS.CONFIG],
       check: checkConfig,
-    },
-    {
-      id: CHECK_IDS.TUI_PLUGIN,
-      name: CHECK_NAMES[CHECK_IDS.TUI_PLUGIN],
-      check: checkTuiPluginConfig,
     },
     {
       id: "deprecated-reasoning-keys",

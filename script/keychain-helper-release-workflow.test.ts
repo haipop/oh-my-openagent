@@ -2,11 +2,11 @@
 
 import { describe, expect, test } from "bun:test"
 import { spawnSync } from "node:child_process"
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { load } from "js-yaml"
-import { KEYCHAIN_HELPER_IDENTIFIER } from "../packages/omo-native/keychain-helper/build"
-import { KEYCHAIN_HELPER_RELEASE_ASSET, KEYCHAIN_HELPER_SOURCE } from "./release-keychain-helper-target"
+import { KEYCHAIN_HELPER_IDENTIFIER } from "../packages/omo-opencode/src/cli/service-auth/keychain-helper/build"
+import { KEYCHAIN_HELPER_RELEASE_ASSET } from "./release-keychain-helper-target"
 import { runBlock } from "./release-workflow-test-steps"
 import {
   SUBPROCESS_TEST_TIMEOUT_MS,
@@ -43,16 +43,14 @@ describe("keychain helper release workflows (#11262)", () => {
     const asset = stepAt(steps, "Upload keychain helper release asset artifact")
 
     expect(job?.["runs-on"]).toBe("macos-latest")
-    // Skipped only when verified operator-built darwin artifacts replace it (#13921).
-    expect(job?.if).toBe(
-      "github.repository == 'code-yeongyu/oh-my-openagent' && inputs.operator_darwin_artifacts == ''",
-    )
-    expect(workflow.jobs.build?.needs).toEqual(["desktop-engine", "keychain-helper", "operator-darwin"])
+    expect(job?.if).toBe("github.repository == 'code-yeongyu/oh-my-openagent'")
+    expect(workflow.jobs.build?.needs).toEqual(["desktop-engine", "keychain-helper"])
+    expect(workflow.jobs["operator-darwin"]).toBeUndefined()
     expect([build.index, sign.index, verify.index, pack.index, tarball.index, asset.index]).toEqual(
       [build.index, sign.index, verify.index, pack.index, tarball.index, asset.index].slice().sort((a, b) => a - b),
     )
     expect(build.value.run).toContain(
-      'bun packages/omo-native/keychain-helper/build.ts --out "$HELPER_DIR/omo-keychain"',
+      'bun packages/omo-opencode/src/cli/service-auth/keychain-helper/build.ts --out "$HELPER_DIR/omo-keychain"',
     )
     for (const name of MATERIAL) expect(sign.value.env?.[name]).toBe(`\${{ secrets.${name} }}`)
     expect(sign.value.env?.MACOS_SIGNING_REQUIRED).toBe("true")
@@ -108,54 +106,45 @@ describe("keychain helper release workflows (#11262)", () => {
   )
 
   test.skipIf(process.platform === "win32")(
-    "darwin build legs stage the helper for the compiled payload and the platform package before both builds",
+    "both darwin build legs stage the executable helper before archiving the npm platform package",
     () => {
       const steps = jobSteps(platformWorkflow, "build")
       const launcher = stepAt(steps, "Build launcher")
       const download = stepAt(steps, "Download keychain helper")
       const stage = stepAt(steps, "Stage keychain helper")
-      const compile = stepAt(steps, "Build release binary")
       const compress = stepAt(steps, "Compress binary")
-      const darwinGate =
-        "startsWith(matrix.platform, 'darwin-') && (steps.release-assets.outputs.binary_exists != 'true' || steps.check.outputs.skip != 'true')"
+      const darwinGate = "steps.check.outputs.skip != 'true' && startsWith(matrix.platform, 'darwin-')"
 
       expect(launcher.index).toBeLessThan(download.index)
       expect(download.index).toBeLessThan(stage.index)
-      expect(stage.index).toBeLessThan(compile.index)
       expect(stage.index).toBeLessThan(compress.index)
       expect(download.value.if).toBe(darwinGate)
       expect(stage.value.if).toBe(darwinGate)
       expect(download.value.with).toEqual({ name: "keychain-helper", path: ".omo/keychain-helper" })
 
-      const script = runBlock(
-        platformWorkflow,
-        "      - name: Stage keychain helper\n",
-        "      - name: Build release binary\n",
-      )
-      for (const packageSkip of ["false", "true"]) {
+      const script = stage.value.run ?? ""
+      for (const platform of ["darwin-arm64", "darwin-x64"]) {
         withRoot("omo-keychain-stage-", (root) => {
+          const bin = join(root, `packages/oh-my-opencode-${platform}/bin`)
+          mkdirSync(bin, { recursive: true })
+          expect(bash(script, root, { PLATFORM: platform }).status).not.toBe(0)
+          helperTarball(root, 0o644)
+          expect(bash(script, root, { PLATFORM: platform }).status).not.toBe(0)
           helperTarball(root)
-          const result = bash(script, root, { PLATFORM: "darwin-arm64", PACKAGE_SKIP: packageSkip })
+          const result = bash(script, root, { PLATFORM: platform })
           expect(result.status, String(result.stderr)).toBe(0)
-          expect(mode(join(root, KEYCHAIN_HELPER_SOURCE))).toBe(0o755)
-          const packaged = join(root, "packages/oh-my-opencode-darwin-arm64/bin/omo-keychain")
-          expect(existsSync(packaged)).toBe(packageSkip === "false")
-          if (packageSkip === "false") {
-            expect(mode(packaged)).toBe(0o755)
-            expect(readFileSync(packaged, "utf8")).toBe(HELPER_BYTES)
-          }
+          const packaged = join(bin, "omo-keychain")
+          expect(mode(packaged)).toBe(0o755)
+          expect(readFileSync(packaged, "utf8")).toBe(HELPER_BYTES)
         })
       }
     },
     SUBPROCESS_TEST_TIMEOUT_MS,
   )
 
-  test("the native darwin smoke checks the provisioned helper against its requirement", () => {
-    const smoke = stepAt(jobSteps(platformWorkflow, "build"), "Smoke test release binary").value.run ?? ""
-    expect(smoke).toContain('local helper="${HOME}/.omo/binary-runtime/${OMO_AI_VERSION}/omo-keychain"')
-    expect(smoke).toContain('bun script/keychain-helper-release.ts verify "$helper"')
-    expect(smoke).toMatch(
-      /darwin-arm64\)\n(?:.*\n)*?\s+assert_first_run_provisioned\n\s+assert_keychain_helper_provisioned\n/,
-    )
+  test("the platform legs do not build or smoke-test the retired standalone runtime", () => {
+    const steps = jobSteps(platformWorkflow, "build")
+    expect(steps.map(({ name }) => name)).not.toContain("Build release binary")
+    expect(steps.map(({ name }) => name)).not.toContain("Smoke test release binary")
   })
 })

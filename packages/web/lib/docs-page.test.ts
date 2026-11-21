@@ -1,23 +1,15 @@
 import { describe, expect, test } from "bun:test"
 
 import { DOC_SOURCES } from "./docs-content.generated"
-import { headingId, splitDocPage, splitDocSections } from "./docs-page"
+import { headingId, splitDocSections } from "./docs-page"
 import { DOC_GUIDE_PAGES } from "./docs-sections"
 
-describe("splitDocPage", () => {
-  test("cuts the widget block out of the install guide and splits the rest by h2", () => {
-    const page = splitDocPage(DOC_SOURCES["guide/install.md"] ?? "")
-
-    expect(page.lead).toContain("<h1>")
-    expect(page.lead).not.toContain("get.omo.dev/install.sh")
-    expect(page.afterWidget).not.toContain("<h2>")
-    expect(page.sections.map((section) => section.id)).toContain("fix-your-path")
-    for (const section of page.sections) expect(section.html.startsWith("<h2>")).toBe(true)
-  })
-
-  test("fails the build when the markers are missing", () => {
-    expect(() => splitDocPage("<h1>Install</h1><h2>Update</h2>")).toThrow(/install-tabs markers/)
-  })
+test("the generated install guides lead to the fork and do not offer standalone commands", () => {
+  const guide = DOC_SOURCES["guide/install.md"] ?? ""
+  const section = DOC_SOURCES["guide/installation.md"] ?? ""
+  expect(guide).toContain('href="https://github.com/haipop/oh-my-openagent/blob/feat/deepseek-harness/README.md"')
+  expect(section).toContain('href="/docs/install"')
+  expect(`${guide}\n${section}`).not.toMatch(/get\.omo\.dev\/install\.(?:sh|ps1)|omo-ai|install-tabs/)
 })
 
 describe("splitDocSections", () => {

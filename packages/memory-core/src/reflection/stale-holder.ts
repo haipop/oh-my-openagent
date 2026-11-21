@@ -1,6 +1,4 @@
-// Who holds the reflection lock, decided fail-closed (#10377). This is the one decision behind the
-// session's stale-lock recovery and the `omo doctor` report: the CLI runs a generated bundle of this
-// file (script/build-reflection-lock.ts, checked for staleness by its test), so the two cannot drift.
+// Who holds the reflection lock, decided fail-closed (#10377).
 //
 // Dead means all of: the launcher on this host is gone (or its pid now belongs to another process),
 // the publish claimant, if any, is gone, and the run recorded a valid outcome. Anything that cannot be

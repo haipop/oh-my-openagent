@@ -65,11 +65,11 @@ describe("the release step refuses a service-auth bundle it cannot verify", () =
     expect(() => assertReleaseKeySet(bundle)).toThrow("carries 2 public_keys_hex literals")
   })
 
-  test("#given the committed service-auth bundle #when it is asserted #then it carries exactly the committed release key set", async () => {
-    const bundle = await Bun.file(
-      join(import.meta.dir, "../packages/omo-native/bin/lib/service-auth.generated.js"),
-    ).text()
-
-    expect(assertReleaseKeySet(bundle)).toEqual(committedReleaseKey.public_keys_hex)
-  })
+  test.each(["omo-device-account.js", "omo-device-service.js", "omo-wake.js"])(
+    "the shipped Senpi extension %s carries exactly the committed release key set",
+    async (filename) => {
+      const bundle = await Bun.file(join(import.meta.dir, "../packages/omo-senpi/plugin/extensions", filename)).text()
+      expect(assertReleaseKeySet(bundle)).toEqual(committedReleaseKey.public_keys_hex)
+    },
+  )
 })

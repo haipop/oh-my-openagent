@@ -2,9 +2,10 @@
 /**
  * stopped-target (todo 16, IS-6): the target TUI is SIGSTOPped. A send cannot wake it (its endpoint
  * does not answer), so the row stays queued; SIGCONT raises the terminal's `continue` edge and the
- * delivery is applied exactly once with no further input.
+ * delivery is applied exactly once with no further input. Automatic same-device wake is disabled
+ * in the scratch project so this exercises recovery by the original terminal.
  *
- * The sender is a second pty TUI that listed the target while it ran. A fresh `omo thread send`, from
+ * The sender is a second pty TUI that listed the target while it ran. A fresh SDK send, from
  * a process that never saw the terminal answer, reaches it too (once PD-2): `queued_offline` like the
  * sender's, since a stopped terminal takes nothing until it continues, and SIGCONT applies it once.
  */
@@ -13,17 +14,19 @@ import {
   awaitToolResult,
   awaitTuiEndpoint,
   callDirective,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
   runScenario,
+  useManualRecovery,
   waitFor,
 } from "./lib/gateway.mjs"
 
 const TOKEN = "QA-TOKEN-stopped"
 
 await runScenario("stopped-target", async ({ report, fake, scratch, install, startTui }) => {
+  useManualRecovery(scratch)
   const tui = await startTui("tui-target")
   const target = await awaitTuiEndpoint(scratch, tui)
   await tui.submit("warm up QA-TOKEN-warm")
@@ -38,7 +41,9 @@ await runScenario("stopped-target", async ({ report, fake, scratch, install, sta
   report.assert(
     "sender-sees-target-live",
     listed?.kind === "ok" &&
-      listed.threads.some((thread) => thread.thread === target.durableId && thread.alive === true),
+      listed.threads.some(
+        (thread) => thread.thread === target.durableId && thread.status === "live" && thread.surface === "tui",
+      ),
     `threads=${listed?.threads?.length}`,
   )
 
@@ -49,7 +54,10 @@ await runScenario("stopped-target", async ({ report, fake, scratch, install, sta
   report.assert("target-stopped", stat.startsWith("T"), `ps stat=${stat}`)
   const keystrokes = tui.keystrokes
   const deliveries = []
-  const fresh = await cliSend(scratch, install, target.durableId, "QA-TOKEN-stopped-cli from a fresh process")
+  const fresh = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: "QA-TOKEN-stopped-cli from a fresh process",
+  })
   report.assert(
     "fresh-cli-send-queued-offline",
     fresh.json?.kind === "ok" &&

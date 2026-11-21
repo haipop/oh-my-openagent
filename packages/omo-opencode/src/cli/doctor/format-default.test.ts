@@ -62,7 +62,7 @@ function createCodexSummary(): CodexDoctorSummary {
 }
 
 describe("formatDefault", () => {
-  it("prints the OpenCode edition, installed, latest, and update command when no issues exist", () => {
+  it("prints the OpenCode edition and installed version without an update command", () => {
     //#given
     const result = createBaseResult()
     result.latestVersion = "3.5.0"
@@ -72,7 +72,7 @@ describe("formatDefault", () => {
 
     //#then
     expect(output).toContain("System OK · Edition: OpenCode · Installed: 3.4.0 · Latest: 3.5.0")
-    expect(output).toContain("Update: bunx oh-my-openagent install")
+    expect(output).not.toContain("Update:")
     expect(output).not.toContain("found:")
   })
 
@@ -86,7 +86,7 @@ describe("formatDefault", () => {
 
     //#then
     expect(output).toContain("System OK · Edition: OpenCode · Installed: 3.4.0 · Latest: could not check")
-    expect(output).toContain("Update: bunx oh-my-openagent install")
+    expect(output).not.toContain("Update:")
   })
 
   it("prints numbered issue list when issues exist", () => {

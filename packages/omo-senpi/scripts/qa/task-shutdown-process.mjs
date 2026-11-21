@@ -11,7 +11,7 @@ import { engineStateDir } from "./sandbox-child-env.mjs"
 const script = fileURLToPath(import.meta.url)
 const packageRoot = resolve(dirname(script), "../..")
 const worktree = resolve(packageRoot, "../..")
-const pluginRoot = join(worktree, "packages/omo-native/plugin")
+const pluginRoot = join(packageRoot, "plugin")
 const mockProvider = join(packageRoot, "scripts/qa/mock-provider/index.ts")
 
 function alive(pid) {

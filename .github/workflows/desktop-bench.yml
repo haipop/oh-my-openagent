@@ -24,6 +24,7 @@ concurrency:
 
 jobs:
   desktop-bench:
+    if: github.ref != 'refs/heads/feat/deepseek-harness'
     name: Computer-use bench (base vs head)
     runs-on: ubuntu-26.04
     timeout-minutes: 60

@@ -15,10 +15,6 @@
     "script/agent-command-string-scan.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) generatedCodexInstallerPath, CODEX_INSTALL_BUILD_MARKER_PREFIX, buildCodexInstaller
     "script/build-codex-install.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) buildReleaseBinary
-    "script/build-omo-binary.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) CATEGORY_COVERAGE_ENTRY, CATEGORY_COVERAGE_ARTIFACT, CATEGORY_COVERAGE_PRELUDE_ASSET, TASK_CONFIG_ENTRY, TASK_CONFIG_ARTIFACT
-    "script/build-omo-native.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) getBackfillMarkerPattern
     "script/changelog-backfill-index.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) fragmentPath
@@ -37,30 +33,16 @@
     "script/ci-fast-path.mjs": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) judgeLeg
     "script/ci-leg-tests-guard.mjs": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) claudeCodePackageFor, lockfileIntegrity
-    "script/claude-code-pin.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) proveStagedDesktopEngine
     "script/desktop-engine-ci-proof.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) citedPaths
     "script/docs-paths-exist.test.mjs": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) readSenpiPackageJson
-    "script/engine-build-defines.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) ENGINE_OPTIONAL_SIDECAR_PACKAGES
-    "script/engine-sidecar-sources.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) KEEP_BETAS
     "script/installer/mirror-plan.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) RATCHET_RULES
     "script/lint-ratchet.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) normalizeCallText, THIRD_PARTY_EXCLUDED_BUNDLES, shippedRootEntries
     "script/no-raw-tls-client-scan.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) DESKTOP_ENGINE_SOURCE_PATHS, desktopEngineFingerprint
-    "script/omob-desktop-engine.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) binaryIdentity
-    "script/omob-provenance.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) isOmobRuntimeDir, ProcessListUnavailableError
-    "script/omob-runtime-prune.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) resolveSenpiWorkspaceDirs
-    "script/omob-senpi-workspace-reset.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) parityDir
     "script/oxlint/biome-parity.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) default
@@ -69,12 +51,6 @@
     "script/package-log-blocks.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) main
     "script/preflight-trust.mjs": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) compareDirectories
-    "script/qa/dependency-audit/comparison.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) captureSchema, wireSchema, assistantSchema
-    "script/qa/dependency-audit/contracts.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) FIXTURES, requireSuccess, execute, hashFile, createRuntime, writeModels, normalized, disposeRuntime
-    "script/qa/dependency-audit/runtime.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) STOP_CHORD
     "script/qa/desktop/linux/engine.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) RUN_MARKER
@@ -95,8 +71,6 @@
     "script/qa/desktop/macos/tcc.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) INVALID_STOP_CHORD
     "script/qa/desktop/windows/scenarios-guard.ts": ["exports"],
-    // pre-existing at origin dev 4686e425b5: unused export(s) DOCTOR_EXPECTED_ONLY, sectionKey, compareLines, BINARY_ONLY_REQUIRED_STEPS, memoryReceiptFailures
-    "script/qa/omo-native-parity-compare.mjs": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) GOVERNED_SURFACES
     "script/retired-agent-names.test.ts": ["exports"],
     // pre-existing at origin dev 4686e425b5: unused export(s) ROOT_TEST_SERIAL_QUARANTINE, POSIX_TEST_TIMEOUT_MS
@@ -131,13 +105,11 @@
         "script/bun-panic-retry.ts",
         "script/ci-leg-tests-guard.mjs",
         "script/published-install-smoke.mjs",
-        "script/verify-omo-ai-payload.mjs",
         "script/release-announce.ts",
         "script/preflight-trust.mjs",
         "script/release-version.mjs",
         "script/verify-npm-payload.mjs",
         "script/wait-registry-versions.mjs",
-        "script/senpi-worker-compile.ts",
         "test-support/remove-tree.ts",
         "**/*.{test,spec}.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
         "**/*.test-d.ts",
@@ -145,10 +117,7 @@
         "script/build-cli-node.ts",
         "script/build-codex-install.ts",
         "script/build-model-capabilities.ts",
-        "script/build-omo-binary.ts",
-        "script/build-omo-native.ts",
         "script/build-omo-schema.ts",
-        "script/build-omob.ts",
         "script/build-schema.ts",
         "script/build.ts",
         "script/changelog-section.ts",
@@ -169,8 +138,6 @@
         "script/qa/desktop/linux/expect-sabotage.ts",
         "script/qa/desktop/windows.ts",
         "script/qa/desktop/windows/expect-sabotage.ts",
-        "script/qa/omo-native-eval-smoke.mjs",
-        "script/qa/omo-native-parity-smoke.mjs",
         "script/qa/python-kernel-warmup.mjs",
         "script/release-desktop-engine-target.ts",
         "script/release-latest-flag.ts",
@@ -236,41 +203,13 @@
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/published-install-smoke.d.mts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit-capture.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit-compare.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/changelog.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/graph.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/inventory.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/model-server.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/providers.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/rpc.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/session-cases.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/startup.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/dependency-audit/webfetch.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/desktop/macos.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/desktop/macos/scenarios-input.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/desktop/macos/scenarios-safety.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/fixtures/dependency-audit/extension.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/fixtures/dependency-audit/helper.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/member-boot-profile.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omo-native-parity-compare.d.mts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/omp-item2-admission.mjs",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
@@ -303,8 +242,6 @@
         "script/qa/omp-item6.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/omp-item9.ts",
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/types/senpi-pi-tui.d.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/web-terminal-redaction.d.mts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
@@ -3557,93 +3494,6 @@
         "src/tools/task/index.ts": ["exports"],
         // pre-existing at origin dev 4686e425b5: duplicate export(s) TaskObjectSchema, TaskSchema
         "src/tools/task/types.ts": ["duplicates"],
-      },
-    },
-    "packages/omo-native": {
-      "includeEntryExports": true,
-      // knip's default entry patterns (an explicit "entry" replaces them), files run by path from package.json scripts or CI
-      // workflows, and the test, config and helper files plugins report with exports unchecked: listing them export-checks
-      // them too (script/knip-entry-exports.test.ts probes every knip entry and fails on one that is missing).
-      "entry": [
-        "{index,cli,main}.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
-        "src/{index,cli,main}.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
-        "bin/senpi-patch.mjs",
-        "**/*.{test,spec}.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
-        "**/*.test-d.ts",
-        "test/account-linux-no-gdbus.fixture.ts",
-        "test/bun-bin-shim.fixture.ts",
-        "test/bun-bin-shim.test-support.ts",
-        "test/daemon-test-support.ts",
-        "test/fixtures/compiled-setup/entry.ts",
-        "test/fixtures/provisioned-handoff/entry.ts",
-        "test/fixtures/senpi-hooks-state-child.mjs",
-        "test/fixtures/senpi-hooks-state-consumer.mjs",
-        "test/packed-consumer.mjs",
-        "test/teardown.test-support.ts",
-      ],
-      "ignoreFiles": [
-        // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "launcher-commands.ts",
-      ],
-      // pre-existing at origin dev 4686e425b5: executables this package runs that it does not declare
-      "ignoreBinaries": ["gdbus", "mkfifo"],
-      "ignoreIssues": {
-        // pre-existing at origin dev 4686e425b5: unused export(s) AGENT_DIR_ENV_NAMES, ADOPTED_STATE_FILES, defaultAgentDir
-        "bin/lib/agent-dir.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) BUN_MIN_VERSION, resolveBunGuard, findNodeBinary
-        "bin/lib/bun-runtime.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) COMPUTER_USE_RUNTIME
-        "bin/lib/computer-use-doctor.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) TASK_CONFIG_RUNTIME
-        "bin/lib/daemon-config.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) aggregateEndpoints
-        "bin/lib/daemon-status.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) omoInstallsOnPath, findLegacyPackages, findOpenCodeRegistrations, formatMigrationLines, openCodeRoutingReport
-        "bin/lib/doctor-migration.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) PI_CONFIG_FILES
-        "bin/lib/doctor-pi-config.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) installedDistTag
-        "bin/lib/doctor.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) engineHostCall, rollbackMigrateCall
-        "bin/lib/launcher.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) formatModelChainLines
-        "bin/lib/model-chains.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) readInstalledVersion
-        "bin/lib/self-update.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) default
-        "bin/lib/service-auth.generated.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) API_KEY_TYPE_ACCEPTLIST
-        "bin/lib/setup-credentials.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) KNOWN_AUTH_SCHEMA_VERSIONS
-        "bin/lib/setup-detect.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) NATIVE_AGENT_NAMES, readEditionRouting, readModelChoices, hasModelChoices, translateModelRef, convertModelChoices, nativeRoutingLine, openCodeRoutingGap, openCodeRoutingNotice
-        "bin/lib/setup-opencode-models.d.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) translateModelRef, nativeRoutingLine
-        "bin/lib/setup-opencode-models.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) API_BY_NPM
-        "bin/lib/setup-opencode-providers.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) SETUP_SOURCES, canonicalAgentDir, scanSetup, collectSetupPlans, SetupStaleError, staleSetupTargets, authWritesPending, applySetupStages
-        "bin/lib/setup-stream.d.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) threadExitCode
-        "bin/lib/thread.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) UPDATE_USAGE
-        "bin/lib/update-args.js": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) unixSecondsFromCommittedAt, engineBuildStampFromComponent, engineBuildIdentityLine
-        "build-info.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) compiledUpdateCommand
-        "compile-entry.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) stripDeletedExecSuffix
-        "compile-runtime.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) ENGINE_EXTRA_CA_ENV
-        "compiled-ca-trust.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) COMPILED_DIAGNOSTIC_RUNTIME
-        "compiled-diagnostic-runtime.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) resolveDaemonTaskSettings
-        "task-config-entry.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) SOURCE_ROOT
-        "test/bun-bin-shim.fixture.ts": ["exports"],
-        // pre-existing at origin dev 4686e425b5: unused export(s) identityRealpath, existsOnly
-        "test/bun-bin-shim.test-support.ts": ["exports"],
       },
     },
     "packages/web": {

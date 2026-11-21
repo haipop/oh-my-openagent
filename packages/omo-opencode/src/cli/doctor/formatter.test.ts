@@ -103,7 +103,7 @@ function createCodexDoctorResult(): DoctorResult {
 
 describe("formatDoctorOutput", () => {
   describe("#given default mode", () => {
-    it("shows the edition, installed, latest, and update command when no issues", async () => {
+    it("shows the OpenCode edition without a V1 update command", async () => {
       //#given
       const result = createDoctorResult()
       const { formatDoctorOutput } = await import(`./framework/formatter?default-ok-${Date.now()}`)
@@ -113,7 +113,7 @@ describe("formatDoctorOutput", () => {
 
       //#then
       expect(output).toContain("System OK · Edition: OpenCode · Installed: 3.4.0 · Latest: 3.5.0")
-      expect(output).toContain("Update: bunx oh-my-openagent install")
+      expect(output).not.toContain("Update:")
     })
 
     it("shows issue count and details when issues exist", async () => {

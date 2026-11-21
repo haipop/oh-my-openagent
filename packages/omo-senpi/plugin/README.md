@@ -49,13 +49,7 @@ Then install the built local path:
 senpi install /absolute/path/to/omo/packages/omo-senpi/plugin
 ```
 
-The OMO installer will also support the Senpi target:
-
-```sh
-omo install --platform=senpi
-```
-
-Only local-path installs are supported in v1. `git:` and `npm:` installs are not supported because `extensions/` and `skills/` are generated build outputs, not checked-in source trees.
+This branch supports local-path installation into Senpi. To uninstall, run `senpi remove` with the same local path. No standalone OmO launcher is required. Do not use a `git:` or `npm:` install specifier.
 
 ## Bundled MCP servers
 

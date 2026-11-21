@@ -177,7 +177,7 @@ describe("computer-v3-guards --residue", () => {
         "README.md": "the computer module\n",
         "CHANGELOG.md": "- senpi-desktop-engine was removed\n",
         "changes/unreleased/1.md": "senpi-desktop is gone\n",
-        "packages/omo-native/changes.md": "SENPI_DESKTOP_BACKEND dropped\n",
+        "packages/omo-senpi/changes.md": "SENPI_DESKTOP_BACKEND dropped\n",
         "crates/omo-computer-core/parity/ORACLE-PROVENANCE.tsv": "new path\told path\nx\tcrates/senpi-desktop-core/x\n",
         "crates/omo-computer-safety/src/legacy_marker.rs": "// reads <runtime>/senpi-desktop/<uid>/stop\n",
       })

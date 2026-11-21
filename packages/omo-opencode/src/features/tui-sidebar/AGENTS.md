@@ -35,13 +35,13 @@ TUI side:     1s poll → readMirror() → derivers → computeView() → viewKe
 ## KEY EXPORTS
 
 - `TuiStateMirror` — constructed in `src/create-managers.ts` when sidebar enabled; deps injected (`client`, `backgroundManager`, optional `getStatuses`/`sessionAgentResolver`).
-- `readMirror`, `computeView`, `viewKey`, `buildViewNodes`, derivers, `POLL_INTERVAL_MS` — consumed by `src/tui.ts` on the render side.
+- `readMirror`, `computeView`, `viewKey`, `buildViewNodes`, derivers, `POLL_INTERVAL_MS` — no source TUI reader remains after retirement of `src/tui.ts`; exports are retained only for the co-located private tests.
 - `TuiRuntimeSnapshot` — the cross-process contract; bump `MIRROR_SCHEMA_VERSION` on shape changes (readers drop non-matching versions).
 
 ## LIFECYCLE / WIRING
 
 - Writer: `create-managers.ts` instantiates the mirror; `onEvent()` triggers debounced flush, `start()` adds heartbeat, `stop()` clears timers and resolves pending flushes.
-- Reader: `tui.ts` polls every 1s, re-renders only when `viewKey` changes, falls back to idle roster view (from local config) when the mirror is missing or stale.
+- Reader: none in this package. The former `tui.ts` polling loop is retired; no installer or startup path writes `tui.json`.
 - View selection: active if any of agents/jobs/loop is live; broken if config invalid and nothing active; idle otherwise.
 
 ## CONVENTIONS

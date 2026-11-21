@@ -3,7 +3,6 @@ import { serveDownloadStats } from "./download-stats"
 import { runDownloadsRollup } from "./downloads-rollup"
 import type { Env, RequestContext } from "./env"
 import { isChannel } from "./release-names"
-import { docsRedirect, isScriptName, scriptForRoot, serveScript } from "./scripts"
 import { serveReleaseAsset } from "./serve-release"
 
 const RELEASE_PATH = /^\/v\/([^/]+)\/([^/]+)$/
@@ -19,14 +18,9 @@ function plain(status: number, body: string): Response {
 export async function route(request: Request, ctx: RequestContext): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") return plain(405, "method not allowed")
   const { pathname } = new URL(request.url)
-  if (pathname === "/") {
-    const script = scriptForRoot(request)
-    return script === null ? docsRedirect() : serveScript(request, ctx, script)
-  }
+  if (["/", "/install.sh", "/install.ps1"].includes(pathname)) return plain(410, "standalone installer retired")
   if (pathname === "/healthz") return plain(200, "ok")
   if (pathname === "/stats/downloads") return serveDownloadStats(ctx)
-  const scriptName = pathname.slice(1)
-  if (isScriptName(scriptName)) return serveScript(request, ctx, scriptName)
   const channel = CHANNEL_PATH.exec(pathname)?.[1]
   if (channel !== undefined)
     return isChannel(channel) ? serveChannel(request, ctx, channel) : plain(404, "unknown channel")

@@ -2,7 +2,7 @@ import { existsSync, lstatSync, mkdirSync, realpathSync } from "@oh-my-opencode/
 import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 
-import { attestUsernsRoots, inheritedTrustPaths, USERNS_ROOTS_ENV } from "../../../../omo-native/trust-userns"
+import { attestUsernsRoots, inheritedTrustPaths, USERNS_ROOTS_ENV } from "./trust-userns"
 
 import type { ReflectionSpawnArgs } from "./worker/spawn"
 

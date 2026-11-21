@@ -22,7 +22,7 @@ const SENPI_SYNC_HEADING_MATCHERS = new Set([
 export function isProductSource(path: string): boolean {
   return (
     /\.[cm]?[jt]sx?$/.test(path) &&
-    /^(?:(?:src|app|lib|workers|bin)\/|packages\/[^/]+\/(?:src|app|lib|components|i18n|plugin)\/|packages\/omo-native\/bin\/|packages\/shared-skills\/skills\/[^/]+\/(?:[^/]+\/)*scripts\/)/.test(
+    /^(?:(?:src|app|lib|workers|bin)\/|packages\/[^/]+\/(?:src|app|lib|components|i18n|plugin)\/|packages\/shared-skills\/skills\/[^/]+\/(?:[^/]+\/)*scripts\/)/.test(
       path,
     ) &&
     !/(?:^|\/)(?:__tests__|tests?|testkit|fixtures|testUtils|_generated|vendor|vendored|upstreams|node_modules|dist|install-dist)(?:\/|$)/.test(

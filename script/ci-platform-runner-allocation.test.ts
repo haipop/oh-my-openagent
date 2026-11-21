@@ -108,6 +108,11 @@ const pullRequest = (labels: readonly string[]) => ({
   event: { pull_request: { number: 1, labels: labels.map((name) => ({ name })) } },
 })
 const push = { event_name: "push", ref: "refs/heads/dev", event: {} }
+const forkBranch = "feat/deepseek-harness"
+const forkRef = `refs/heads/${forkBranch}`
+const forkPush = { ...push, ref: forkRef }
+const forkPullRequest = { ...pullRequest([]), base_ref: forkBranch }
+const forkMerge = { event_name: "merge_group", event: { merge_group: { base_ref: forkRef } } }
 
 describe("#given every workflow a pull request triggers", () => {
   test("#then a pull request without the opt-in label schedules no macOS or Windows runner", () => {
@@ -204,10 +209,102 @@ describe("#given the OS matrix jobs that report required contexts", () => {
   )
 })
 
-describe("#given native binary parity, which has no ubuntu leg", () => {
-  test("#then the whole job is skipped outside the full matrix and heavy validation", () => {
-    const condition = String(job("ci.yml", "native-binary-parity")["if"])
-    expect(condition).toBe("needs.ci-mode.outputs.run_heavy == 'true' && needs.ci-mode.outputs.full_matrix == 'true'")
+describe("#given the standalone native distribution was removed", () => {
+  test("#then CI does not schedule its binary parity job", () => {
+    expect(jobs("ci.yml")["native-binary-parity"]).toBeUndefined()
+  })
+})
+
+describe("#given the fork branch only validates macOS", () => {
+  test("#then pushes and PRs select the dedicated native workflow and exclude dev", () => {
+    const file = "fork-macos-ci.yml"
+    const triggers = workflow(file)["on"]
+    if (!isRecord(triggers)) throw new Error("fork CI must define events")
+    expect(triggers.push).toEqual({ branches: [forkBranch] })
+    expect(triggers.pull_request).toEqual({ branches: [forkBranch] })
+    expect(triggers.merge_group).toEqual({ types: ["checks_requested"] })
+    const suites = ["core", "codex", "senpi", "desktop"]
+    const validation = job(file, "test")
+    expect(validation["strategy"]).toMatchObject({ matrix: { suite: suites } })
+    expect(validation["runs-on"]).toBe("macos-15")
+    expect(scheduledRunners(file, forkPush, "false")).toEqual(suites.map(() => "test: macos-15"))
+    expect(scheduledRunners(file, forkPullRequest, "false")).toHaveLength(suites.length)
+    expect(scheduledRunners(file, forkMerge, "false")).toHaveLength(suites.length)
+    expect(scheduledRunners(file, push, "true")).toEqual([])
+    expect(scheduledRunners(file, pullRequest([OPT_IN_LABEL]), "true")).toEqual([])
+  })
+
+  test("#then the inherited CI cannot allocate testing jobs for the fork's merge group", () => {
+    for (const name of ["lint-ratchet", "ci-mode"]) {
+      for (const github of [forkPush, forkPullRequest, forkMerge]) {
+        expect(evaluate(job("ci.yml", name)["if"], { github })).toBe(false)
+      }
+      expect(evaluate(job("ci.yml", name)["if"], { github: push })).toBe(true)
+    }
+    for (const name of ["macos-test-1-status", "macos-test-2-status", "macos-codex-status", "macos-senpi-status"]) {
+      expect(
+        evaluate(job("ci.yml", name)["if"], {
+          github: forkMerge,
+          needs: { "ci-mode": { result: "skipped" } },
+        }),
+      ).toBe(false)
+    }
+  })
+
+  test.each([
+    "computer-live-linux.yml",
+    "computer-live-windows-full.yml",
+    "desktop-linux-qa.yml",
+    "desktop-windows-qa.yml",
+    "isolation-linux-fs.yml",
+    "memory-takeover-trace.yml",
+  ])("#then %s excludes the fork PR even when its path filters match", (file) => {
+    const triggers = workflow(file)["on"]
+    expect(triggers).toMatchObject({ pull_request: { "branches-ignore": [forkBranch] } })
+  })
+
+  test.each([
+    ["computer-fixtures.yml", ["platform", "native-linux", "electron-linux", "webview-linux"]],
+    ["computer-live-windows-full.yml", ["platform"]],
+    ["desktop-bench.yml", ["desktop-bench"]],
+    ["desktop-linux-qa.yml", ["linux-desktop-qa"]],
+    ["desktop-windows-qa.yml", ["platform"]],
+    ["get-worker-ci.yml", ["worker"]],
+    ["isolation-linux-fs.yml", ["linux-fs"]],
+    ["memory-takeover-trace.yml", ["platform"]],
+    ["windows-flake-soak.yml", ["soak"]],
+  ] as const)("#then manual %s cannot start testing from the fork ref", (file, names) => {
+    const github = { ...forkPush, event_name: "workflow_dispatch" }
+    for (const name of names) {
+      expect(evaluate(job(file, name)["if"], { github, inputs: { test_ref: "" } })).toBe(false)
+      expect(
+        evaluate(job(file, name)["if"], {
+          github: { ...github, ref: push.ref },
+          inputs: { test_ref: "" },
+        }),
+      ).toBe(true)
+    }
+  })
+
+  test.each([
+    ["memory-takeover-trace.yml", "platform"],
+    ["windows-flake-soak.yml", "soak"],
+  ])("#then manual %s cannot retarget testing to the fork ref", (file, name) => {
+    for (const testRef of [forkBranch, forkRef]) {
+      expect(
+        evaluate(job(file, name)["if"], {
+          github: { ...push, event_name: "workflow_dispatch" },
+          inputs: { test_ref: testRef },
+        }),
+      ).toBe(false)
+    }
+  })
+
+  test("#then the workflow lint gate uses macOS on the fork and retains the upstream runner", () => {
+    const runsOn = job("lint-workflows.yml", "actionlint")["runs-on"]
+    expect(evaluate(runsOn, { github: forkPush })).toBe("macos-15")
+    expect(evaluate(runsOn, { github: forkPullRequest })).toBe("macos-15")
+    expect(evaluate(runsOn, { github: push })).toBe("ubuntu-26.04")
   })
 })
 

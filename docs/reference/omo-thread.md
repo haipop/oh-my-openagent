@@ -617,8 +617,10 @@ try {
 }
 ```
 
-`pluginRoot` is `<omo-ai install>/plugin`. Every method resolves to the same data union as the
-CLI's JSON; nothing throws for a refusal. Endpoints come from the endpoint registry on disk; pass
+`pluginRoot` is the retained Senpi plugin directory (`packages/omo-senpi/plugin` after
+`bun run build:senpi-plugin`). The standalone CLI commands above are upstream reference;
+they are not shipped by this branch. SDK methods return a result union rather than throwing
+for a refusal. Endpoints come from the endpoint registry on disk; pass
 `engineStatusAll` (a function returning the stdout of `omo host status --all --include-workers --json`) only to
 enumerate from that report instead. Neither the SDK nor `omo thread` runs that command itself: it is a full
 diagnostic pass that took 8-9 s on a host with about 50 endpoints.

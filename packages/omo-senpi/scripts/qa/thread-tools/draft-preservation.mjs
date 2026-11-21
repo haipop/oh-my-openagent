@@ -13,7 +13,7 @@ import { join } from "node:path"
 import {
   assistantTexts,
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   deliveryIdOf,
   deliveryRow,
@@ -36,7 +36,10 @@ await runScenario("draft-preservation", async ({ report, evidence, scratch, inst
   const screenBefore = tui.screen()
   const before = await renderTerminalPng(tui.rawText(), join(evidence, "draft-before.png"))
 
-  const sent = await cliSend(scratch, install, target.durableId, `${TOKEN} arrives while the user types`)
+  const sent = await threadSdk(scratch, install, "send", {
+    thread: target.durableId,
+    text: `${TOKEN} arrives while the user types`,
+  })
   const deliveryId = sent.json?.delivery_id
   report.assert(
     "send-held-behind-draft",

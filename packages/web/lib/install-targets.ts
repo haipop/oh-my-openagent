@@ -1,18 +1,6 @@
 export const INSTALL_TARGETS = ["unix", "powershell", "cmd"] as const
 export type InstallTarget = (typeof INSTALL_TARGETS)[number]
 
-export const INSTALL_COMMANDS: Readonly<Record<InstallTarget, string>> = {
-  unix: "curl -fsSL https://get.omo.dev/install.sh | bash",
-  powershell: "irm https://get.omo.dev/install.ps1 | iex",
-  cmd: 'powershell -ExecutionPolicy Bypass -c "irm https://get.omo.dev/install.ps1 | iex"',
-}
-
-export const INSTALL_PROMPTS: Readonly<Record<InstallTarget, string>> = {
-  unix: "$",
-  powershell: "PS>",
-  cmd: ">",
-}
-
 export type InstallOs = "windows" | "macos" | "linux" | "chromeos" | "ios" | "android" | "unknown"
 
 export interface InstallClient {

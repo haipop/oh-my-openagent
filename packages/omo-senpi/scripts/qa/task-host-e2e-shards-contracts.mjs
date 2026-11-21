@@ -8,9 +8,6 @@ const TESTS = [
   "packages/senpi-task/src/lifecycle/host-endpoint-inside-host.test.ts",
   "packages/senpi-task/src/lifecycle/host-session-endpoint.test.ts",
   "packages/senpi-task/src/store/rollback-migrate.test.ts",
-  "packages/omo-native/test/daemon-rollback.test.ts",
-  "packages/omo-native/test/daemon-rollback-options.test.ts",
-  "packages/omo-native/test/daemon-drain-wait.test.ts",
   "packages/omo-senpi/src/components/task/shard-routing.test.ts",
   "packages/senpi-task/src/runners/rpc-host/shard-socket.test.ts",
 ]

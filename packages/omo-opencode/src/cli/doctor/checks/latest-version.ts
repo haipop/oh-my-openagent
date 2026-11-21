@@ -16,6 +16,7 @@ export function gatherEditionDistTags(
   target: DoctorTarget,
   fetchDistTags: FetchDistTags = fetchNpmDistTags,
 ): Promise<NpmDistTags | null> {
+  if (target !== "codex") return Promise.resolve(null)
   return fetchDistTags(EDITION_PACKAGE_NAMES[target])
 }
 
@@ -27,6 +28,7 @@ function resolveInstalledVersion(input: LatestVersionInput): string | null {
 }
 
 export function resolveLatestVersion(input: LatestVersionInput): string | null {
+  if (input.target !== "codex") return null
   if (!input.distTags) return null
   const channel = extractChannel(resolveInstalledVersion(input))
   return input.distTags[channel] ?? input.distTags.latest ?? null

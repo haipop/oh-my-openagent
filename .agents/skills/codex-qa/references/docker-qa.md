@@ -1,11 +1,9 @@
-# Docker QA (default path)
+# Optional Docker QA
 
-Run Codex QA inside a DISPOSABLE container so the real `~/.codex` is never
-touched and you always test against the latest codex. The container is the
-sandbox: latest released codex (and opencode) are baked in, a COPY of your
-config is loaded, and the container is removed on exit (`docker run --rm`). This
-is the DEFAULT; fall back to running the scripts locally (see SKILL.md) only
-when Docker is unavailable or on Windows.
+This is an opt-in development recipe. Use the native, isolated path in
+[SKILL.md](../SKILL.md) for fork acceptance, without copying the real
+`~/.codex` configuration. The container is removed on exit
+(`docker run --rm`).
 
 ## Use it
 

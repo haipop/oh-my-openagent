@@ -1,11 +1,9 @@
-# Docker QA (default path)
+# Optional Docker QA
 
-Run opencode QA inside a DISPOSABLE container so the host is never touched and
-you always test against the latest opencode. The container itself is the
-sandbox: latest released opencode + codex are baked in, a COPY of your local
-config is loaded, and the container is removed on exit (`docker run --rm`). This
-is the DEFAULT; fall back to running the scripts locally (see SKILL.md) only
-when Docker is unavailable or on Windows.
+This is an opt-in development recipe. Use the native, isolated path in
+[SKILL.md](../SKILL.md) for fork acceptance; the image's default OpenCode
+version and copied settings do not satisfy that gate. The container is
+removed on exit (`docker run --rm`).
 
 ## Use it
 

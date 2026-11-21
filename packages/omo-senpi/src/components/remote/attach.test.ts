@@ -4,7 +4,7 @@ import { createConnection } from "node:net"
 import { dirname } from "node:path"
 import { PEER, SESSION_ID } from "../../../../device-service-core/test/local-api/conformance/world.ts"
 import { pushDetached, pushFrame, pushRecords, pushSnapshot, reader, THREAD, worldWith } from "./attach.test-support"
-import { pipeAddress, serveRemoteAttach } from "../../../../omo-native/remote-attach"
+import { pipeAddress, serveRemoteAttach } from "./testing/remote-attach-server"
 import type { RemoteClientDeps } from "./client"
 import { attachMember } from "./attach"
 import { nextActionFor, remoteFailure } from "./codes"
@@ -57,7 +57,7 @@ const attached = async (
   return { owner, handle: outcome.value }
 }
 
-// The endpoint server a caller outside `omo remote`'s local-only graph injects (#13440): omo-native's own.
+// The endpoint server a caller outside `omo remote`'s local-only graph injects (#13440); this test owns a local copy.
 const SERVING: Partial<RemoteClientDeps> = { serveAttach: (attach, label) => serveRemoteAttach(attach, { label }) }
 
 // Windows serves the endpoint on a named pipe derived from the path and secret. The `.sock` path is not a file.

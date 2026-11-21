@@ -15,7 +15,7 @@ Dispatch `publish.yml` with `lazycodex_only=true`, `publish_lazycodex=true`, and
 
 The source tag remains `lazycodex-v<version>`. No omo manifests, npm packages or release tags are changed. Normal omo releases reject the reserved `lazycodex` identifier; LazyCodex-only releases reject normal omo versions. Validation runs in release metadata before release-state drafting, and the local omo publish/preparation script enforces the same reservation. Historical tag/npm collision guards remain for immutable payloads and old releases. Existing consumed plain versions cannot be reclaimed.
 
-Full releases keep their existing channel semantics: LazyCodex follows the root prerelease channel (or `latest` for stable releases); `omo-ai` keeps its ordered version mapping and always publishes to `beta`. No prerelease may explicitly use the `latest` channel.
+LazyCodex follows the root prerelease channel (or `latest` for stable releases). No prerelease may explicitly use the `latest` channel. The feature branch does not publish `omo-ai`; see the [current release process](release-process.md).
 
 ## Preflight diagnostics and retry budget
 

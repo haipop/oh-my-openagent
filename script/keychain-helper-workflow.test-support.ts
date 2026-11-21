@@ -64,11 +64,11 @@ export function bash(script: string, cwd: string, env: Record<string, string>): 
   })
 }
 
-export function helperTarball(root: string): string {
+export function helperTarball(root: string, helperMode = 0o755): string {
   const source = join(root, "signed")
   mkdirSync(source, { recursive: true })
   writeFileSync(join(source, "omo-keychain"), HELPER_BYTES)
-  chmodSync(join(source, "omo-keychain"), 0o755)
+  chmodSync(join(source, "omo-keychain"), helperMode)
   mkdirSync(join(root, ".omo", "keychain-helper"), { recursive: true })
   const tar = spawnSync(
     "tar",

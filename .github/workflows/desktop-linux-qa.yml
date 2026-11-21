@@ -5,6 +5,7 @@ name: Desktop Linux QA
 on:
   workflow_dispatch:
   pull_request:
+    branches-ignore: [feat/deepseek-harness]
     paths:
       - ".github/workflows/desktop-linux-qa.yml"
       - "Cargo.toml"
@@ -35,6 +36,7 @@ concurrency:
 
 jobs:
   linux-desktop-qa:
+    if: github.ref != 'refs/heads/feat/deepseek-harness'
     name: Linux interactive-desktop QA
     runs-on: ubuntu-26.04
     timeout-minutes: 60

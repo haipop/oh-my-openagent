@@ -67,9 +67,27 @@ describe("glob matching", () => {
 
 describe("rule selection", () => {
   const rules = Object.freeze([
-    Object.freeze({ name: "always", description: "", globs: Object.freeze([]), alwaysApply: true, body: "always body" }),
-    Object.freeze({ name: "tests", description: "", globs: Object.freeze(["**/*.test.ts"]), alwaysApply: false, body: "test body" }),
-    Object.freeze({ name: "python", description: "", globs: Object.freeze(["**/*.py"]), alwaysApply: false, body: "py body" }),
+    Object.freeze({
+      name: "always",
+      description: "",
+      globs: Object.freeze([]),
+      alwaysApply: true,
+      body: "always body",
+    }),
+    Object.freeze({
+      name: "tests",
+      description: "",
+      globs: Object.freeze(["**/*.test.ts"]),
+      alwaysApply: false,
+      body: "test body",
+    }),
+    Object.freeze({
+      name: "python",
+      description: "",
+      globs: Object.freeze(["**/*.py"]),
+      alwaysApply: false,
+      body: "py body",
+    }),
   ])
 
   test("#given a prompt that names a matching path #when selected #then the glob rule joins the always rules", () => {

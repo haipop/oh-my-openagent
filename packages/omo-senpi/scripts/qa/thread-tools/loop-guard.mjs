@@ -8,7 +8,7 @@
  *    unless the user sets one, and A->B->A is allowed); A's row carries hop 3.
  * 2. Fan-out: one turn of A sends to 20 distinct live sessions (opened on one Desktop-thread shard
  *    host, `i-*`); every send is accepted (one turn has no cap on how many sessions it reaches).
- * 3. Burst: 9 concurrent `omo thread send`s to one target: 8 pass, the 9th is `pair_loop_guard`
+ * 3. Burst: 9 concurrent SDK sends to one target: 8 pass, the 9th is `pair_loop_guard`
  *    (`guard: "pair_loop"`, `burst`, `retry_after_ms`); after 5 s of REAL wall time one more passes.
  *    TIME-UNDER-TEST EXCEPTION: the refill is the behavior under test, so this one wait is a
  *    deliberate 5 s wall-clock pause, recorded in the report; nothing else here waits on time.
@@ -20,7 +20,7 @@
 import {
   allToolResults,
   awaitTuiEndpoint,
-  cliSend,
+  threadSdk,
   deliveryEntries,
   hasFlag,
   openHostSession,
@@ -139,12 +139,12 @@ await runScenario(
     )
 
     // ------------------------------------------------------------------ 3. per-pair burst + real refill
-    // The nine sends go out at once: one `omo thread send` takes about a second, so sequential sends
+    // The nine sends go out at once: one fresh-process SDK send takes about a second, so sequential sends
     // would refill tokens between them (5 s each) and the burst would measure the machine, not the cap.
     const burstTarget = targets[0]
     const burst = await Promise.all(
       Array.from({ length: BURST + 1 }, (_, index) =>
-        cliSend(scratch, install, burstTarget, `QA-TOKEN-burst-${index}`),
+        threadSdk(scratch, install, "send", { thread: burstTarget, text: `QA-TOKEN-burst-${index}` }),
       ),
     )
     const passed = burst.filter((result) => result.json?.kind === "ok")
@@ -175,7 +175,10 @@ await runScenario(
       `TIME-UNDER-TEST EXCEPTION: waiting ${REFILL_WAIT_MS} ms of real wall time for one pair-bucket token to refill`,
     )
     await new Promise((resolvePromise) => setTimeout(resolvePromise, REFILL_WAIT_MS))
-    const refilled = await cliSend(scratch, install, burstTarget, "QA-TOKEN-burst-after-refill")
+    const refilled = await threadSdk(scratch, install, "send", {
+      thread: burstTarget,
+      text: "QA-TOKEN-burst-after-refill",
+    })
     report.assert("burst-refills-after-5s", refilled.json?.kind === "ok", refilled.stdout.trim().slice(0, 200))
   },
   MUTANT ? { patches: ["hop_cap_2"], installName: "omo-ai-loop-guard-mutant" } : {},

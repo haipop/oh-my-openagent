@@ -4,7 +4,6 @@ const CODEX_ONLY_ERROR =
 export const PASSTHROUGH_COMMANDS: ReadonlySet<string> = new Set([
   "doctor",
   "cleanup",
-  "get-local-version",
   "boulder",
   "refresh-model-capabilities",
   "run",

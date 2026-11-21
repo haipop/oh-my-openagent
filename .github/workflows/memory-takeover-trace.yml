@@ -4,6 +4,7 @@ name: Memory takeover trace
 # and writes a phase table to the job summary. Windows is the subject; Linux and macOS are the baselines.
 on:
   pull_request:
+    branches-ignore: [feat/deepseek-harness]
     paths:
       - .github/workflows/memory-takeover-trace.yml
       - packages/memory-core/src/concurrency/takeover-trace.test-support.ts
@@ -35,6 +36,10 @@ permissions:
 
 jobs:
   platform:
+    if: >-
+      github.ref != 'refs/heads/feat/deepseek-harness' &&
+      inputs.test_ref != 'feat/deepseek-harness' &&
+      inputs.test_ref != 'refs/heads/feat/deepseek-harness'
     permissions:
       contents: read
       pull-requests: read

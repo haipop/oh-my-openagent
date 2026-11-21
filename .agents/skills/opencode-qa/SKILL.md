@@ -10,9 +10,10 @@ helper script and a deep reference. Every script ships a `--self-test` that
 asserts its scenario against the live machine, so the scripts are both the QA
 tools and their own regression checks.
 
-Verified against opencode v1.17.7 (bun 1.3.12, macOS). Confirm the installed
-version with `opencode --version`; the surface is stable but always sanity
-check a flag with `opencode <cmd> --help`.
+For this fork, verify the packaged plugin on a native OpenCode v2.3.2 host.
+The generic CLI and server recipes below were written against v1.17.7; do
+not use them as V2 acceptance evidence. Confirm flags with
+`opencode <cmd> --help` before reusing a recipe.
 
 ## Golden rules (read before running anything)
 
@@ -31,19 +32,25 @@ check a flag with `opencode <cmd> --help`.
 
 ## Setup
 
-Scripts live next to this file under `scripts/`. Invoke them from this skill
-directory (or with their absolute path):
+**Run QA on the native host. Docker is not required.** For the fork's V2
+plugin, build and pack the local candidate as in the root README, then run from
+the repository root:
 
 ```bash
-cd <this-skill-dir>                        # .agents/skills/opencode-qa
-bash scripts/lib/common.sh --self-check    # confirm the harness + deps
+bun script/qa/opencode-v2-acceptance.mjs \
+  --candidate ./omo-opencode-v2.tgz \
+  --evidence-dir ".omo/evidence/$(date +%Y%m%d-%H%M%S)-opencode-v2"
 ```
 
-**Docker is the default QA surface.** Run QA inside a disposable container that
-has the latest opencode and a copy of your config, with the host untouched:
-`script/agent/qa-docker.sh` (see [references/docker-qa.md](references/docker-qa.md)).
-The local scripts below are the fallback for when Docker is unavailable or on
-Windows.
+The V2 driver uses a disposable HOME, temporary XDG directories, and a
+loopback model fixture. It runs a no-plugin control and checks that the cold
+unpack loads the candidate, including Sisyphus, prompt context and tool calls.
+
+For the generic recipes below, use the scripts in this skill directory:
+
+```bash
+bash .agents/skills/opencode-qa/scripts/lib/common.sh --self-check
+```
 
 `common.sh` provides the shared harness (DB path, SQL escaping, isolated XDG
 sandbox, free port, server start/stop, and an EXIT-trap cleanup). It requires
@@ -216,4 +223,4 @@ isolated sandbox and clean up on exit.
 - `references/tui-tmux.md` - tmux recipe, isolation, TUI control API
 - `references/testing-harness.md` - how opencode tests itself (bun test)
 - `references/sdk.md` - the @opencode-ai/sdk client (reference only)
-- `references/docker-qa.md` - run QA in a disposable Docker container (default; local is the fallback)
+- `references/docker-qa.md` - optional container recipe; not a fork acceptance path

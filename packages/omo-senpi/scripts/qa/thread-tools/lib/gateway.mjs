@@ -8,9 +8,8 @@
  *   test; unset or empty, importing this module exits 2 naming the engine omo pins, before anything
  *   is installed or created),
  *   installed once into a kit dir (`THREAD_QA_KIT_DIR`, default `<QA tmp root>/qa-thread-tools-kit`; the root is `/tmp` on POSIX, the OS temp dir on Windows);
- * - `omo` is this checkout's launcher (`packages/omo-native/bin/omo.js`) over a COPY of this
- *   checkout's built plugin (`packages/omo-senpi/plugin`), so `omo`, `omo --session`, `omo thread`
- *   and `omo daemon adopt` are the real CLI paths;
+ * - the pty and shard host launch the released Senpi with a COPY of the built plugin;
+ *   connector-side calls run the copied plugin's SDK in a separate process;
  * - every terminal is a real pty TUI (`Bun.spawn({ terminal })`) whose screen is kept by
  *   `@xterm/headless`, and every assertion reads target state: the endpoint's own answers, the
  *   gateway store and the session file.
@@ -39,7 +38,7 @@ import {
 } from "node:fs"
 import { createServer } from "node:http"
 import { createConnection } from "node:net"
-import { dirname, join, resolve, sep } from "node:path"
+import { dirname, isAbsolute, join, resolve, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { withTelemetryOptOut } from "../../telemetry-opt-out-env.mjs"
@@ -47,7 +46,7 @@ import { parseDeliveryText } from "./delivery-text.mjs"
 import { requireEngineVersion } from "./engine-version.mjs"
 import { QA_TMP_ROOT } from "./qa-tmp.mjs"
 import { createScratchLayout } from "./scratch-layout.mjs"
-import { sameVersion } from "../../../../../omo-native/bin/lib/same-version.js"
+import { sameVersion } from "../../same-version.mjs"
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -60,8 +59,6 @@ const KIT_DEPENDENCIES = {
   "@xterm/headless": "6.0.0",
   "@xterm/xterm": "6.0.0",
 }
-const SOURCE_BIN = join(OMO_ROOT, "packages", "omo-native", "bin")
-const SOURCE_NATIVE_MANIFEST = join(OMO_ROOT, "packages", "omo-native", "package.json")
 const SOURCE_PLUGIN = join(OMO_ROOT, "packages", "omo-senpi", "plugin")
 
 /** One bus every event source reports to; `waitFor` re-checks its predicate on each tick. */
@@ -377,7 +374,7 @@ export async function ensureKit() {
 
 /**
  * Patches applied to a scratch COPY of the built plugin. Each names the bundle, the exact text it
- * replaces and why; `buildOmoInstall` refuses a patch that does not match exactly once, so a rebuilt
+ * replaces and why; `copyPlugin` refuses a patch that does not match exactly once, so a rebuilt
  * bundle can never silently skip one.
  */
 export const PATCHES = {
@@ -389,8 +386,8 @@ export const PATCHES = {
    */
   crash_after_admit: {
     file: "extensions/omo.js",
-    from: "e._test?.afterAdmit?.(p.row,f.kind)",
-    to: '(e._test?.afterAdmit??((r,k)=>{if(process.env.THREAD_QA_CRASH_AFTER_ADMIT===k){try{process.getBuiltinModule("node:fs").writeFileSync(process.env.THREAD_QA_CRASH_MARKER,r.delivery_id)}catch{}process.kill(process.pid,"SIGKILL")}}))(p.row,f.kind)',
+    from: /([\w$]+)\._test\?\.afterAdmit\?\.\(([\w$]+)\.row,([\w$]+)\.kind\)/,
+    to: '($1._test?.afterAdmit??((r,k)=>{if(process.env.THREAD_QA_CRASH_AFTER_ADMIT===k){try{process.getBuiltinModule("node:fs").writeFileSync(process.env.THREAD_QA_CRASH_MARKER,r.delivery_id)}catch{}process.kill(process.pid,"SIGKILL")}}))($2.row,$3.kind)',
   },
   /**
    * `lost-ack`: the store worker's `afterDbCommit` test hook (it runs only right after a delivery's
@@ -412,16 +409,13 @@ export const PATCHES = {
 }
 
 /**
- * A runnable omo install in the kit: `<kit>/<name>/{bin,package.json,plugin}`, resolving the engine
- * from `<kit>/node_modules`. Rebuilt from this checkout on every call.
+ * Copy the built plugin into the kit so scenario patches never modify the checkout.
  */
-export async function buildOmoInstall(name, patchNames = []) {
-  await ensureKit()
+async function copyPlugin(name, patchNames) {
+  const kit = await ensureKit()
   const root = join(KIT_DIR, name)
   rmSync(root, { recursive: true, force: true })
   mkdirSync(root, { recursive: true })
-  cpSync(SOURCE_BIN, join(root, "bin"), { recursive: true })
-  cpSync(SOURCE_NATIVE_MANIFEST, join(root, "package.json"))
   cpSync(SOURCE_PLUGIN, join(root, "plugin"), { recursive: true })
   const applied = []
   for (const patchName of patchNames) {
@@ -437,7 +431,13 @@ export async function buildOmoInstall(name, patchNames = []) {
     writeFileSync(path, text.replace(patch.from, patch.to))
     applied.push({ patch: patchName, file: patch.file })
   }
-  return { name, root, omoJs: join(root, "bin", "omo.js"), plugin: join(root, "plugin"), patches: applied }
+  return {
+    name,
+    root,
+    senpiCli: join(kit.engineDist, "bundle", "cli.js"),
+    plugin: join(root, "plugin"),
+    patches: applied,
+  }
 }
 
 /* ------------------------------------------------------------------ scratch */
@@ -483,6 +483,12 @@ export function makeScratch(label, fake) {
   })
   watchTree(dir)
   return { label, dir, home, agentDir, work, env: withTelemetryOptOut(env) }
+}
+
+export function useManualRecovery(scratch) {
+  const configDir = join(scratch.work, ".omo")
+  mkdirSync(configDir)
+  writeFileSync(join(configDir, "omo.json"), JSON.stringify({ session_wake: { same_device: false } }))
 }
 
 function mockModels(url) {
@@ -791,7 +797,7 @@ const KEYS = {
 }
 
 /**
- * One interactive `omo` in a real pty. The raw byte stream goes to `<evidence>/<label>.pty.log`; the
+ * One interactive Senpi session with the OmO plugin in a real pty. The raw byte stream goes to `<evidence>/<label>.pty.log`; the
  * screen is an xterm emulator fed the same bytes. `keystrokes` counts every byte this harness wrote
  * to the pty, which is what "no keystroke on its pty" is asserted against.
  */
@@ -799,9 +805,10 @@ export class Tui {
   static async start(scratch, install, { label, args = [], cols = 120, rows = 40, evidence, env = {} }) {
     const term = await headlessTerminal(cols, rows)
     const tui = new Tui(label, term, evidence)
-    const proc = Bun.spawn([process.env.THREAD_QA_NODE ?? "node", install.omoJs, ...args], {
+    // Launch under Bun directly so signals hit Senpi, not its Node re-exec wrapper.
+    const proc = Bun.spawn([process.execPath, install.senpiCli, "--extension", install.plugin, ...args], {
       cwd: scratch.work,
-      env: { ...scratch.env, ...env },
+      env: withTelemetryOptOut({ ...scratch.env, ...env }),
       detached: true,
       terminal: {
         cols,
@@ -922,9 +929,13 @@ export class Tui {
 
 /* ------------------------------------------------------------------ CLI */
 
-/** Run `omo <args>` from the scratch work dir with the scratch env; `--json` output is parsed. */
-export async function omo(scratch, install, args, { env = {}, cwd } = {}) {
-  const result = await run(process.env.THREAD_QA_NODE ?? "node", [install.omoJs, ...args], {
+/** Exercise the built SDK from a fresh process, including its store worker and sender identity. */
+export function threadSdk(scratch, install, method, input = {}, options = {}) {
+  return runCli(scratch, join(here, "sdk-call.mjs"), [install.plugin, method, JSON.stringify(input)], options)
+}
+
+async function runCli(scratch, entry, args, { env = {}, cwd } = {}) {
+  const result = await run(process.env.THREAD_QA_NODE ?? "node", [entry, ...args], {
     cwd: cwd ?? scratch.work,
     env: { ...scratch.env, ...env },
   })
@@ -942,15 +953,23 @@ export async function omo(scratch, install, args, { env = {}, cwd } = {}) {
 
 /**
  * A Desktop-thread shard host (`i-*`), started the way the Desktop starts one: the engine names the
- * shard path (`omo host shard-path --kind i`) and ensures a host there from omo's launch spec, so the
+ * shard path (`senpi host shard-path --kind i`) and ensures a host there from the plugin's launch spec, so the
  * host loads the same (patched) plugin as the terminals.
  */
 export async function startShardHost(scratch, install, owner) {
-  const shard = await omo(scratch, install, ["host", "shard-path", "--kind", "i", "--owner", owner, "--json"])
+  const shard = await runCli(scratch, install.senpiCli, [
+    "host",
+    "shard-path",
+    "--kind",
+    "i",
+    "--owner",
+    owner,
+    "--json",
+  ])
   const socket = shard.json?.socket ?? shard.json?.path ?? shard.stdout.trim().split("\n").pop()
   if (typeof socket !== "string" || !socket.endsWith(".sock"))
     throw new Error(`shard-path answered ${shard.code}: ${shard.stdout} ${shard.stderr}`)
-  const ensured = await omo(scratch, install, [
+  const ensured = await runCli(scratch, install.senpiCli, [
     "host",
     "ensure",
     "--launch-spec",
@@ -980,11 +999,6 @@ export async function openHostSession(client, cwd, extra = {}) {
     sessionPath: row?.sessionPath ?? opened.data.state?.sessionFile,
     row,
   }
-}
-
-/** `omo thread send <target> <text> --json` from the sandbox (principal `cli:<uid>`). */
-export async function cliSend(scratch, install, target, text, args = [], options = {}) {
-  return await omo(scratch, install, ["thread", "send", target, text, "--json", ...args], options)
 }
 
 /* ------------------------------------------------------------------ endpoint client */
@@ -1106,14 +1120,23 @@ export async function awaitTuiEndpoint(scratch, tui, { exclude = [], timeoutMs =
   const client = await EndpointClient.connect(record.socket, `${tui.label}-ctl`)
   const listed = await client.request({ type: "list_sessions" })
   const row = listed.data?.sessions?.[0]
-  if (row === undefined) throw new Error(`${tui.label}: endpoint listed no session: ${JSON.stringify(listed)}`)
+  // The TUI exposes the durable ID as sessionId; shard RPC has a separate routing handle.
+  if (
+    row?.surface !== "tui" ||
+    typeof row.sessionId !== "string" ||
+    row.sessionId.length === 0 ||
+    typeof row.sessionPath !== "string" ||
+    !isAbsolute(row.sessionPath)
+  ) {
+    throw new Error(`${tui.label}: endpoint listed no persisted TUI session: ${JSON.stringify(listed)}`)
+  }
   const state = await client.request({ type: "get_state" })
   return {
     socket: record.socket,
     client,
     row,
-    durableId: row.durableId ?? row.durable_id ?? row.sessionId ?? state.data?.sessionId,
-    sessionPath: row.sessionFile ?? row.session_path ?? row.path ?? state.data?.sessionFile,
+    durableId: row.sessionId,
+    sessionPath: row.sessionPath,
     state: state.data,
   }
 }
@@ -1301,7 +1324,7 @@ export async function runScenario(label, body, { patches = [], installName } = {
     return tui
   }
   try {
-    ctx.install = await buildOmoInstall(installName ?? `omo-ai-${label}`, patches)
+    ctx.install = await copyPlugin(installName ?? `omo-senpi-${label}`, patches)
     ctx.fake = await startFakeModel()
     ctx.scratch = makeScratch(label, ctx.fake)
     report.log(

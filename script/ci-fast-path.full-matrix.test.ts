@@ -357,7 +357,8 @@ describe("full-matrix classification", () => {
     test.each([
       ["a native crate source", "crates/omo-computer-backend-fake/src/lib.rs"],
       ["the Cargo lockfile", "Cargo.lock"],
-      ["the native launcher package", "packages/omo-native/bin/lib/service-auth.generated.js"],
+      ["the Desktop engine release", "script/desktop-engine-release.ts"],
+      ["the signed keychain helper", "packages/omo-opencode/src/cli/service-auth/keychain-helper/build.ts"],
       ["a QA script named for an OS", "script/qa/computer/pool/macos-vm-ops.ts"],
       ["basename contains windows", "packages/senpi-task/src/runners/rpc-process.windows.test.ts"],
       ["powershell script", "script/qa/run-smoke.ps1"],

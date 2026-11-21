@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsS https://get.omo.dev/healthz
-          curl -fsSI https://get.omo.dev/install.sh | grep -i '^cache-control: public, max-age=300'
+          test "$(curl -sS -o /dev/null -w '%{http_code}' https://get.omo.dev/install.sh)" = 410
           curl -fsS https://get.omo.dev/channels/latest
       - name: Write job summary
         if: always()
@@ -58,6 +58,6 @@ jobs:
           JOB_SUMMARY_STATUS: ${{ job.status }}
           JOB_SUMMARY_DETAILS: |
             - Refuses to deploy while a D1 migration is pending, then deploys the omo-get Worker.
-            - Smoke-checks healthz, install.sh caching and the latest channel.
+            - Smoke-checks healthz, the retired install.sh route and the latest channel.
           JOB_SUMMARY_NEXT: A pending-migration stop means the migration must be applied through the reviewed step first; otherwise check wrangler authentication.
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh

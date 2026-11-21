@@ -11,7 +11,7 @@ import {
   staleSetupTargets,
   type SetupPlans,
   type SetupStageResult,
-} from "../../../../omo-native/bin/lib/setup-stream.js"
+} from "./setup/setup-stream.js"
 import type { OnboardingEngineAuthStore } from "./scan-component"
 import type {
   OnboardingApplyResponse,
@@ -194,7 +194,7 @@ function historyItem(item: ProjectCandidate | SessionScanItem): OnboardingScanIt
   return { id: item.sessionKey, kind: "session", state: "found", detail: item.title, project: item.cwd }
 }
 
-export { authWritesPending, staleSetupTargets } from "../../../../omo-native/bin/lib/setup-stream.js"
+export { authWritesPending, staleSetupTargets } from "./setup/setup-stream.js"
 
 /** How an apply's credential additions and notice lines travel: through the engine's locked store, and to the caller's report sink. */
 export interface ApplyOnboardingScanOptions {

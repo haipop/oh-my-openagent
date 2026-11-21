@@ -1,12 +1,6 @@
 import type { Metadata } from "next"
-import type { JSX } from "react"
 import { getTranslations } from "next-intl/server"
-
-import { DocsShell } from "@/components/docs/docs-shell"
-import { wrapTables } from "@/components/docs/wrap-tables"
-import { InstallTabs } from "@/components/landing/install-tabs"
-import { splitDocPage } from "@/lib/docs-page"
-import { loadDocSource } from "@/lib/docs-source"
+import { redirect } from "next/navigation"
 
 export async function generateMetadata({
   params,
@@ -18,29 +12,6 @@ export async function generateMetadata({
   return { title: t("title"), description: t("description") }
 }
 
-export default async function InstallDocsPage(): Promise<JSX.Element> {
-  const t = await getTranslations("docs")
-  const page = splitDocPage(wrapTables(loadDocSource("guide/install.md")))
-
-  return (
-    <DocsShell
-      mobileHeader={t("mobileHeader")}
-      searchLabel={t("searchLabel")}
-      searchPlaceholder={t("searchPlaceholder")}
-      sectionsLabel={t("sectionsLabel")}
-      sections={page.sections.map(({ id, title }) => ({ id, title }))}
-    >
-      <article className="docs-content" dangerouslySetInnerHTML={{ __html: page.lead }} />
-      <InstallTabs className="mt-6" />
-      <article
-        className="docs-content mt-6"
-        dangerouslySetInnerHTML={{ __html: page.afterWidget }}
-      />
-      {page.sections.map((section) => (
-        <section key={section.id} id={section.id} className="scroll-mt-20 lg:scroll-mt-12">
-          <article className="docs-content" dangerouslySetInnerHTML={{ __html: section.html }} />
-        </section>
-      ))}
-    </DocsShell>
-  )
+export default function InstallDocsPage(): never {
+  redirect("https://github.com/haipop/oh-my-openagent/blob/feat/deepseek-harness/README.md")
 }

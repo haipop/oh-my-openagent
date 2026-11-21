@@ -28,6 +28,49 @@ describe("facade manifest", () => {
     })
   })
 
+  it("#given formatted interface members #when generating #then comments and newlines preserve member boundaries", () => {
+    const source = `
+export interface Example {
+  readonly enabled: boolean
+  /**
+   * Reads the state; returns no value when unavailable.
+   * @tier read
+   * @policy none
+   * @wire
+   */
+  read(options?: {
+    readonly limit: number;
+  }): Promise<void>
+}
+`
+    expect(buildFacadeManifest(source).methods).toEqual([
+      {
+        method: "Example.read",
+        params: [{ name: "options", type: "{ readonly limit: number; }", optional: true }],
+        returns: "Promise<void>",
+        tier: "read",
+        policy: "none",
+        wire: [],
+        summary: "Reads the state; returns no value when unavailable.",
+      },
+    ])
+  })
+
+  it("#given a doc comment after a semicolon #when generating #then it describes the next member", () => {
+    const source = `
+export interface Example {
+  readonly enabled: boolean; /**
+   * Reads the state.
+   * @tier read
+   * @policy none
+   * @wire
+   */
+  read(): Promise<void>;
+}
+`
+    expect(buildFacadeManifest(source).methods).toMatchObject([{ method: "Example.read", summary: "Reads the state." }])
+  })
+
   it("#given a method without tags or with an unknown wire method #when generating #then generation fails naming it", () => {
     const untagged = "export interface X {\n\t/** Does a thing. */\n\tgo(): Promise<void>;\n}\n"
     const unknownWire =

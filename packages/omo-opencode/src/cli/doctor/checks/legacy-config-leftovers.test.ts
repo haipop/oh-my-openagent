@@ -12,7 +12,7 @@ afterEach(() => {
 })
 
 describe("legacy config leftovers doctor warning", () => {
-  test("#given a legacy OpenCode config #when doctor collects migration leftovers #then it emits a warning with the migrate command hint", () => {
+  test("#given a legacy OpenCode config #when doctor collects migration leftovers #then it emits a read-only warning without migration advice", () => {
     // given
     const root = mkdtempSync(join(tmpdir(), "omo-doctor-legacy-config-"))
     fixtures.push(root)
@@ -35,7 +35,7 @@ describe("legacy config leftovers doctor warning", () => {
     expect(leftovers[0]).toEndWith(join(".config", "opencode", "oh-my-openagent.json"))
     expect(warning).toMatchObject({
       severity: "warning",
-      fix: expect.stringContaining("oh-my-openagent config migrate"),
+      fix: expect.stringContaining("retired OpenCode V1 migration command performs no writes"),
     })
   })
 })

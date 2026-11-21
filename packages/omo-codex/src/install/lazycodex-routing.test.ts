@@ -1,117 +1,78 @@
 /// <reference types="bun-types" />
 
-import { afterEach, describe, expect, test } from "bun:test"
+import { afterEach, describe, expect, mock, spyOn, test } from "bun:test"
 import process from "node:process"
-import { resolveInstallArgs } from "../../../omo-opencode/src/cli/cli-program"
-import { argsToConfig } from "../../../omo-opencode/src/cli/install-validators"
+import * as p from "@clack/prompts"
+import { resolveInstallArgs } from "../../../omo-opencode/src/cli/install-command-options"
+import { runCliInstaller } from "../../../omo-opencode/src/cli/cli-installer"
+import * as codexInstaller from "../../../omo-opencode/src/cli/install-codex"
+import { validateNonTuiArgs } from "../../../omo-opencode/src/cli/install-validators"
+import { install } from "../../../omo-opencode/src/cli/install"
+import { promptInstallPlatform } from "../../../omo-opencode/src/cli/tui-install-prompts"
 
 describe("lazycodex install routing", () => {
   const originalInvocationName = process.env.OMO_INVOCATION_NAME
+  const originalError = console.error
 
   afterEach(() => {
-    if (originalInvocationName === undefined) {
-      delete process.env.OMO_INVOCATION_NAME
-    } else {
-      process.env.OMO_INVOCATION_NAME = originalInvocationName
-    }
+    if (originalInvocationName === undefined) delete process.env.OMO_INVOCATION_NAME
+    else process.env.OMO_INVOCATION_NAME = originalInvocationName
+    console.error = originalError
+    mock.restore()
   })
 
-  test("defaults platform to codex when invoked as lazycodex", () => {
-    // given
-    process.env.OMO_INVOCATION_NAME = "lazycodex"
+  test.each(["lazycodex", "lazycodex-ai"])("defaults %s to the retained Codex route", (invocationName) => {
+    process.env.OMO_INVOCATION_NAME = invocationName
 
-    // when
-    const args = resolveInstallArgs({
-      tui: false,
-      claude: "no",
-      gemini: "no",
-      copilot: "no",
-    })
-    const config = argsToConfig(args)
+    const args = resolveInstallArgs({ tui: false })
 
-    // then
     expect(args.platform).toBe("codex")
-    expect(config.hasCodex).toBe(true)
-    expect(config.hasOpenCode).toBe(false)
+    expect(args.codexAutonomous).toBeUndefined()
+    expect(validateNonTuiArgs(args)).toEqual({ valid: true, errors: [] })
   })
 
-  test("defaults platform to codex when invoked as lazycodex-ai", () => {
-    // given
-    process.env.OMO_INVOCATION_NAME = "lazycodex-ai"
-
-    // when
-    const args = resolveInstallArgs({
-      tui: false,
-      claude: "no",
-      gemini: "no",
-      copilot: "no",
-    })
-    const config = argsToConfig(args)
-
-    // then
-    expect(args.platform).toBe("codex")
-    expect(config.hasCodex).toBe(true)
-    expect(config.hasOpenCode).toBe(false)
-  })
-
-  test("respects explicit --platform=both", () => {
-    // given
+  test("preserves the default autonomous Codex permission selection", async () => {
     process.env.OMO_INVOCATION_NAME = "lazycodex"
-
-    // when
-    const args = resolveInstallArgs({
-      tui: false,
-      claude: "no",
-      gemini: "no",
-      copilot: "no",
-      platform: "both",
-    })
-    const config = argsToConfig(args)
-
-    // then
-    expect(args.platform).toBe("both")
-    expect(config.hasCodex).toBe(true)
-    expect(config.hasOpenCode).toBe(true)
-  })
-
-  test("leaves omo install unresolved so argsToConfig applies opencode default", () => {
-    // given
-    process.env.OMO_INVOCATION_NAME = "oh-my-opencode"
-
-    // when
-    const args = resolveInstallArgs({
-      tui: false,
-      claude: "no",
-      gemini: "no",
-      copilot: "no",
-    })
-    const config = argsToConfig(args)
-
-    // then
-    expect(args.platform).toBeUndefined()
-    expect(config.hasCodex).toBe(false)
-    expect(config.hasOpenCode).toBe(true)
-  })
-
-  test("leaves unset invocation unresolved so argsToConfig applies opencode default", () => {
-    // given
-    delete process.env.OMO_INVOCATION_NAME
-
-    // when
-    const args = resolveInstallArgs(
-      {
-        tui: false,
-        claude: "no",
-        gemini: "no",
-        copilot: "no",
+    const install = spyOn(codexInstaller, "runCodexInstaller").mockResolvedValue({
+      marketplaceName: "sisyphuslabs",
+      installed: [],
+      configPath: "/tmp/config.toml",
+      codexHome: "/tmp/codex",
+      gitBashPath: null,
+      projectCleanup: {
+        projectRoot: null,
+        configPath: null,
+        changed: false,
+        removedKeys: [],
+        configs: [],
+        artifacts: [],
       },
-      undefined,
-    )
-    const config = argsToConfig(args)
+    })
 
-    // then
-    expect(args.platform).toBeUndefined()
-    expect(config.hasCodex).toBe(false)
-    expect(config.hasOpenCode).toBe(true)
+    const args = resolveInstallArgs({ tui: false })
+    await expect(runCliInstaller(args)).resolves.toBe(0)
+    expect(install).toHaveBeenCalledWith({ autonomousPermissions: true })
+  })
+
+  test("keeps explicit retired platforms on the rejecting install boundary", async () => {
+    process.env.OMO_INVOCATION_NAME = "lazycodex"
+    console.error = mock(() => {})
+
+    const args = resolveInstallArgs({ tui: false, platform: "both" })
+
+    expect(args.platform).toBe("both")
+    expect(validateNonTuiArgs(args).valid).toBe(false)
+    await expect(install(args)).resolves.toBe(1)
+  })
+
+  test.each(["oh-my-opencode", undefined])("generic invocation %p selects Codex interactively", async (_name) => {
+    const select = spyOn(p, "select").mockResolvedValue("codex")
+    const selectCalls = select as unknown as {
+      mock: { calls: readonly (readonly [{ initialValue: unknown; options: readonly [{ value: unknown }] }])[] }
+    }
+
+    await expect(promptInstallPlatform()).resolves.toBe("codex")
+    expect(selectCalls.mock.calls[0]?.[0].initialValue).toBe("codex")
+    expect(selectCalls.mock.calls[0]?.[0].options.map((option) => option.value)).toEqual(["codex"])
   })
 })

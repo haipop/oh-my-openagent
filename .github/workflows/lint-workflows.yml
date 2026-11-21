@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   actionlint:
-    runs-on: ubuntu-26.04
+    runs-on: ${{ (github.ref == 'refs/heads/feat/deepseek-harness' || github.base_ref == 'feat/deepseek-harness') && 'macos-15' || 'ubuntu-26.04' }}
     steps:
       - uses: actions/checkout@v7
 

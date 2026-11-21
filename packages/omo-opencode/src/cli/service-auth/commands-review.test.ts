@@ -12,7 +12,7 @@ for (const scenario of [
   "device-limit",
   "device-name",
 ]) {
-  test(`native CLI error output hides every credential for ${scenario}`, async () => {
+  test(`CLI error output hides every credential for ${scenario}`, async () => {
     const home = await temporaryHome()
     const secretValues = [grant.accessToken, grant.refreshToken, minted.deviceCode, limitDetail.managementToken]
     let stored: string | null = JSON.stringify({
@@ -68,7 +68,7 @@ for (const scenario of [
       process.execPath,
       "--preload",
       join(import.meta.dir, "cli-keystore.fixture.ts"),
-      join(resolve(import.meta.dir, "../../../../.."), "packages", "omo-native", "bin", "omo.js"),
+      resolve(import.meta.dir, "../index.ts"),
       ...(scenario === "device-limit" ? ["login", "--device"] : ["whoami"]),
     ]
     const env = {
