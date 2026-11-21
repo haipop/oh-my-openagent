@@ -45,12 +45,16 @@ const TEAM_NEGATION_KEYWORDS = Object.freeze(["team mode", "team-mode", "team_mo
 /** Hyperplan negation keywords for the shared scrub pipeline. */
 const HYPERPLAN_NEGATION_KEYWORDS = Object.freeze(["hyperplan", "hpp"])
 
+const COMBO_NEGATION_KEYWORDS = HYPERPLAN_NEGATION_KEYWORDS.flatMap((plan) =>
+  DEFAULT_KEYWORDS.flatMap((work) => [plan + " " + work, work + " " + plan]),
+)
+
 function ultraworkMode(options) {
   return {
     id: "ultrawork",
     sourceKind: ULTRAWORK_SOURCE_KIND,
     pattern: options.ultraworkPattern,
-    negationKeywords: options.keywords,
+    negationKeywords: [...COMBO_NEGATION_KEYWORDS, ...options.keywords],
     summary: "ultrawork mode activated",
     buildPointer: () => buildUltraworkPointer({ skillName: ULTRAWORK_SKILL_NAME }),
   }
@@ -72,7 +76,7 @@ function hyperplanMode() {
     id: "hyperplan",
     sourceKind: HYPERPLAN_SOURCE_KIND,
     pattern: createGuardedPattern(HYPERPLAN_PATTERN_CORE),
-    negationKeywords: HYPERPLAN_NEGATION_KEYWORDS,
+    negationKeywords: [...COMBO_NEGATION_KEYWORDS, ...HYPERPLAN_NEGATION_KEYWORDS],
     summary: "hyperplan mode activated",
     buildPointer: () => buildHyperplanPointer({ skillName: HYPERPLAN_SKILL_NAME }),
   }
@@ -83,7 +87,7 @@ function hyperplanUltraworkMode() {
     id: "hyperplan-ultrawork",
     sourceKind: HYPERPLAN_ULTRAWORK_SOURCE_KIND,
     pattern: createGuardedPattern(HYPERPLAN_ULTRAWORK_PATTERN_CORE),
-    negationKeywords: [],
+    negationKeywords: COMBO_NEGATION_KEYWORDS,
     summary: "hyperplan ultrawork mode activated",
     buildPointer: () =>
       buildHyperplanUltraworkPointer({

@@ -17,6 +17,19 @@ describe("comment extraction", () => {
     expect(commentTextOf("count += 1 // bump it")).toBe("bump it")
   })
 
+  test.each([
+    'const url = "https://example.com/docs#note that this is obvious"',
+    'print("# note that this is obvious")',
+    "SELECT '-- note that this is obvious'",
+    'const label = `// just note that this is obvious`',
+  ])("#given a quoted comment marker (%s) #when read #then it is ignored", (line) => {
+    expect(commentTextOf(line)).toBeUndefined()
+  })
+
+  test("#given a quoted marker before a real comment #when read #then only the real comment is returned", () => {
+    expect(commentTextOf('const url = "https://example.com" // note the fallback')).toBe("note the fallback")
+  })
+
   test("#given a python comment #when read #then the hash marker is stripped", () => {
     expect(commentTextOf("# loop through rows")).toBe("loop through rows")
   })

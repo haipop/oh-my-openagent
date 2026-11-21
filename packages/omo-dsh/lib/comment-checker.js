@@ -43,7 +43,6 @@ const SLOP_PATTERNS = [
 
 /** Comment prefixes per language family: `//`, `#`, `--`, `;`, `%`, `/*`. */
 const LINE_COMMENT = /^\s*(?:\/\/|\/\*+|\*|#|--|;|%)\s?(.*)$/u
-const TRAILING_COMMENT = /(?:\/\/|#|--)\s*(.+)$/u
 
 /**
  * Extract the comment text of a source line, if any.
@@ -54,8 +53,10 @@ const TRAILING_COMMENT = /(?:\/\/|#|--)\s*(.+)$/u
 export function commentTextOf(line) {
   const own = LINE_COMMENT.exec(line)
   if (own !== null) return (own[1] ?? "").replace(/\*\/\s*$/u, "").trim()
-  const trailing = TRAILING_COMMENT.exec(line)
-  if (trailing !== null) return (trailing[1] ?? "").trim()
+  const tokens = /"(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|\x60(?:\\.|[^\x60\\])*(?:\x60|$)|(?:\/\/|#|--)\s*(.*)$/gu
+  for (const token of line.matchAll(tokens)) {
+    if (token[1] !== undefined) return token[1].trim()
+  }
   return undefined
 }
 

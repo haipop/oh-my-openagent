@@ -330,6 +330,40 @@ describe("step injection", () => {
     expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
   })
 
+  test.each([
+    "do not use hyperplan ultrawork",
+    "don't use hpp  ulw",
+    "不要用 hyperplan ultrawork",
+    "不用 ulw hpp",
+  ])("#given a negated combined mode (%s) #when the step enters #then neither mode activates", async (prompt) => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage(prompt)
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(rootAgent(), [hosted]), decision)).toBe(decision)
+  })
+
+  test("#given a negated combo followed by a separate invocation #then only the latter activates", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const hosted = humanMessage("avoid hyperplan ulw; use ultrawork for this change")
+    const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
+    expect(result.messages).toEqual([hosted, expect.objectContaining({ source: expect.objectContaining({ kind: "omo-ultrawork" }) })])
+  })
+
+  test("#given a previous mode in the step messages #when a new prompt names another mode #then it activates", async () => {
+    const { ctx, state } = createFakeContext()
+    apply(ctx, {})
+    const agent = rootAgent()
+    const first = humanMessage("hyperplan ulw this migration")
+    const initial = await runStep(state, stepPayload(agent, [first]), { kind: "enter", messages: [first] })
+
+    const next = humanMessage("team mode for the implementation")
+    const messages = [...(initial.messages as unknown[]), next]
+    const result = await runStep(state, stepPayload(agent, [next]), { kind: "enter", messages })
+    expect(result.messages).toEqual([...messages, expect.objectContaining({ source: expect.objectContaining({ kind: "omo-team" }) })])
+  })
+
   test("#given a URL containing the word #when the step enters #then nothing is injected", async () => {
     const { ctx, state } = createFakeContext()
     apply(ctx, {})
@@ -435,6 +469,31 @@ describe("project rules", () => {
     const messages = result.messages as { source: { kind: string }; content: { text: string }[] }[]
     expect(messages[1]?.source.kind).toBe("omo-rules")
     expect(messages[1]?.content[0]?.text).toContain("tests.md")
+  })
+
+  test("#given retained rule context #when another prompt matches a new rule #then only the new rule is added", async () => {
+    const cwd = createRuleDirectory({
+      "tests.md": '---\nglobs: ["*.test.ts"]\n---\nTest rule body.\n',
+      "python.md": '---\nglobs: ["*.py"]\n---\nPython rule body.\n',
+    })
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, { rules: { roots: [".omo/rules"] } })
+    const agent = rootAgent()
+    const first = humanMessage("fix a.test.ts")
+    const firstResult = await runStep(state, stepPayload(agent, [first]), { kind: "enter", messages: [first] })
+    const firstMessages = firstResult.messages as { content: { text: string }[] }[]
+    expect(firstMessages[1]?.content[0]?.text).toContain("Test rule body.")
+    expect(firstMessages[1]?.content[0]?.text).not.toContain("Python rule body.")
+
+    const second = humanMessage("review worker.py")
+    const messages = [...firstMessages, second]
+    const decision = { kind: "enter", messages }
+    const result = await runStep(state, stepPayload(agent, [second]), decision)
+    const resultMessages = result.messages as { content: { text: string }[] }[]
+    expect(resultMessages).toHaveLength(4)
+    expect(resultMessages[3]?.content[0]?.text).toContain("Python rule body.")
+    expect(resultMessages[3]?.content[0]?.text).not.toContain("Test rule body.")
+    expect(await runStep(state, stepPayload(agent, [second]), decision)).toBe(decision)
   })
 
   test("#given no working directory service #when the step enters #then rules are skipped quietly", async () => {
@@ -573,6 +632,20 @@ describe("shared config file", () => {
     const result = await runStep(state, stepPayload(rootAgent(), [hosted]), { kind: "enter", messages: [hosted] })
     expect((result.messages as unknown[]).length).toBe(2)
   })
+
+  test("#given the project disables the adapter #when hooks run #then they do not inject", async () => {
+    const cwd = createProjectConfig('{"dsh":{"enabled":false}}')
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => cwd } })
+    apply(ctx, {})
+    const agent = rootAgent()
+    const hosted = humanMessage("ulw the parser")
+    const decision = { kind: "enter", messages: [hosted] }
+    expect(await runStep(state, stepPayload(agent, [hosted]), decision)).toBe(decision)
+
+    const exec = { name: "write", arguments: { file_path: "src/a.ts", content: "// loop through rows\n" }, agent }
+    const downstream = { kind: "accept" }
+    expect(await runPostExecute(state, exec, { isError: false }, downstream)).toBe(downstream)
+  })
 })
 
 describe("status tool", () => {
@@ -580,6 +653,18 @@ describe("status tool", () => {
     const tool = state.registeredTools[0] as { execute(args: unknown, exec: unknown): Promise<Record<string, unknown>> }
     return await tool.execute({}, { agent })
   }
+
+  test("#given a project tries to disable registered skills #when queried #then status reflects activation", async () => {
+    const root = mkdtempSync(join(tmpdir(), "omo-dsh-status-"))
+    tempDirectories.push(root)
+    mkdirSync(join(root, ".omo"), { recursive: true })
+    writeFileSync(join(root, ".omo", "omo.json"), '{"dsh":{"skills":{"library":false}}}')
+    const { ctx, state } = createFakeContext({ workingDirectory: { ensure: async () => root } })
+    apply(ctx, {})
+
+    expect(state.registeredSkills).toHaveLength(17)
+    expect((await runStatus(state, rootAgent())).skills).toEqual({ library: true })
+  })
 
   test("#given a session directory with config and rules #when omo_status runs #then it reports the effective layers and empty rule state", async () => {
     const root = mkdtempSync(join(tmpdir(), "omo-dsh-status-"))

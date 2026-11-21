@@ -38,7 +38,6 @@ import {
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_RULES,
   DEFAULT_RULE_ROOTS,
-  isRulesMessage,
   loadRules,
   RULES_SOURCE_KIND,
   selectRules,
@@ -295,8 +294,7 @@ function humanPromptText(messages) {
  */
 async function injectRules(ctx, options, payload, decision) {
   if (!options.rules.enabled) return decision
-  if (decision.messages.some(isRulesMessage)) return decision
-  const promptText = humanPromptText(decision.messages)
+  const promptText = humanPromptText(payload.messages)
   if (promptText.length === 0) return decision
   const session = payload.agent?.session
   if (session === undefined || session === null) return decision
@@ -400,6 +398,7 @@ export function apply(ctx, config) {
       if (payload.signal?.aborted === true) return decision
       try {
         const options = await effectiveOptions(ctx, payload.agent, rowConfig, baseOptions)
+        if (!options.enabled) return decision
         const withMode = injectMode(options, payload, decision)
         return await injectRules(ctx, options, payload, withMode)
       } catch (error) {
@@ -414,6 +413,7 @@ export function apply(ctx, config) {
     const downstream = await next()
     try {
       const options = await effectiveOptions(ctx, exec.agent, rowConfig, baseOptions)
+      if (!options.enabled) return downstream
       return await warnAboutComments(options, exec, result, downstream)
     } catch (error) {
       ctx.logger?.warn?.("omo-ultrawork: comment check skipped: %o", error)
@@ -425,8 +425,8 @@ export function apply(ctx, config) {
 /** Inject the mode pointer for a human prompt, deduped per claimed message. */
 function injectMode(options, payload, decision) {
   if (!options.applyToSubagents && isChildAgent(payload.agent)) return decision
-  if (decision.messages.some(isModeMessage)) return decision
-  const match = findModeMatch(decision.messages, buildModes(options))
+  const lastPointer = decision.messages.findLastIndex(isModeMessage)
+  const match = findModeMatch(decision.messages.slice(lastPointer + 1), buildModes(options))
   if (match === undefined) return decision
   const messageId = match.message?.id
   if (typeof messageId !== "string" || messageId.length === 0) return decision

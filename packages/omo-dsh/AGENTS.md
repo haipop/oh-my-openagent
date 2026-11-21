@@ -133,6 +133,12 @@ A child plugin with required config must get it. The `@deepseek-ai/dsh-plan-mode
 absent from the roster with no visible error. Verify every preset appears in the Desktop roster, not
 only that the Loader rows report `active`.
 
+Mount the delegation rows by package entrypoint, never by tool subpath. DSH 0.2.2 folded `list_agents`
+into `@deepseek-ai/dsh-tool-subagent-control` and dropped the `.../list-agents` export, so a
+`@deepseek-ai/dsh-tool-subagent-control/list-agents` row fails to import and is reported as
+`never started` when the preset composes. The older 0.2.1 packages still export the split entry; the
+bundle follows the current Harness.
+
 The `headless` profile mounts `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-headless`, not the Web
 app bundle, so it has no `agent-preset-registry` service and ignores the declarations; live preset QA
 therefore runs through the Desktop roster. The declarations still load and activate in profiles that
@@ -188,12 +194,12 @@ must not silently change DSH behavior. JSONC is accepted (comments and trailing 
 
 Precedence: the plugin row config wins over every file; the nearest project layer wins over outer
 project layers; the user layer is the lowest level. Keys: `enabled`, `keywords`, `applyToSubagents`,
-`modes`, `skills`, `rules`, `commentChecker`. An invalid file falls back to the row config with a
+`modes`, `rules`, `commentChecker`. An invalid file falls back to the row config with a
 warning instead of breaking the session.
 
-What the file cannot change is which runtime skills are registered: skills publish once at bundle
-activation, so `skills` in the file is part of the config surface but skill registration follows the
-row.
+Runtime skills publish once at bundle activation, so `skills.library` is a row-only setting.
+An effective file value of `enabled: false` disables hook injections for the session, not already
+registered skills or the status tool.
 
 ## Status surface
 
@@ -215,7 +221,7 @@ so this bundle uses the two waterfalls the Host does expose.
 
 **Rules.** `agent/pre-step` reads `.omo/rules/*.md` under the session directory (then
 `~/.omo/rules`), parses the frontmatter subset OmO rule files use, and appends one sourced
-`user/message` (kind `omo-rules`) per session listing the rules that apply. A rule with no `globs`,
+`user/message` (kind `omo-rules`) listing newly applicable rules. A rule with no `globs`,
 or with `alwaysApply: true`, applies to the whole session; a glob-scoped rule joins only when the
 prompt names a matching path. Rules use the declared `workingDirectory` dependency to resolve the session
 directory; a profile without that service leaves the whole bundle inactive. Per-rule injection is

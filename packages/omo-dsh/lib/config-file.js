@@ -22,7 +22,7 @@ import { homedir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 
 /** Config keys the adapter reads from the shared file. */
-export const CONFIG_FILE_KEYS = Object.freeze(["enabled", "keywords", "applyToSubagents", "modes", "skills", "rules", "commentChecker"])
+export const CONFIG_FILE_KEYS = Object.freeze(["enabled", "keywords", "applyToSubagents", "modes", "rules", "commentChecker"])
 
 /** File names checked inside an `.omo` directory, in precedence order. */
 export const CONFIG_FILE_NAMES = Object.freeze(["omo.json", "omo.jsonc"])

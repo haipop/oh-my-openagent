@@ -51,7 +51,7 @@ function escapeRegExp(value) {
 
 function keywordAlternation(keywords) {
   return keywords
-    .map((keyword) => escapeRegExp(keyword.trim()))
+    .map((keyword) => keyword.trim().split(/\s+/u).map(escapeRegExp).join("\\s+"))
     .filter((keyword) => keyword.length > 0)
     .join("|")
 }
@@ -93,7 +93,7 @@ export function createGuardedPattern(core) {
 export function buildNegationPattern(keywords = DEFAULT_KEYWORDS) {
   const alternation = keywordAlternation(keywords)
   return new RegExp(
-    `(?:\\b(?:do\\s+not|don['’]?t|dont|never|no|not|without|avoid|disable|turn\\s+off|stop|skip)\\s+(?:use\\s+|using\\s+)?(?:${alternation})\\b)|(?:(?:不要|别|禁止|不用|无需|不可|勿|禁用|关掉|关闭|停用|忽略)\\s*(?:使用|用)?\\s*(?:${alternation}))`,
+    `(?:\\b(?:do\\s+not|don['’]?t|dont|never|no|not|without|avoid|disable|turn\\s+off|stop|skip)\\s+(?:use\\s+|using\\s+)?|(?:不要|别|禁止|不用|无需|不可|勿|禁用|关掉|关闭|停用|忽略)\\s*(?:使用|用)?\\s*)(?:${alternation})(?![\\w/\\-])`,
     "gi",
   )
 }
