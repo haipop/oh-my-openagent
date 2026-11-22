@@ -16,16 +16,10 @@ const manifestPolicy = (manifest: Record<string, unknown>) =>
 describe("shipped path classifier", () => {
   test.each([
     "packages/omo-opencode/src/tools/delegate-task/categories.ts",
-    "packages/omo-senpi/src/components/onboarding/component.ts",
     "crates/senpi-desktop-backend-macos/src/ax/menus/select.rs",
     "crates/senpi-desktop-core/src/menus/mod.rs",
     "packages/omo-opencode/src/opencode-v2/server-entry.ts",
-    "packages/omo-senpi/plugin/runtime/dag/sdk.js",
-    "packages/omo-senpi/plugin/package.json",
-    "packages/omo-senpi/plugin/daemon-launch-spec.json",
-    "packages/omo-senpi/plugin/scripts/install.mjs",
     "packages/omo-opencode/src/testing/create-plugin-module.ts",
-    "packages/omo-senpi/skills/onboarding/SKILL.md",
     "packages/shared-skills/skills/ulw-research/SKILL.md",
     "packages/prompts-core/prompts/ultrawork/codex.md",
     ".agents/skills/opencode-qa/SKILL.md",
@@ -40,8 +34,6 @@ describe("shipped path classifier", () => {
     expect(isUserFacingPath(path, policy)).toBe(true)
   })
   test.each([
-    "packages/omo-senpi/src/components/onboarding/component.test.ts",
-    "packages/omo-senpi/src/components/onboarding/test-harness.ts",
     "packages/isolation-core/src/backends/git-fixture.ts",
     "packages/isolation-core/src/merge/abandoned-concurrent-merge.fixture.ts",
     "packages/isolation-core/src/merge/merge-fixture.ts",
@@ -49,7 +41,6 @@ describe("shipped path classifier", () => {
     "packages/omo-opencode/src/features/team-mode/test-support/async-test-helpers.ts",
     "crates/senpi-desktop-backend-macos/src/ax/menus/live_tests.rs",
     "crates/senpi-desktop-backend-macos/src/ax/menus/tests.rs",
-    "packages/omo-senpi/plugin/extensions/omo.js",
     "packages/omo-codex/scripts/install-dist/install-local.mjs",
     "docs/reference/omo-ai-publishing.md",
     "README.md",

@@ -25,13 +25,12 @@ Every `BoulderState` carries `active_work_id` + a `works` map. The root-level fi
 
 - **omo-opencode** (`workspace:*`): `features/boulder-state/*` re-exports; hooks `atlas`, `ulw-execute`, `todo-continuation-enforcer`; CLI `boulder` command.
 - **omo-codex** (`file:` dep): `plugin/components/ulw-execute-continuation/boulder-reader.ts`.
-- **omo-senpi** (`workspace:*`): `src/components/ulw-execute-continuation/boulder-eligibility.ts` reads work state with `senpi:`-prefixed session ids.
-- Both ulw-execute read paths (`omo-opencode` hook, `omo-senpi` continuation component) call `reconcileStaleWorks` first and pass the agent sessions directory resolved by `omo-senpi`'s `resolveAgentSessionsDirectory`; this package resolves no home path of its own.
+- Current harness readers are `omo-opencode` and `omo-codex`; each resolves its own harness-specific session or state path. The OpenCode hook also calls `reconcileStaleWorks` before reading; the Codex reader is deliberately dependency-free and reads the on-disk state directly.
 
 ## NOTES
 
 - **Prototype-pollution guard:** `RESERVED_KEYS = {__proto__, prototype, constructor}` — task upserts reject matching keys.
-- **Session IDs are normalized** with an `opencode:` / `codex:` / `senpi:` prefix (`normalizeSessionId`). Senpi callers must pass a pre-prefixed `senpi:<id>` to read APIs such as `getWorkForSession`; the default platform stays `opencode`.
+- **Session IDs are normalized** with an `opencode:` / `codex:` / `senpi:` prefix (`normalizeSessionId`). Bare IDs default to `opencode` for legacy compatibility; historical third-platform IDs such as `senpi:<id>` remain readable, while active callers write current `opencode:` or `codex:` IDs.
 - **`readBoulderState` rejects empty `{}`** as invalid (returns null), alongside non-object and array payloads.
 - **Stale works:** `completeBoulder` is the only completion transition, so a work whose session died abnormally would stay `active` forever (#8413). `reconcileStaleWorks(directory, options?)` demotes an `active` work to `paused` and stamps `stale_since` when its last activity - the newest of its sessions' transcript mtimes, `updated_at` and `started_at` - is at least `OMO_BOULDER_STALE_WORK_THRESHOLD_MS` (default 6h) old; a work with no activity evidence at all is stale. Nothing stale means no write, `completed`/`abandoned` and status-less records are never touched, and every failure is swallowed. Transcripts are read only under session directories whose alphanumeric shape matches the work's own cwd or worktree, because an agent home accumulates thousands of them. `selectActiveWork`/`appendSessionIdForWork` return a `stale_since` work to `active` and drop the stamp; a work paused without the stamp keeps its status. Readers are unchanged - `getActiveWorks`/`getWorkResumeOptions` still filter `completed`/`abandoned` only.
 - **`writeBoulderState` self-creates `.omo/.gitignore`** (`*`, `!/rules/`) on first `mkdir`.

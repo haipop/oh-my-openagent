@@ -22,7 +22,7 @@ export const generatedCodexInstallerPath = generatedEntrypoint
 // Output bytes shift with the bundler version (CI pins a different Bun than a dev box), so a
 // byte comparison would fail on a perfectly current bundle. Source bytes do not shift, so this
 // flips only when someone edits installer source without regenerating the committed bundle.
-// Same reasoning as `// omo-senpi-build:` in packages/omo-senpi/plugin/scripts/build-extension.mjs.
+
 export const CODEX_INSTALL_BUILD_MARKER_PREFIX = "// omo-codex-install:"
 
 const BUILD_SETTINGS = JSON.stringify({ target: "node", format: "esm", minify: false, packages: "bundle" })

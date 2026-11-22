@@ -32,7 +32,7 @@
 
 - 从 `feat/deepseek-harness` 删除基于 Pi/Senpi 的 OmO 独立 Agent，包括 `omo-native` 中的独立发行实现和专用构建及发布入口。`omo-ai` npm 包和独立二进制属于同一独立版。
 - 裁剪仅在功能分支实施。`dev` 仍用于同步上游；`omo-dsh` Host bundle 和 DSH 内的 OmO 角色预设不在此次删除范围内。其他保留组件仍依赖的共享代码不能随独立版误删。
-- **保留边界：** [`omo-senpi`](../omo-senpi/AGENTS.md) 保留为 Senpi 宿主的本地插件，不安装独立 launcher。保留 `senpi-task`、Codex、桌面引擎及它们共用的功能和安全门禁。
+- **保留边界：** Senpi 宿主适配（`omo-senpi`、`senpi-task`、`omo-native`）已整体删除。保留 Codex、DSH、OpenCode、桌面引擎（`senpi-desktop-*`、`omo-computer-*`）及它们共用的功能和安全门禁。
 
 ## OpenCode V2 插件支持
 

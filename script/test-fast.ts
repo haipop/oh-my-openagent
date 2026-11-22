@@ -33,7 +33,6 @@ export function testFastGroups(): TestFastGroup[] {
       args: ["test", ...testTimeoutArgs(), "packages/omo-opencode", "packages/memory-core"],
     },
     { name: "root-rest", args: ["--config=bunfig.win2.parallel.toml", "test", ...testTimeoutArgs()] },
-    { name: "senpi", args: ["test", ...testTimeoutArgs(), "packages/omo-senpi"] },
   ]
 }
 

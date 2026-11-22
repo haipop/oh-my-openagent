@@ -21,6 +21,8 @@
         "src/hooks/prometheus-md-only/fixtures/*.ts",
         // Preloaded by path (`bun --preload <file>`) into the launcher child of state-file-cli.test.ts.
         "src/cli/service-auth/state-file-cli.fixture.ts",
+        // Built by path (`bun <file> --out ...`) by publish-platform.yml to produce the macOS keychain helper.
+        "src/cli/service-auth/keychain-helper/build.ts",
       ],
       "ignoreFiles": [
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs

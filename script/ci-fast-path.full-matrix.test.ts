@@ -189,7 +189,6 @@ describe("full-matrix classification", () => {
       ["a script named like a doc", "script/agents.ts"],
       ["a doc-like name with an unknown extension", "packages/utils/README.rst"],
       ["an unlisted .github file", ".github/CODEOWNERS"],
-      ["an in-process senpi-task runner", "packages/senpi-task/src/runners/in-process.ts"],
       ["a Codex plugin source file", "packages/omo-codex/plugin/src/index.ts"],
       ["an omo-opencode hook", "packages/omo-opencode/src/hooks/session-start.ts"],
     ])("#then %s runs heavy validation on ubuntu only", (_name, changedPath) => {
@@ -360,7 +359,6 @@ describe("full-matrix classification", () => {
       ["the Desktop engine release", "script/desktop-engine-release.ts"],
       ["the signed keychain helper", "packages/omo-opencode/src/cli/service-auth/keychain-helper/build.ts"],
       ["a QA script named for an OS", "script/qa/computer/pool/macos-vm-ops.ts"],
-      ["basename contains windows", "packages/senpi-task/src/runners/rpc-process.windows.test.ts"],
       ["powershell script", "script/qa/run-smoke.ps1"],
       ["ci workflow", ".github/workflows/ci.yml"],
       ["classifier itself", "script/ci-fast-path.mjs"],
@@ -437,7 +435,7 @@ describe("full-matrix workflow wiring", () => {
   })
 
   describe("#given the OS matrix jobs", () => {
-    test.each(["test", "codex-compatibility", "senpi-compatibility"])(
+    test.each(["test", "codex-compatibility"])(
       "#then every heavy step in %s is ubuntu-first",
       (jobName) => {
         // given
@@ -460,7 +458,7 @@ describe("full-matrix workflow wiring", () => {
       },
     )
 
-    test.each(["test", "codex-compatibility", "senpi-compatibility"])(
+    test.each(["test", "codex-compatibility"])(
       "#then checkout and summary steps in %s stay unconditional",
       (jobName) => {
         // given

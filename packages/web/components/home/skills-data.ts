@@ -1,5 +1,5 @@
 /**
- * Skills that ship in OmO's plugin (packages/shared-skills/skills, packages/omo-senpi/skills). The old landing also
+
  * listed imagegen and prompt-engineering, which OmO does not ship; they are left out here.
  */
 export const SHIPPED_SKILLS: ReadonlyArray<{ readonly name: string; readonly blurb: string }> = [

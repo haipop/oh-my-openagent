@@ -104,7 +104,7 @@ Recommended models, named plainly:
 - **Claude Opus 5.5** (or Claude Fable 5.1). The reference configuration. The orchestration prompt was built against Claude's habit of following long, mechanics-driven instructions.
 - **GPT-6.2 Astra, GPT-6.1 Sol or GPT-6 Sol**. The GPT-recommended configuration. It gets the GPT-native `gpt-6-astra` prompt preset built for autonomous, principle-driven work: give it a goal, not a recipe. Over-orchestration on small bounded tasks is a known risk.
 
-Kimi K3 and GLM 5.3 are on the Recommended list too, lower down and with lighter validation. Models outside it aren't supported as the main agent. You don't have to choose: with no `model_profile`, a fresh session runs **Recommended** (Opus 5.5, Fable 5.1, Kimi K3, GPT-6.2 Astra, GPT-6.1 Sol, GPT-6 Sol, GLM 5.3) and takes the first one you have connected. The Daily lanes lead with Claude; Obsessive · Normal runs GPT-6.2 Astra at medium (then the GPT-6.2 and GPT-6.1 Sol tiers and GPT-5.6 Sol where Astra isn't served) and Obsessive · Heavy GPT-6.2 Astra at high, with no fallback. Details in the [Agent-Model Matching Guide](./agent-model-matching.md).
+Kimi K3 and GLM 5.3 are on the Recommended list too, lower down and with lighter validation. Models outside it aren't supported as the main agent. You don't have to choose: with no `model_profile`, a fresh session runs **Recommended** (Opus 5.5, Fable 5.1, Kimi K3, GPT-6.2 Astra, GPT-6.1 Sol, GPT-6 Sol, GLM 5.3) and takes the first one you have connected. The Daily lanes lead with Claude; Obsessive · Normal runs GPT-6.2 Astra at medium (then the GPT-6.2 and GPT-6.1 Sol tiers and GPT-5.6 Sol where Astra isn't served) and Obsessive · Heavy GPT-6.2 Astra at high, with no fallback.
 
 ### The category worker
 
@@ -221,7 +221,6 @@ Override specific categories or curated agents in `omo.json`:
 - Grok 4.7: third rung in the `unspecified-low` category (xhigh)
 - DeepSeek V4.1 Flash (`deepseek-flash`) / V4 Pro: utility rungs in `explore`, `librarian`, `quick`, and `unspecified-low`
 
-See the [Agent-Model Matching Guide](./agent-model-matching.md) for the full chains, safe vs risky overrides, and the tuned-preset list.
 
 ---
 
@@ -259,7 +258,6 @@ It does not semantically classify requests as research, implementation, investig
 
 - **[Installation Guide](./installation.md)**: complete setup instructions, provider authentication, and troubleshooting
 - **[Orchestration Guide](./orchestration.md)**: deep dive into delegation, planning with `/ulw-plan`, and execution with `/ulw-execute`
-- **[Agent-Model Matching Guide](./agent-model-matching.md)**: which models each role runs on and how to customize
 - **[Team Mode Guide](./team-mode.md)**: parallel multi-agent coordination (OFF by default); 12 `team_*` tools, shared mailbox, shared task list, optional tmux layout
 - **[Configuration Reference](../reference/configuration.md)**: full config options with examples
 - **[Features Reference](../reference/features.md)**: complete feature documentation

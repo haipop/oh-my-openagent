@@ -2,9 +2,9 @@ import type { BoulderState, BoulderWorkState, BoulderWorkStatus } from "../types
 
 export const RESERVED_KEYS = new Set(["__proto__", "prototype", "constructor"])
 
-// Bare session ids default to "opencode" for legacy compatibility.
-// Senpi callers MUST pass pre-prefixed "senpi:<id>" to read APIs such as
-// getWorkForSession, because the default platform remains "opencode".
+// Bare session ids default to "opencode" for legacy compatibility. Historical
+// "senpi:<id>" state remains readable; active callers use current platform
+// prefixes because the default platform remains "opencode".
 type SessionPlatform = "codex" | "opencode" | "senpi"
 
 const SESSION_ID_PREFIX_PATTERN = /^(codex|opencode|senpi):/

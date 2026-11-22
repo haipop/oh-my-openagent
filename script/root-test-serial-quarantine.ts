@@ -20,14 +20,6 @@ export interface SerialQuarantineEntry {
 
 export const ROOT_TEST_SERIAL_QUARANTINE: readonly SerialQuarantineEntry[] = [
   {
-    path: "packages/senpi-task/src/runners/rpc-process.windows.test.ts",
-    reason: "spawns a real console probe process and asserts on its exclusive console handles",
-  },
-  {
-    path: "packages/senpi-task/src/__adversarial__/chaos-bench.test.ts",
-    reason: "a saturation benchmark whose timings degrade once workers compete for the same cores",
-  },
-  {
     path: "packages/omo-codex/src/install/install-codex-legacy-agent-purge.test.ts",
     reason: "purges legacy agent state from a shared installer root",
   },
@@ -44,33 +36,9 @@ export const ROOT_TEST_SERIAL_QUARANTINE: readonly SerialQuarantineEntry[] = [
     reason: "hit its timeout under real --parallel on the manifest cache path (run 32053350172)",
   },
   {
-    path: "packages/senpi-task/src/dag/scheduler.test.ts",
-    reason: "wave-ordering assertions are timing sensitive under a saturated scheduler",
-  },
-  {
-    path: "packages/senpi-task/src/team/member-extension/residency.test.ts",
-    reason:
-      "cold real-process member revival is starved by concurrent Windows filesystem load under --parallel (run 34958448646)",
-  },
-  {
     path: "script/release-version.test.ts",
     reason:
       "five sequential Git Bash spawns of the publish workflow's metadata step; one spawn exhausted its 10s budget under Windows --parallel while the test's own work is string parsing (run 34962017319)",
-  },
-  {
-    path: "packages/senpi-task/src/store/record-lock.test.ts",
-    reason:
-      "task record lock waits are timed (a 1s per-holder budget, a 100ms hand-on chain) against real live and dead child processes; run alone so the kernel32/libproc start-identity proof runs on every OS without --parallel CPU starvation",
-  },
-  {
-    path: "packages/senpi-task/src/store/record-lock-reap-window.test.ts",
-    reason:
-      "steps the record lock reaper against live child processes and a 1s per-holder wait; same timing sensitivity as record-lock.test.ts",
-  },
-  {
-    path: "packages/senpi-task/src/runners/rpc-host/durable-json.test.ts",
-    reason:
-      "spies the node:fs module namespace (openSync/renameSync/fsyncSync) process-wide while it runs; kept out of the shared pool so no concurrent file observes the spies, and so the win32 no-directory-fsync branch runs on windows-latest",
   },
 ] as const
 

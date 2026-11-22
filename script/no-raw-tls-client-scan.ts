@@ -112,8 +112,6 @@ export function isScannedSourceFile(relativePath: string): boolean {
 export const KNOWN_BUILT_RUNTIMES = [
   "packages/omo-codex/plugin/skills/browser/runtime/omowright/index.js",
   "packages/omo-codex/plugin/skills/browser/runtime/omowright/page-bundle.js",
-  "packages/omo-senpi/plugin/skills/browser/runtime/omowright/index.js",
-  "packages/omo-senpi/plugin/skills/browser/runtime/omowright/page-bundle.js",
 ]
 
 // Truly third-party npm-dependency bundles would be named here, one

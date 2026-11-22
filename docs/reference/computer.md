@@ -6,7 +6,7 @@ The OmO Native computer-use component registers a search-exposed `computer` tool
 
 ## Source of the contract
 
-- Component registration, session lifecycle and resource discovery: `packages/omo-senpi/src/components/computer-use/index.ts`
+- Component registration, session lifecycle and resource discovery: `packages/senpi-desktop-tool/src/registration.ts`, `packages/senpi-desktop-tool/src/session.ts`
 - Typed native-only configuration: `packages/omo-config-core/src/schema/computer.ts`
 - Tool actions and validation: `packages/senpi-desktop-tool/src/tool.ts`, `packages/senpi-desktop-tool/src/params.ts`
 - User command and permission tiers: `packages/senpi-desktop-tool/src/command.ts`, `packages/senpi-desktop-tool/src/permission.ts`

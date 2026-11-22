@@ -75,17 +75,6 @@ opencode run --standalone --format json --agent sisyphus --session '<sessionID>'
 
 撤回时，从 `plugins` 删除本地包这一项，只移除本次装入的 Sisyphus 文件，然后再删除解包目录或恢复备份。
 
-## Senpi 插件
-
-本分支保留本地路径插件，不安装独立 OmO launcher。已有 Senpi 的情况下，在功能分支的 checkout 根目录构建并安装：
-
-```sh
-bun run build:senpi-plugin
-senpi install "$(pwd)/packages/omo-senpi/plugin"
-```
-
-使用 `senpi list` 确认安装项。撤回时在同一 checkout 运行 `senpi remove "$(pwd)/packages/omo-senpi/plugin"`。
-
 ## 项目与许可
 
 [功能分支需求](packages/omo-dsh/REQUIREMENTS.md) · [许可证](LICENSE.md) · [第三方声明](THIRD-PARTY-NOTICES.md)

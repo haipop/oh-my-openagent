@@ -23,12 +23,19 @@ const ENGINES = DESKTOP_ENGINE_RELEASE_HOSTS.map((host) => {
   if (asset === null) throw new Error("missing engine asset name: " + host)
   return asset
 })
-const FIRST_ENGINE = ENGINES[0]!
+const [FIRST_ENGINE] = ENGINES
+if (FIRST_ENGINE === undefined) throw new Error("missing engine asset")
 
 type Files = Record<string, string>
 
 function checksums(files: Files, names: readonly string[]): string {
-  return names.map((name) => createHash("sha256").update(files[name]!).digest("hex") + "  " + name + "\n").join("")
+  return names
+    .map((name) => {
+      const contents = files[name]
+      if (contents === undefined) throw new Error("missing release asset: " + name)
+      return createHash("sha256").update(contents).digest("hex") + "  " + name + "\n"
+    })
+    .join("")
 }
 
 function release(): Files {

@@ -14,8 +14,6 @@
   ],
   "docs": [
     ".agents/skills/codex-qa/SKILL.md: omo get-local-version",
-    "AGENTS.md: omo doctor",
-    "CLAUDE.md: omo doctor",
     "docs/guide/binary-install.md: /bin/omo",
     "docs/guide/computer-use.md: omo doctor",
     "docs/guide/migrating-from-opencode.md: /bin/omo",
@@ -30,19 +28,14 @@
     "packages/omo-opencode/src/cli/doctor/checks/codex-components.test.ts: omo doctor",
     "packages/omo-opencode/src/cli/doctor/checks/codex-components.ts: omo doctor",
     "packages/omo-opencode/src/cli/doctor/checks/tools.ts: omo doctor",
-    "packages/senpi-task/src/agents/task-agents.ts: omo doctor",
     "packages/tmux-core/src/tmux-utils.test.ts: omo run",
     "packages/tmux-core/src/tmux-utils/server-health.ts: omo run",
     "script/install-codex-dev.ts: omo get-local-version",
     "script/qa/codex-marketplace-e2e.sh: =omo",
-    "packages/omo-senpi/src/components/memory/reflection-stale-active.ts: omo doctor x3",
     "packages/memory-core/src/reflection/host-sweep.ts: omo doctor x2",
     "packages/memory-core/src/reflection/identity-orphan-sweep.ts: omo doctor",
     "packages/memory-core/src/reflection/stale-lock-reaper.scenarios.test.ts: omo doctor",
     "packages/memory-core/src/reflection/stale-lock-reaper.ts: omo doctor x2",
-    "packages/omo-senpi/plugin/extensions/omo-memory-doctor.js: omo doctor x2",
-    "packages/omo-senpi/plugin/extensions/omo.js: omo doctor",
-    "packages/omo-senpi/src/components/memory/commands/doctor-reservation.ts: omo doctor x2",
     "packages/memory-core/src/retention/host-step.ts: omo doctor",
     "packages/memory-core/src/retention/cap.ts: omo doctor",
     "packages/memory-core/src/retention/pass.ts: omo doctor",
@@ -51,7 +44,6 @@
   "literal-label": [
     "packages/omo-opencode/src/cli/account-keys/keystore.ts: =omo",
     "packages/device-service-core/test/cold-wake/session-host-unit.test.ts: /bin/omo x8",
-    "packages/device-service-core/test/local-api/conformance/fixtures/refresher.register.json: /bin/omo x2",
-    "packages/omo-senpi/src/components/device-service/index.test.ts: /bin/omo"
+    "packages/device-service-core/test/local-api/conformance/fixtures/refresher.register.json: /bin/omo x2"
   ]
 }

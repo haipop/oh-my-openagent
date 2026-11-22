@@ -11,10 +11,6 @@ export const GATE_CONFIG = {
     /^package\.json$/,
     /^bun\.lock$/,
     /^packages\/[^/]+\/package\.json$/,
-    /^packages\/omo-senpi\/plugin\/package\.json$/,
-    // publish.yml force-adds the whole directory (git add -f packages/omo-senpi/plugin/extensions).
-    /^packages\/omo-senpi\/plugin\/extensions\//,
-    /^packages\/omo-senpi\/plugin\/runtime\//,
     /^packages\/omo-codex\/plugin\/(?:package\.json|package-lock\.json|\.codex-plugin\/plugin\.json)$/,
     /^packages\/omo-codex\/plugin\/components\/[^/]+\/(?:package\.json|hooks\/hooks\.json)$/,
     /^packages\/omo-codex\/plugin\/hooks\/[^/]+\.json$/,

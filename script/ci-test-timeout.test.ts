@@ -65,7 +65,7 @@ describe("per-file test timeout budget", () => {
   })
 
   test("#given ci.yml #when a POSIX job runs bun test over more than one file #then the invocation carries --timeout 20000", () => {
-    const sharedScripts = ["ci-root-shard-2.sh", "ci-senpi-posix.sh"]
+    const sharedScripts = ["ci-root-shard-2.sh"]
       .map((file) => readFileSync(join(repoRoot, ".github", "scripts", file), "utf8"))
       .join("\n")
     const multiFileRuns = (workflow + "\n" + sharedScripts)

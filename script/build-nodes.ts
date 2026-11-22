@@ -17,12 +17,6 @@ export const BUILD_NODES: BuildNode[] = [
     deps: ["git-bash-mcp", "lsp-tools-mcp", "lsp-daemon"],
   },
   {
-    id: "senpi-plugin",
-    command: "bun",
-    args: ["run", "build:senpi-plugin:stage"],
-    deps: ["ast-grep-mcp", "lsp-daemon", "codex-plugin"],
-  },
-  {
     id: "index",
     command: "bun",
     args: [

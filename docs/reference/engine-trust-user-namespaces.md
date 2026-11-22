@@ -10,7 +10,7 @@ The launcher trust stage (`packages/omo-native/trust-stage.ts`) stores certifica
 2. owned by uid 0 or by the current uid;
 3. not group- or other-writable unless the sticky bit is set.
 
-The memory reflection sandbox (`packages/omo-senpi/src/components/memory/sandbox-platform.ts`) starts the child with `bwrap --ro-bind / / --dev-bind /dev /dev --tmpfs /tmp --bind <writable dirs> ...`. bwrap creates an unprivileged user namespace that maps only the caller's uid. The kernel reports every unmapped owner, root included, as the overflow uid (`/proc/sys/kernel/overflowuid`, 65534). Inside the sandbox, `/` and `/home` fail rule 2, so no trust directory can pass. The fallback under `/tmp` walks up to the same `/`, so the child dies before it does any work.
+The memory reflection sandbox starts the child with `bwrap --ro-bind / / --dev-bind /dev /dev --tmpfs /tmp --bind <writable dirs> ...`. bwrap creates an unprivileged user namespace that maps only the caller's uid. The kernel reports every unmapped owner, root included, as the overflow uid (`/proc/sys/kernel/overflowuid`, 65534). Inside the sandbox, `/` and `/home` fail rule 2, so no trust directory can pass. The fallback under `/tmp` walks up to the same `/`, so the child dies before it does any work.
 
 Measured on Linux x64 with bubblewrap 0.9.0, using the sandbox's own arguments and the real `prepareTrustDirectory` from `origin/dev` at `e887cabf50`:
 

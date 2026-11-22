@@ -1,7 +1,7 @@
 # computer.run sandbox: threat model and compatibility matrix (QuickJS)
 
 Status: design reference for the opt-in QuickJS run sandbox (#12230). Docs only: nothing here changes
-code or defaults. Line numbers are at `dev` 7adadfb805.
+code or defaults. Line numbers are at `dev` 7adadfb805. Paths under `packages/omo-senpi/` identify artifacts from the retired Senpi host adapter; they are retained as historical audit provenance and do not exist in this branch.
 
 `computer` runs (`{ action: "run", code }` and `computer.run(fn)` from the eval kernel) execute
 model-written JavaScript; the CUA adapter (`computer_actions`) also executes its batches as a run body that the
@@ -358,7 +358,7 @@ Row 32 (bridge):
 14. One worker per session: two concurrent `run` calls in one session execute one after the other (the fake engine
     sees the second run's first request only after the first run settled), each within its own timeout.
 
-## 10. How the matrix was built
+## 10. How the matrix was built (historical scan)
 
 Two scans, both re-runnable from the repository root.
 

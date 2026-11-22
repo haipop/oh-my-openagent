@@ -195,4 +195,4 @@ bun remove -g omo-ai
 
 (or `npm uninstall -g omo-ai`). On a bun install, omo-ai replaces bun's `omo` symlink with a small launcher shim so each start skips a node boot, and `bun remove` leaves that file behind; delete it with `rm ~/.bun/bin/omo` (the shim says so in its header). Your state under `~/.omo/agent/` and `~/.omo/omo.jsonc` stays on disk; delete it yourself if you want a clean slate. The OpenCode plugin, if you kept it, is unaffected.
 
-See also: [Installation](./installation.md#omo-native-omo-via-omo-ai) for where omo keeps its state, and [Agent Model Matching](./agent-model-matching.md) for choosing models per category.
+See also: [Installation](./installation.md) for setup and provider authentication.

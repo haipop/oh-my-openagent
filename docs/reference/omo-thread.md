@@ -588,7 +588,7 @@ direction: {inbound, outbound}, inbound_mode, outbound_events, policy_id, create
 lease_started_at, ttl_seconds, expires_at}`.
 
 A failure is `{kind:"error", error: {code, message, next_action, details?}}`; the code is one of
-the thread error taxonomy (`packages/omo-senpi/src/components/thread/AGENTS.md`, "Error taxonomy").
+the retired Senpi thread error taxonomy's "Error taxonomy" section.
 The failures the CLI answers itself use the same shape: a usage error is `invalid_arguments`
 (exit 2), and win32 or a runtime without `node:sqlite` is `unsupported` (exit 4).
 
@@ -617,8 +617,7 @@ try {
 }
 ```
 
-`pluginRoot` is the retained Senpi plugin directory (`packages/omo-senpi/plugin` after
-`bun run build:senpi-plugin`). The standalone CLI commands above are upstream reference;
+`pluginRoot` is the retired Senpi plugin directory from an existing install. The standalone CLI commands above are upstream reference;
 they are not shipped by this branch. SDK methods return a result union rather than throwing
 for a refusal. Endpoints come from the endpoint registry on disk; pass
 `engineStatusAll` (a function returning the stdout of `omo host status --all --include-workers --json`) only to

@@ -1,11 +1,11 @@
 # thread-address-core
 
-The thread and device address rules every omo surface shares (#14305): the address grammar, the device resolver, the one name comparison, row identity and naming, the per-device listing state, and the typed refusals as plain data. omo-senpi's thread tools and remote client import it as a workspace dependency; the omo desktop app vendors these files byte-for-byte at its omo runtime pin and loads them in its web client.
+The thread and device address rules every omo surface shares (#14305): the address grammar, the device resolver, the one name comparison, row identity and naming, the per-device listing state, and the typed refusals as plain data. The omo desktop app vendors these files byte-for-byte at its omo runtime pin and loads them in its web client.
 
 ## Rules
 
 - Zero runtime dependencies: no package import, no `node:` built-in, no Node or Bun global. `src/self-contained.test.ts` fails when a source file imports anything but a sibling file (`./name`); `tsconfig.json` (`"types": []`, tests excluded) fails the typecheck on a Node or Bun global in a source file. Tests typecheck under `tsconfig.test.json` with `bun-types`.
-- Plain data in, plain data out. No messages that name omo tools: a refusal is `{ code, reason, details }`, and the caller words it (omo-senpi: `thread/address/refusals.ts` `toolRefusal`).
+- Plain data in, plain data out. No messages that name omo tools: a refusal is `{ code, reason, details }`, and the caller owns its wording.
 - `parse.ts` imports nothing at all: `components/remote/seams.ts` (the published omo-ai/remote types) reaches it, and `remote/types-closure.test.ts` allows it only as a leaf.
 
 ## Anatomy
@@ -19,4 +19,4 @@ The thread and device address rules every omo surface shares (#14305): the addre
 | `row.ts` | `rowKey`, `rowAddress`, `rowName` (only a real name is an address; a fallback is `unnamed`), `mergeRows` |
 | `refusals.ts` | refusal codes, the plain refusal union and its builders, the device candidate shape, `deviceLabel` (`name (id)`) |
 
-The stateful half (account reads, `resolveAddress`) lives in `packages/omo-senpi/src/components/thread/address/`.
+The stateful half (account reads, `resolveAddress`) is caller-owned; current harness surfaces implement their own address resolution.

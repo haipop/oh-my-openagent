@@ -17,8 +17,6 @@ const mcpPackagePaths: readonly string[] = [
 const adapterPackagePaths: readonly string[] = [
   "packages/omo-codex",
   "packages/omo-dsh",
-  "packages/omo-senpi",
-  "packages/senpi-task",
   "packages/senpi-desktop-engine",
   "packages/senpi-desktop-prelude",
   "packages/senpi-desktop-protocol",
@@ -214,7 +212,7 @@ describe("package registration audit", () => {
     const expectedDevDependencyNames = (
       await Promise.all(
         managedWorkspacePaths
-          // omo-opencode stays linked because the Senpi build imports its config-migration export.
+          .filter((path) => !skillPackagePaths.includes(path))
           .map((path) => readManifest(join(path, "package.json")).then((manifest) => manifest.name)),
       )
     ).toSorted()

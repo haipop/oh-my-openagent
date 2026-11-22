@@ -1,10 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { createRequire } from "node:module"
 import { basename, dirname, join, relative, resolve, sep } from "node:path"
 
-import { BUILTIN_AGENT_NAMES } from "../packages/senpi-task/src/agents/builtin/names"
-import { LEGACY_AGENT_NAME_ALIASES } from "../packages/senpi-task/src/agents/builtin/legacy-agent-names"
-import { DEFAULT_CATEGORIES as SENPI_CATEGORIES } from "../packages/senpi-task/src/category/builtins"
 import { LEGACY_CATEGORY_NAME_ALIASES } from "../packages/omo-config-core/src/schema/legacy-category-names"
 import {
   BuiltinAgentNameSchema,
@@ -12,7 +8,6 @@ import {
   OverridableAgentNameSchema,
 } from "../packages/omo-opencode/src/config/schema/agent-names"
 import { DEFAULT_CATEGORIES as OPENCODE_CATEGORIES } from "../packages/omo-opencode/src/tools/delegate-task/builtin-categories"
-import { createNativeSkillSources } from "../packages/omo-senpi/plugin/scripts/native-skill-sources.mjs"
 import {
   designpowersThirdPartyRelativePaths,
   frontendSkillRoot,
@@ -26,7 +21,7 @@ import {
  * Every skill name, skill-relative path, agent name and category name that a shipped SKILL.md or
  * prompt hands to a model must resolve to a real target in each edition that ships the file. A name
  * that resolves nowhere fails differently per edition (OpenCode refuses the whole `task` call with
- * "Skills not found", Senpi starts the child without the skill, a prose pointer loads nothing), so
+ * "Skills not found", a prose pointer loads nothing), so
  * the audit fails closed and suggests the nearest real name.
  *
  * An optional mention ("when the `x` skill is available", "if the session lists the `x` skill")
@@ -34,7 +29,7 @@ import {
  * ships the file.
  */
 
-export type Edition = "senpi" | "opencode" | "codex" | "repo"
+export type Edition = "opencode" | "codex" | "repo"
 type ReferenceClass = "skill-name" | "skill-path" | "agent-name" | "category-name"
 
 interface ReferenceFinding {
@@ -57,7 +52,7 @@ export interface AuditedFile {
   readonly path: string
   readonly editions: readonly Edition[]
   readonly skillRoot: string | undefined
-  readonly taskDialect: "opencode" | "senpi" | "codex"
+  readonly taskDialect: "opencode" | "codex"
 }
 
 /**
@@ -89,7 +84,7 @@ const PLACEHOLDER_NAMES: ReadonlySet<string> = new Set([
   "your-skill",
 ])
 
-const SHIPPED_EDITIONS: readonly Edition[] = ["senpi", "opencode", "codex"]
+const SHIPPED_EDITIONS: readonly Edition[] = ["opencode", "codex"]
 const SKILL_NAME_SHAPE = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/
 
 function toPortable(path: string): string {
@@ -157,27 +152,6 @@ function codexAgentRoleNames(repoRoot: string): string[] {
   })
 }
 
-/**
- * Skills the pinned Senpi engine contributes on its own: the codemode skill (`src/skill/<name>`) and
- * every builtin extension skill (`dist/core/extensions/builtin/<ext>/skill`). They are read from the
- * installed pin, so a skill renamed upstream fails this audit on the pin bump that ships the rename.
- */
-function senpiEngineSkillRoots(repoRoot: string): string[] {
-  const requireFromSenpiAdapter = createRequire(join(repoRoot, "packages", "omo-senpi", "package.json"))
-  const senpiRoot = dirname(requireFromSenpiAdapter.resolve("@code-yeongyu/senpi/package.json"))
-  const requireFromSenpi = createRequire(join(senpiRoot, "package.json"))
-  const codemodeRoot = dirname(requireFromSenpi.resolve("@code-yeongyu/senpi-codemode/package.json"))
-  const builtinRoot = join(senpiRoot, "dist", "core", "extensions", "builtin")
-  const builtinSkillRoots = listDirectories(builtinRoot)
-    .map((extension) => join(builtinRoot, extension, "skill"))
-    .filter((skillRoot) => existsSync(join(skillRoot, "SKILL.md")))
-  const codemodeSkillRoots = skillRootsUnder(join(codemodeRoot, "src", "skill"))
-  if (codemodeSkillRoots.length === 0) {
-    throw new Error(`no codemode skill found under ${codemodeRoot}/src/skill; the pinned senpi-codemode layout changed`)
-  }
-  return [...builtinSkillRoots, ...codemodeSkillRoots]
-}
-
 function union(...sets: ReadonlySet<string>[]): ReadonlySet<string> {
   return new Set(sets.flatMap((set) => [...set]))
 }
@@ -185,13 +159,10 @@ function union(...sets: ReadonlySet<string>[]): ReadonlySet<string> {
 function buildReferenceCatalog(repoRoot: string): ReferenceCatalog {
   const packagesRoot = join(repoRoot, "packages")
   const sharedRoots = skillRootsUnder(join(packagesRoot, "shared-skills", "skills"))
-  const nativeSources = createNativeSkillSources(packagesRoot).sources
-  const xSearchRoot = join(packagesRoot, "omo-senpi", "src", "components", "x-search", "skill")
   const loaderBuiltinRoots = skillRootsUnder(
     join(packagesRoot, "skills-loader-core", "src", "features", "builtin-skills"),
   )
   const codexComponentRoots = codexComponentSkillRoots(repoRoot)
-  const engineRoots = senpiEngineSkillRoots(repoRoot)
   const agentsLocalRoots = skillRootsUnder(join(repoRoot, ".agents", "skills"))
   const opencodeLocalRoots = skillRootsUnder(join(repoRoot, ".opencode", "skills"))
 
@@ -201,47 +172,38 @@ function buildReferenceCatalog(repoRoot: string): ReferenceCatalog {
     return name
   }
   const sharedSkills = sharedRoots.map((root) => addRoot(root))
-  const nativeSenpiSkills = nativeSources.map((source) => addRoot(source.source, source.name))
-  const xSearch = addRoot(xSearchRoot)
   const loaderBuiltinSkills = loaderBuiltinRoots.map((root) => addRoot(root))
   const codexComponentSkills = codexComponentRoots.map((root) => addRoot(root))
-  const engineSkills = engineRoots.map((root) => addRoot(root))
   const agentsLocalSkills = agentsLocalRoots.map((root) => addRoot(root))
   const opencodeLocalSkills = opencodeLocalRoots.map((root) => addRoot(root))
 
-  const senpiSkills = new Set([...sharedSkills, ...nativeSenpiSkills, xSearch, ...engineSkills])
   // `.opencode/skills` here is this repository's own project-local set: OpenCode discovers that directory only in the
   // user's project and config dirs, so it never reaches a user's session and is no part of the shipped catalog.
   const opencodeSkills = new Set([...sharedSkills, ...loaderBuiltinSkills, ...BuiltinSkillNameSchema.options])
   // The Codex sync synthesizes `ultrawork` from the canonical prompts-core directive.
   const codexSkills = new Set([...sharedSkills, ...codexComponentSkills, "ultrawork", ...CODEX_SYSTEM_SKILL_NAMES])
 
-  const senpiAgents = new Set([...BUILTIN_AGENT_NAMES, ...Object.keys(LEGACY_AGENT_NAME_ALIASES)])
   const opencodeAgents = new Set<string>([...BuiltinAgentNameSchema.options, ...OverridableAgentNameSchema.options])
   const codexAgents = new Set([...codexAgentRoleNames(repoRoot), ...CODEX_BUILTIN_AGENT_TYPES])
 
   const legacyCategories = Object.keys(LEGACY_CATEGORY_NAME_ALIASES)
-  const senpiCategories = new Set([...Object.keys(SENPI_CATEGORIES), ...legacyCategories])
   const opencodeCategories = new Set([...Object.keys(OPENCODE_CATEGORIES), ...legacyCategories])
 
   return {
     skills: {
-      senpi: senpiSkills,
       opencode: opencodeSkills,
       codex: codexSkills,
-      repo: union(senpiSkills, opencodeSkills, codexSkills, new Set([...agentsLocalSkills, ...opencodeLocalSkills])),
+      repo: union(opencodeSkills, codexSkills, new Set([...agentsLocalSkills, ...opencodeLocalSkills])),
     },
     agents: {
-      senpi: senpiAgents,
       opencode: opencodeAgents,
       codex: codexAgents,
-      repo: union(senpiAgents, opencodeAgents, codexAgents),
+      repo: union(opencodeAgents, codexAgents),
     },
     categories: {
-      senpi: senpiCategories,
       opencode: opencodeCategories,
       codex: opencodeCategories,
-      repo: union(senpiCategories, opencodeCategories),
+      repo: union(opencodeCategories),
     },
     skillRoots,
   }
@@ -268,30 +230,15 @@ function collectAuditedFiles(repoRoot: string): AuditedFile[] {
   const packagesRoot = join(repoRoot, "packages")
   const files: AuditedFile[] = []
 
-  const nativeSources = createNativeSkillSources(packagesRoot).sources
-  const nativeByName = new Map(nativeSources.map((source) => [source.name, source]))
-
   const sharedRoot = join(packagesRoot, "shared-skills", "skills")
   for (const skillRoot of skillRootsUnder(sharedRoot)) {
-    const native = nativeByName.get(basename(skillRoot))
     for (const file of auditedTree(repoRoot, skillRoot, ["opencode", "codex"], "opencode", skillRoot)) {
-      // A Senpi-native override replaces the shared skill; only its listed shared assets still ship there.
-      const portable = toPortable(relative(skillRoot, file.path))
       // Third-party corpora are materialized byte for byte from pinned upstreams at build time; their own
       // README maps the upstream skills they name, and this audit covers only text this repository authors.
       if (thirdPartyFrontendPaths.has(toPortable(relative(frontendSkillRoot, file.path)))) continue
-      const shipsToSenpi =
-        native === undefined ||
-        (native.sharedAssets ?? []).some((asset) => portable === asset || portable.startsWith(`${asset}/`))
-      files.push({ ...file, editions: shipsToSenpi ? ["opencode", "codex", "senpi"] : ["opencode", "codex"] })
+      files.push(file)
     }
   }
-
-  for (const source of nativeSources) {
-    files.push(...auditedTree(repoRoot, source.source, ["senpi"], "senpi", source.source))
-  }
-  const xSearchRoot = join(packagesRoot, "omo-senpi", "src", "components", "x-search", "skill")
-  files.push(...auditedTree(repoRoot, xSearchRoot, ["senpi"], "senpi", xSearchRoot))
 
   for (const skillRoot of codexComponentSkillRoots(repoRoot)) {
     files.push(...auditedTree(repoRoot, skillRoot, ["codex"], "codex", skillRoot))
@@ -315,22 +262,10 @@ function collectAuditedFiles(repoRoot: string): AuditedFile[] {
     files.push(basename(file.path) === "codex.md" ? { ...file, editions: ["codex"], taskDialect: "codex" } : file)
   }
 
-  // Agent prompts written in TypeScript: OpenCode's agents and the Senpi task engine's builtin agents.
-  for (const [agentsRoot, edition] of [
-    [join(packagesRoot, "omo-opencode", "src", "agents"), "opencode"],
-    [join(packagesRoot, "senpi-task", "src", "agents"), "senpi"],
-  ] as const) {
-    for (const path of listFilesRecursive(agentsRoot)) {
-      if (!path.endsWith(".ts") || NON_SHIPPED_FILE.test(toPortable(relative(repoRoot, path)))) continue
-      files.push({ path, editions: [edition], skillRoot: undefined, taskDialect: edition })
-    }
-  }
-
-  const senpiComponentsRoot = join(packagesRoot, "omo-senpi", "src", "components")
-  for (const path of listFilesRecursive(senpiComponentsRoot)) {
-    if (!path.endsWith(".md") || basename(path) === "AGENTS.md" || path.startsWith(xSearchRoot)) continue
-    if (NON_SHIPPED_FILE.test(toPortable(relative(repoRoot, path)))) continue
-    files.push({ path, editions: ["senpi"], skillRoot: undefined, taskDialect: "senpi" })
+  // Agent prompts written in TypeScript by OpenCode's agents.
+  for (const path of listFilesRecursive(join(packagesRoot, "omo-opencode", "src", "agents"))) {
+    if (!path.endsWith(".ts") || NON_SHIPPED_FILE.test(toPortable(relative(repoRoot, path)))) continue
+    files.push({ path, editions: ["opencode"], skillRoot: undefined, taskDialect: "opencode" })
   }
 
   return files
@@ -357,6 +292,9 @@ const SKILL_RELATIVE_PATH = /`(\.{1,2}\/[^`\s]+\.md|(?:references|scripts|assets
 const SKILL_OWNER = /`([a-z0-9][a-z0-9-]*)`(?:'s\b|\s+skill\b)|\bload\s+`([a-z0-9][a-z0-9-]*)`/g
 // A conditional mention of a skill the user's own project may define ("some repositories define one project-locally") names no shipped target.
 const PROJECT_LOCAL_MENTION = /\bproject[- ]local(?:ly)?\b/i
+// These are optional surfaces supplied by host/plugin ecosystems rather than this repository; the docs say
+// what to do when the surface is present but must still load normally without it.
+const OPTIONAL_EXTERNAL_SKILL_NAMES = new Set(["mass-ulw", "visualize"])
 const CONDITIONAL_WORD = /\b(?:when|whenever|if|where|unless)\b/i
 // An optional mention names availability of the skill or of a harness surface, never a generic "has": "when the \`x\`
 // skill is available", "if the session lists the \`x\` skill", "where the harness has a dependency-graph surface".
@@ -545,9 +483,8 @@ function catalogFor(
 }
 
 /**
- * Shared skills are written in the OpenCode dialect and the Senpi and Codex syncs translate their
- * `task(...)` examples (the synced Senpi output is checked by omo-senpi's skills-sync test), so a
- * target there must be real in OpenCode or Senpi. A Codex `agent_type` must be a Codex role.
+ * Shared skills are written in the OpenCode dialect and the Codex sync translates their `task(...)`
+ * examples, so a target there must be real in OpenCode. A Codex `agent_type` must be a Codex role.
  */
 function taskTargetAccepted(
   file: AuditedFile,
@@ -559,8 +496,7 @@ function taskTargetAccepted(
   const byEdition = catalogFor(catalog, kind)
   if (isAgentType) return byEdition.codex.has(name)
   if (file.editions.includes("repo")) return byEdition.repo.has(name)
-  if (file.taskDialect === "senpi") return byEdition.senpi.has(name)
-  return byEdition.opencode.has(name) || byEdition.senpi.has(name)
+  return byEdition.opencode.has(name)
 }
 
 function auditSkillPath(
@@ -572,6 +508,7 @@ function auditSkillPath(
 ): Omit<ReferenceFinding, "file" | "line"> | undefined {
   if (file.skillRoot === undefined || isTemplated(raw.reference)) return undefined
   const owner = owningSkill(content, raw.index)
+  if (owner !== undefined && OPTIONAL_EXTERNAL_SKILL_NAMES.has(owner) && isOptionalMention(content, raw.index)) return undefined
   const ownerRoots = owner === undefined ? [] : (catalog.skillRoots.get(owner) ?? [])
   if (ownerRoots.length > 0) {
     if (ownerRoots.some((root) => resolvesUnder(root, raw.reference))) return undefined
@@ -632,6 +569,7 @@ function auditFile(file: AuditedFile, catalog: ReferenceCatalog, repoRoot: strin
     }
 
     const optional = isOptionalMention(content, raw.index)
+    if (optional && OPTIONAL_EXTERNAL_SKILL_NAMES.has(name)) continue
     const missingIn = optional
       ? SHIPPED_EDITIONS.some((edition) => byEdition[edition].has(name)) ||
         PROJECT_LOCAL_MENTION.test(sentenceAround(content, raw.index)) ||

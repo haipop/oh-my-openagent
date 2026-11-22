@@ -118,8 +118,6 @@ describe("PostHog test guard preload audit (#10394)", () => {
     expect(configs).toEqual(
       expect.arrayContaining([
         "bunfig.toml",
-        "packages/omo-senpi/bunfig.toml",
-        "packages/senpi-task/bunfig.toml",
         "packages/telemetry-core/bunfig.toml",
       ]),
     )

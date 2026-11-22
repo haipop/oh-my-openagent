@@ -6,11 +6,9 @@ import { readFile } from "node:fs/promises"
 import { dirname, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { sharedAssetSourceFor } from "../../../omo-senpi/plugin/scripts/native-skill-sources.mjs"
 
 const WORKSPACE_ROOT = resolve(import.meta.dir, "../../../..")
 const MARKDOWN_REFERENCE_DEFINITION_RE = /^ {0,3}\[([^\]\n]+)\]:\s+(\S+)/
-const PACKAGES_ROOT = resolve(WORKSPACE_ROOT, "packages")
 const MAINTAINER_LOCAL_PATH_RE = /file:\/\/\/(?:Users|home)\/|(?:^|[\s(`'"])(?:\/Users|\/home)\//
 
 function collectMarkdownFiles(): string[] {
@@ -253,10 +251,7 @@ describe("markdown local link audit", () => {
         collectMarkdownFiles().map(async (filePath) => {
           return collectLinkedTargets(await readFile(filePath, "utf-8")).flatMap((linkedTarget) => {
             const targetPath = resolveMarkdownTarget(filePath, linkedTarget.target)
-            // A native senpi skill links to shared assets the sync overlays into it; those resolve in shared-skills.
-            const overlaid = targetPath ? sharedAssetSourceFor(PACKAGES_ROOT, targetPath) : null
-            const exists =
-              targetPath !== undefined && (existsSync(targetPath) || (overlaid !== null && existsSync(overlaid)))
+            const exists = targetPath !== undefined && existsSync(targetPath)
             return targetPath && !exists
               ? [`${relativeWorkspacePath(filePath)}:${linkedTarget.line} missing ${linkedTarget.target}`]
               : []

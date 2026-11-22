@@ -26,12 +26,11 @@ function writeFixture(relativePath: string, content: string): string {
   return path
 }
 
-function perEdition(senpi: string[], opencode: string[], codex: string[]): Record<Edition, ReadonlySet<string>> {
+function perEdition(opencode: string[], codex: string[]): Record<Edition, ReadonlySet<string>> {
   return {
-    senpi: new Set(senpi),
     opencode: new Set(opencode),
     codex: new Set(codex),
-    repo: new Set([...senpi, ...opencode, ...codex]),
+    repo: new Set([...opencode, ...codex]),
   }
 }
 
@@ -41,13 +40,9 @@ writeFixture("skills/other/references/present.md", "present\n")
 writeFixture("skills/main/references/python/httpx2.md", "real file\n")
 
 const catalog: ReferenceCatalog = {
-  skills: perEdition(
-    ["git-master", "bun", "other"],
-    ["git-master", "team-mode", "other"],
-    ["git-master", "teammode", "other"],
-  ),
-  agents: perEdition(["explore", "plan-reviewer"], ["explore", "oracle"], ["explorer", "plan"]),
-  categories: perEdition(["quick", "deep-low"], ["quick", "deep-low"], ["quick", "deep-low"]),
+  skills: perEdition(["git-master", "team-mode", "other"], ["git-master", "teammode", "other"]),
+  agents: perEdition(["explore", "oracle"], ["explorer", "plan"]),
+  categories: perEdition(["quick", "deep-low"], ["quick", "deep-low"]),
   skillRoots: new Map([["other", [otherSkillRoot]]]),
 }
 
@@ -55,7 +50,7 @@ function audit(
   relativePath: string,
   content: string,
   editions: readonly Edition[],
-  taskDialect: AuditedFile["taskDialect"] = "senpi",
+  taskDialect: AuditedFile["taskDialect"] = "opencode",
 ) {
   const path = writeFixture(relativePath, content)
   const file: AuditedFile = { path, editions, skillRoot: join(fixtureRoot, "skills", "main"), taskDialect }
@@ -78,12 +73,12 @@ describe("skill reference audit", () => {
 
   test("#given a load_skills entry with an underscore instead of a hyphen #when audited #then it is reported with the real name as the suggestion", () => {
     expect(
-      audit("skills/main/SKILL.md", 'task(category="quick", load_skills=["git_master"])\n', ["senpi", "opencode"]),
+      audit("skills/main/SKILL.md", 'task(category="quick", load_skills=["git_master"])\n', ["opencode"]),
     ).toEqual([
       {
         referenceClass: "skill-name",
         reference: "git_master",
-        missingIn: ["senpi", "opencode"],
+        missingIn: ["opencode"],
         suggestion: "git-master",
       },
     ])
@@ -91,7 +86,7 @@ describe("skill reference audit", () => {
 
   test("#given a prose pointer to a skill that exists in one edition only #when the file ships to two #then only the edition that lacks it is reported", () => {
     expect(
-      audit("skills/main/one.md", "Read the `bun` skill before your first cell.\n", ["senpi", "opencode"]),
+      audit("skills/main/one.md", "Read the `bun` skill before your first cell.\n", ["opencode"]),
     ).toEqual([{ referenceClass: "skill-name", reference: "bun", missingIn: ["opencode"], suggestion: undefined }])
   })
 
@@ -117,9 +112,9 @@ describe("skill reference audit", () => {
     )
     const file: AuditedFile = {
       path,
-      editions: ["senpi"],
+      editions: ["opencode"],
       skillRoot: join(fixtureRoot, "skills", "main"),
-      taskDialect: "senpi",
+      taskDialect: "opencode",
     }
     expect(
       auditSkillReferences(fixtureRoot, { catalog: repoOnlyCatalog, files: [file] }).map((finding) => [
@@ -154,27 +149,27 @@ describe("skill reference audit", () => {
   })
 
   test("#given a path the prose places in another skill #when audited #then it resolves against that skill's root", () => {
-    expect(audit("skills/main/four.md", "Follow the `other` skill's `references/present.md`.\n", ["senpi"])).toEqual([])
+    expect(audit("skills/main/four.md", "Follow the `other` skill's `references/present.md`.\n", ["opencode"])).toEqual([])
     expect(
-      audit("skills/main/five.md", "Follow the `other` skill's `references/never-written-guide.md`.\n", ["senpi"]),
+      audit("skills/main/five.md", "Follow the `other` skill's `references/never-written-guide.md`.\n", ["opencode"]),
     ).toEqual([
       {
         referenceClass: "skill-path",
         reference: "other:references/never-written-guide.md",
-        missingIn: ["senpi"],
+        missingIn: ["opencode"],
         suggestion: undefined,
       },
     ])
   })
 
-  test("#given task targets naming a missing agent and category #when audited in the Senpi dialect #then both are reported with the nearest real name", () => {
+  test("#given task targets naming a missing agent and category #when audited in the OpenCode dialect #then both are reported with the nearest real name", () => {
     expect(
       audit("skills/main/six.md", 'task(subagent_type="explroe", prompt="x")\ntask(category="quik", prompt="y")\n', [
-        "senpi",
+        "opencode",
       ]),
     ).toEqual([
-      { referenceClass: "agent-name", reference: "explroe", missingIn: ["senpi"], suggestion: "explore" },
-      { referenceClass: "category-name", reference: "quik", missingIn: ["senpi"], suggestion: "quick" },
+      { referenceClass: "agent-name", reference: "explroe", missingIn: ["opencode"], suggestion: "explore" },
+      { referenceClass: "category-name", reference: "quik", missingIn: ["opencode"], suggestion: "quick" },
     ])
   })
 

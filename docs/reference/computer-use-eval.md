@@ -1,6 +1,6 @@
 # Computer-use eval and latency bench
 
-`packages/omo-senpi/scripts/qa/cu-eval/` measures computer use end to end: seven tasks through three arms, each judged by its own oracles, plus a latency bench with per-host baselines. Neither ever calls a real model.
+`script/qa/cu-eval/` measures computer use end to end: seven tasks through three arms, each judged by its own oracles, plus a latency bench with per-host baselines. Neither ever calls a real model.
 
 ## Tasks
 
@@ -44,13 +44,13 @@ The step prints one line per op and a closing `bench comparison: base <sha> vs h
 
 ```bash
 cargo build --release -p senpi-desktop-engine
-node packages/omo-senpi/scripts/qa/cu-eval/run.mjs --arm sdk-direct --fake-engine --json
-node packages/omo-senpi/scripts/qa/cu-eval/run.mjs --arm all --fake-engine --out cu-eval.json
-node packages/omo-senpi/scripts/qa/cu-eval/run.mjs --arm sdk-direct --fake-engine --mismatch safari-form-fill   # QA control: exits 1
-node packages/omo-senpi/scripts/qa/cu-eval/bench.mjs --fake-engine --compare packages/omo-senpi/scripts/qa/cu-eval/baselines/linux-x64-fake.json
+node script/qa/cu-eval/run.mjs --arm sdk-direct --fake-engine --json
+node script/qa/cu-eval/run.mjs --arm all --fake-engine --out cu-eval.json
+node script/qa/cu-eval/run.mjs --arm sdk-direct --fake-engine --mismatch safari-form-fill   # QA control: exits 1
+node script/qa/cu-eval/bench.mjs --fake-engine --compare script/qa/cu-eval/baselines/linux-x64-fake.json
 # macOS (a QA account, apps in English):
-node packages/omo-senpi/scripts/qa/cu-eval/run.mjs --arm sdk-direct --live --json --out cu-eval-live.json
-node packages/omo-senpi/scripts/qa/cu-eval/bench.mjs --live --write-baseline --out bench-live.json
+node script/qa/cu-eval/run.mjs --arm sdk-direct --live --json --out cu-eval-live.json
+node script/qa/cu-eval/bench.mjs --live --write-baseline --out bench-live.json
 ```
 
 Both scripts re-run themselves on Bun when started with Node (the SDK is TypeScript source). `--engine <path>` or `CARGO_TARGET_DIR` picks the engine binary. Exit 0 means every task ran with no `fail` or `error` and every restore post-check held.

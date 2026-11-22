@@ -1,7 +1,6 @@
 // Vendored from code-yeongyu/senpi@c6317f5971 (senpi#3818, formatting only).
 // Source of truth: packages/coding-agent/src/core/extensions/builtin/mcp/env-grants-store.ts.
 // This copy stays: omo-opencode consumes it and has no senpi dependency.
-// env-grants-store-drift.test.ts fails when it stops matching the pinned senpi store.
 /**
  * Shared native/legacy MCP environment grants, with no senpi-internal imports.
  *

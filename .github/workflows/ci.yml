@@ -367,16 +367,7 @@ jobs:
           & .github/scripts/windows-ci-telemetry.ps1 `
             -ArtifactDirectory $telemetryDirectory `
             -Invocation "shard-2-quarantine" `
-            -TestArguments @("test", "packages/senpi-task/src/runners/rpc-process.windows.test.ts", "packages/senpi-task/src/__adversarial__/chaos-bench.test.ts", "packages/omo-codex/src/install/install-codex-legacy-agent-purge.test.ts", "script/codex-installer-version.test.ts", "packages/shared-skills/provenance-gate.test.ts", "packages/omo-codex/src/install/install-codex-mcp-manifest.test.ts", "packages/senpi-task/src/dag/scheduler.test.ts", "packages/senpi-task/src/team/member-extension/residency.test.ts", "script/release-version.test.ts", "packages/senpi-task/src/store/record-lock.test.ts", "packages/senpi-task/src/store/record-lock-reap-window.test.ts", "packages/senpi-task/src/runners/rpc-host/durable-json.test.ts")
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          # Bun 1.4.2 and 1.4.3-canary.1 intermittently segfault a test worker in the rpc-host suite
-          # (oven-sh/bun#44390, #9219). It runs in its own required invocation, which
-          # script/bun-panic-retry.ts re-runs once only when Bun itself crashed; a second crash or
-          # any real test failure fails this step. The remainder config excludes the directory.
-          & .github/scripts/windows-ci-telemetry.ps1 `
-            -ArtifactDirectory $telemetryDirectory `
-            -Invocation "shard-2-rpc-host" `
-            -TestArguments @("script/bun-panic-retry.ts", "--config=bunfig.win2.parallel.toml", "test", "--parallel", "./packages/senpi-task/src/runners/rpc-host")
+            -TestArguments @("test", "packages/omo-codex/src/install/install-codex-legacy-agent-purge.test.ts", "script/codex-installer-version.test.ts", "packages/shared-skills/provenance-gate.test.ts", "packages/omo-codex/src/install/install-codex-mcp-manifest.test.ts", "script/release-version.test.ts")
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & .github/scripts/windows-ci-telemetry.ps1 `
             -ArtifactDirectory $telemetryDirectory `
@@ -453,7 +444,7 @@ jobs:
           JOB_SUMMARY_DETAILS: |
             - Builds vendored LSP packages before tests.
             - Runs `npm test` for `packages/lsp-daemon`.
-            - Runs all non-Senpi root tests sharded two ways per OS: shard 1 covers omo-opencode + memory-core, shard 2 runs the shared serial quarantine first and then the remainder (serial on POSIX, `--parallel` on Windows).
+            - Runs all root tests sharded two ways per OS: shard 1 covers omo-opencode + memory-core, shard 2 runs the shared serial quarantine first and then the remainder (serial on POSIX, `--parallel` on Windows).
             - Splits every OS by the same package groups so global zauc mock bootstraps stay with their consumers.
           JOB_SUMMARY_NEXT: Open the first failing test or package-build step; matrix failures are usually OS-specific.
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh
@@ -476,7 +467,6 @@ jobs:
       shard2a: ${{ steps.root-tests-posix-2a.outcome }}
       shard2b: ${{ steps.root-tests-posix-2b.outcome }}
       codex: ${{ steps.codex-platform-tests.outcome }}
-      senpi: ${{ steps.senpi-tests-posix.outcome }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -531,14 +521,6 @@ jobs:
           bash .github/scripts/ci-codex-platform-build.sh
           bash .github/scripts/ci-codex-platform-node.sh
           bun test packages/omo-opencode/src/cli/cli-installer.platform.test.ts
-      - name: Run Senpi compatibility tests
-        id: senpi-tests-posix
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        timeout-minutes: 20
-        env:
-          CI_JUNIT_DIR: ${{ runner.temp }}/junit
-        run: bash .github/scripts/ci-senpi-posix.sh
-
       # The JUnit reports prove a re-sharded layout runs exactly the tests this one runs (#13315).
       - name: Upload macOS JUnit reports
         if: always()
@@ -561,7 +543,6 @@ jobs:
             - Root shard 2 heavy: `${{ steps.root-tests-posix-2a.outcome }}`.
             - Root shard 2 light: `${{ steps.root-tests-posix-2b.outcome }}`.
             - Codex platform: `${{ steps.codex-platform-tests.outcome }}`.
-            - Senpi: `${{ steps.senpi-tests-posix.outcome }}`.
           JOB_SUMMARY_NEXT: Inspect the failed part; independent parts continue after an earlier failure.
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh
 
@@ -642,29 +623,6 @@ jobs:
           RUNTIME_TOUCHING: ${{ needs.ci-mode.outputs.runtime_touching }}
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/ci-macos-status.sh
 
-  macos-senpi-status:
-    name: senpi-compatibility
-    needs: [ci-mode, macos-combined]
-    if: ${{ always() && !cancelled() && needs.ci-mode.result != 'skipped' }}
-    runs-on: ubuntu-26.04
-    strategy:
-      matrix:
-        os: [macos-latest]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-      - name: Write job summary
-        env:
-          LEG_OS: ${{ matrix.os }}
-          LEG_JOB_STATUS: ${{ needs.macos-combined.result }}
-          TEST_OUTCOMES: ${{ needs.macos-combined.outputs.senpi }}
-          RUN_HEAVY: ${{ needs.ci-mode.outputs.run_heavy }}
-          FULL_MATRIX: ${{ needs.ci-mode.outputs.full_matrix }}
-          RUNTIME_TOUCHING: ${{ needs.ci-mode.outputs.runtime_touching }}
-        run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/ci-macos-status.sh
-
   typecheck:
     needs: [ci-mode]
     runs-on: ubuntu-26.04
@@ -690,23 +648,6 @@ jobs:
       - name: Install dependencies
         if: needs.ci-mode.outputs.run_heavy == 'true'
         run: bun install --frozen-lockfile --ignore-scripts
-
-      # A Bun 1.4.3 frozen install once left @types/node out of the tree; tsgo then fell back to
-      # bun-types' ForkOptions and reported a false 'windowsHide' error in omo-senpi. Fail here,
-      # with the cause, if the declared @types/node does not resolve from omo-senpi.
-      - name: Verify @types/node resolves from omo-senpi
-        if: needs.ci-mode.outputs.run_heavy == 'true'
-        shell: bash
-        run: |
-          node -e '
-            const { createRequire } = require("node:module");
-            const path = require("node:path");
-            const pkg = path.resolve("packages/omo-senpi/package.json");
-            const declared = require(pkg).devDependencies["@types/node"];
-            const found = createRequire(pkg)("@types/node/package.json").version;
-            console.log(`@types/node declared ${declared}, resolved ${found}`);
-            if (found !== declared) process.exit(1);
-          '
 
       - name: Type check
         if: needs.ci-mode.outputs.run_heavy == 'true'
@@ -736,7 +677,6 @@ jobs:
           JOB_SUMMARY_STATUS: ${{ job.status }}
           JOB_SUMMARY_DETAILS: |
             - Builds vendored LSP packages required by the workspace.
-            - Checks that `@types/node` resolves from `packages/omo-senpi` after the frozen install.
             - Runs root `bun run typecheck`, including script and package checks.
           JOB_SUMMARY_NEXT: Start with the first TypeScript diagnostic; shared package failures can cascade into adapters.
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh
@@ -843,158 +783,6 @@ jobs:
             - Runs the full hermetic Codex gate plus every omo-codex component check script on Linux, and platform-specific installer/path/shell smoke tests on macOS and Windows.
             - Preserves Linux, macOS, and Windows platform compatibility coverage without duplicating platform-neutral tests.
           JOB_SUMMARY_NEXT: Inspect the failing component build or the first Codex compatibility test failure for this OS.
-        run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh
-
-  senpi-compatibility:
-    needs: [ci-mode]
-    # #11815: without a job budget a hung leg sits until GitHub's 360-minute default; healthy legs take 33-55 minutes.
-    timeout-minutes: 100
-    # Preserve required matrix check names during the Ubuntu image migration.
-    # Outside the full matrix a macOS/Windows leg still reports its required context, from an ubuntu
-    # runner with every heavy step skipped, so it never waits for a hosted macOS/Windows slot (#10856).
-    runs-on: ${{ (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix != 'true') && 'ubuntu-26.04' || matrix.os }}
-    strategy:
-      fail-fast: false
-      # merge_group retains this matrix, including the required ubuntu context.
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        if: needs.ci-mode.outputs.run_heavy == 'true' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        with:
-          node-version: "24"
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        if: needs.ci-mode.outputs.run_heavy == 'true' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        with:
-          bun-version: "1.4.4"
-
-      - uses: actions/cache@v6
-        if: needs.ci-mode.outputs.run_heavy == 'true' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-1.4.4-${{ hashFiles('bun.lock') }}
-
-      - name: Install dependencies
-        if: needs.ci-mode.outputs.run_heavy == 'true' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        run: bun install --frozen-lockfile --ignore-scripts
-
-      - name: Remove stale self-package test copies
-        if: needs.ci-mode.outputs.run_heavy == 'true' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        run: bun run script/remove-stale-self-package-tests.ts
-
-      # Linux only: digestBuildSources hashes repo-relative paths (build-extension.mjs:140,143),
-      # which are backslash-separated on Windows, so the source digest is platform-dependent and
-      # a committed artifact can never match on every OS. One platform is enough to catch drift.
-      - name: Verify committed Senpi plugin bundle is current
-        if: needs.ci-mode.outputs.run_heavy == 'true' && matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          set -euo pipefail
-          node packages/omo-senpi/plugin/scripts/build-extension.mjs --check
-          # The installer embeds the required-artifact list, so a stale copy demands files the
-          # plugin no longer ships and refuses to install. Nothing else in CI reads it.
-          node packages/omo-senpi/plugin/scripts/build-install.mjs --check
-          # The merge gate reads this map at the base tip to tell whether a PR can change a committed
-          # bundle; it is traced from the three generators above, so a stale map is a red build.
-          bun run bundle-inputs:check
-
-      - name: Run Senpi compatibility tests
-        id: senpi-tests-posix
-        if: needs.ci-mode.outputs.run_heavy == 'true' && runner.os != 'Windows' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        shell: bash
-        run: bash .github/scripts/ci-senpi-posix.sh
-
-      # EQ.omo (brain/hand plan P0-06f): E21-E24 through the real senpi CLI with the built plugin, against the
-      # linux-x64 B0 goldens. The collectors, normalizer and fake model server are the senpi EQ harness at a pinned commit.
-      - name: Run omo fused-path equivalence (EQ.omo E21-E24)
-        if: needs.ci-mode.outputs.run_heavy == 'true' && matrix.os == 'ubuntu-latest'
-        shell: bash
-        timeout-minutes: 45
-        env:
-          SENPI_EQ_HARNESS_SHA: 5ab795e3392325c961596d7944a1740f4d0a9e20
-        run: |
-          set -euo pipefail
-          cargo build --release -p senpi-desktop-engine --locked
-          git init -q "$RUNNER_TEMP/senpi-eq"
-          git -C "$RUNNER_TEMP/senpi-eq" fetch -q --depth 1 https://github.com/code-yeongyu/senpi.git "$SENPI_EQ_HARNESS_SHA"
-          git -C "$RUNNER_TEMP/senpi-eq" -c advice.detachedHead=false checkout -q FETCH_HEAD
-          # E24 observes the pinned TypeScript language server only; the runner's own servers never reach a case.
-          npm install --prefix "$RUNNER_TEMP/eq-lsp" --no-save --no-audit --no-fund typescript-language-server@5.3.0 typescript@5.9.3
-          # E24 runs the pinned comment-checker binary from the Codex plugin workspace (the root install does not carry it);
-          # the binaries ship inside the npm tarball, so --ignore-scripts still installs them and nothing is downloaded mid-case.
-          npm --prefix packages/omo-codex/plugin ci --ignore-scripts --no-audit --no-fund
-          node packages/omo-senpi/scripts/qa/fused-equivalence-e2e.mjs --compare --placement fused --senpi-repo "$RUNNER_TEMP/senpi-eq" \
-            --lsp-dir "$RUNNER_TEMP/eq-lsp/node_modules/.bin" --evidence-dir "$RUNNER_TEMP/eq-omo"
-
-      - name: Run Senpi compatibility tests with Windows telemetry
-        id: senpi-tests-windows
-        # #11815: this step has hung and stayed in_progress for hours under GitHub's 360-minute default job limit.
-        # Healthy runs take 31-52 minutes (21 runs, 2026-10); 75 minutes fails a hang on its own and lets the telemetry
-        # upload and the summary below still run.
-        timeout-minutes: 75
-        if: needs.ci-mode.outputs.run_heavy == 'true' && runner.os == 'Windows' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        shell: pwsh
-        env:
-          WINDOWS_TEST_SHARD: senpi-compatibility
-        run: |
-          bun run build:senpi-plugin
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $packDirectory = Join-Path $env:RUNNER_TEMP "omo-senpi-pack"
-          New-Item -ItemType Directory -Path $packDirectory -Force | Out-Null
-          npm pack --pack-destination $packDirectory packages/omo-senpi/plugin
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          npm --prefix packages/lsp-daemon test -- test/daemon-roundtrip.test.ts
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          bun check --no-script --all -p packages/omo-senpi/tsconfig.json
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          bun test ./.agents/skills/senpi-qa/scripts/resolve-evidence-dir.test.mjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $telemetryDirectory = Join-Path $env:RUNNER_TEMP "windows-senpi-compatibility-telemetry"
-          & .github/scripts/windows-ci-telemetry.ps1 `
-            -ArtifactDirectory $telemetryDirectory `
-            -Invocation "senpi-compatibility" `
-            -TestArguments @("test", "packages/omo-senpi")
-          exit $LASTEXITCODE
-
-      - name: Upload Windows Senpi telemetry
-        if: always() && runner.os == 'Windows' && needs.ci-mode.outputs.run_heavy == 'true' && (matrix.os == 'ubuntu-latest' || needs.ci-mode.outputs.full_matrix == 'true')
-        continue-on-error: true
-        uses: actions/upload-artifact@v6
-        with:
-          name: windows-senpi-compatibility-telemetry-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/windows-senpi-compatibility-telemetry/*.json
-            ${{ runner.temp }}/windows-senpi-compatibility-telemetry/*.junit.xml
-          if-no-files-found: warn
-          overwrite: false
-
-      # A leg whose test steps were all skipped must never look like a pass.
-      - name: Check that this leg ran its tests
-        if: always()
-        shell: bash
-        env:
-          LEG_OS: ${{ matrix.os }}
-          LEG_JOB_STATUS: ${{ job.status }}
-          TEST_OUTCOMES: ${{ steps.senpi-tests-posix.outcome }} ${{ steps.senpi-tests-windows.outcome }}
-          RUN_HEAVY: ${{ needs.ci-mode.outputs.run_heavy }}
-          FULL_MATRIX: ${{ needs.ci-mode.outputs.full_matrix }}
-        run: node script/ci-leg-tests-guard.mjs --os "$LEG_OS" --job-status "$LEG_JOB_STATUS" --outcomes "$TEST_OUTCOMES" --run-heavy "$RUN_HEAVY" --full-matrix "$FULL_MATRIX"
-
-      - name: Write job summary
-        if: always()
-        shell: bash
-        env:
-          JOB_SUMMARY_TITLE: Senpi compatibility (${{ matrix.os }})
-          JOB_SUMMARY_STATUS: ${{ job.status }}
-          JOB_SUMMARY_DETAILS: |
-            - Builds the local-path Senpi adapter package artifacts.
-            - Builds the shared LSP daemon once before staging Senpi artifacts.
-            - Packs the generated Pi package and runs hermetic Senpi and QA-contract tests.
-            - Covers Linux/macOS socket and Windows named-pipe daemon smoke.
-          JOB_SUMMARY_NEXT: Inspect the first omo-senpi build, sync, directive, or package test failure for this OS.
         run: GITHUB_STEP_SUMMARY="$GITHUB_STEP_SUMMARY" bash .github/scripts/write-job-summary.sh
 
   lazycodex-published-smoke:
@@ -1154,7 +942,7 @@ jobs:
   auto-commit-schema:
     # Pin until this release/deploy path is proven on Ubuntu 26.04: #9947.
     runs-on: ubuntu-24.04
-    needs: [ci-mode, lint-ratchet, test, macos-test-1-status, macos-test-2-status, typecheck, codex-compatibility, macos-codex-status, senpi-compatibility, macos-senpi-status, build]
+    needs: [ci-mode, lint-ratchet, test, macos-test-1-status, macos-test-2-status, typecheck, codex-compatibility, macos-codex-status, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     permissions:
       contents: write
@@ -1205,7 +993,7 @@ jobs:
   draft-release:
     # Pin until this release/deploy path is proven on Ubuntu 26.04: #9948.
     runs-on: ubuntu-24.04
-    needs: [ci-mode, lint-ratchet, test, macos-test-1-status, macos-test-2-status, typecheck, codex-compatibility, macos-codex-status, senpi-compatibility, macos-senpi-status, build]
+    needs: [ci-mode, lint-ratchet, test, macos-test-1-status, macos-test-2-status, typecheck, codex-compatibility, macos-codex-status, build]
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/dev' &&
