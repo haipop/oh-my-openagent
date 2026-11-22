@@ -65,7 +65,7 @@ function transformLine(line: string): string {
   return `${parsed.lineNumber}#${hash}|${parsed.content}`
 }
 
-function transformOutput(output: string): string {
+export function transformHashlineReadOutput(output: string): string {
   if (!output) {
     return output
   }
@@ -202,7 +202,7 @@ export function createHashlineReadEnhancerHook(_ctx: PluginInput, config: Hashli
       if (!shouldProcess(config)) {
         return
       }
-      output.output = transformOutput(output.output)
+      output.output = transformHashlineReadOutput(output.output)
     },
   }
 }

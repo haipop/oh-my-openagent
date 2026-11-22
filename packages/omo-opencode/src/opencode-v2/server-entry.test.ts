@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test"
+import { mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import type { SessionContext, SessionPrompt } from "@opencode/plugin/promise/session"
 import { unsafeTestValue } from "../../../../test-support/unsafe-test-value"
 import rootModule from "../index"
@@ -28,7 +31,9 @@ async function setupPlugin(): Promise<Harness> {
     tools: new Map(),
     storedMessages: [],
   }
+  const directory = mkdtempSync(join(tmpdir(), "omo-v2-entry-test-"))
   const context = unsafeTestValue<Parameters<typeof opencodeV2Server.setup>[0]>({
+    location: { directory },
     session: {
       context: async ({ sessionID }: { sessionID: string }) => {
         if (sessionID !== "server-session") throw new Error(`unexpected session read: ${sessionID}`)
@@ -61,7 +66,11 @@ async function setupPlugin(): Promise<Harness> {
     },
   })
 
-  await opencodeV2Server.setup(context)
+  try {
+    await opencodeV2Server.setup(context)
+  } finally {
+    rmSync(directory, { recursive: true })
+  }
   return harness
 }
 
