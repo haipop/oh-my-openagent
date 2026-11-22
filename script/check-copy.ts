@@ -6,12 +6,8 @@ import ts from "@typescript/typescript6"
 const MESSAGE = "No em dashes in product copy. Use a period, comma, colon, or parentheses instead."
 
 // These embedded directives and runtime bundles are generated from source outside this check's scope.
-const GENERATED_SOURCES = new Set([
-  "packages/omo-codex/plugin/components/ultrawork/src/directive-content.ts",
-])
-const SHIPPED_SKILL_SYNC_SCRIPTS = new Set([
-  "packages/omo-codex/plugin/scripts/sync-skills.mjs",
-])
+const GENERATED_SOURCES = new Set(["packages/omo-codex/plugin/components/ultrawork/src/directive-content.ts"])
+const SHIPPED_SKILL_SYNC_SCRIPTS = new Set(["packages/omo-codex/plugin/scripts/sync-skills.mjs"])
 
 export function isProductSource(path: string): boolean {
   return (
@@ -28,7 +24,7 @@ export function isProductSource(path: string): boolean {
     !/\.(?:test|spec|testkit|gen|generated)\.|\.d\.[cm]?ts$/.test(path) &&
     !/(?:^|\/)testUtils\.[cm]?[jt]sx?$/.test(path) &&
     !/^packages\/(?:lsp-daemon|lsp-tools-mcp)\//.test(path) &&
-      !GENERATED_SOURCES.has(path)
+    !GENERATED_SOURCES.has(path)
   )
 }
 

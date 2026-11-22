@@ -12,7 +12,6 @@
 //     carries the CJK bigrams.
 //
 
-
 import { CJK_CLASS } from "./bm25"
 import { normalizedHaystack } from "./haystack"
 import type { RecallDocument } from "./provider"

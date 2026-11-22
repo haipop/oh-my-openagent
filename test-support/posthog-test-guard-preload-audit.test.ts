@@ -115,11 +115,6 @@ describe("PostHog test guard preload audit (#10394)", () => {
 
     // then
     expect(unguarded).toEqual([])
-    expect(configs).toEqual(
-      expect.arrayContaining([
-        "bunfig.toml",
-        "packages/telemetry-core/bunfig.toml",
-      ]),
-    )
+    expect(configs).toEqual(expect.arrayContaining(["bunfig.toml", "packages/telemetry-core/bunfig.toml"]))
   })
 })

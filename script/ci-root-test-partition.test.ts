@@ -134,7 +134,6 @@ describe("root test CI partition", () => {
     )
   })
 
-
   test("#given measured package groups #when the matrix command is rendered #then native file sharding is not used", () => {
     const job = rootTestJob()
 

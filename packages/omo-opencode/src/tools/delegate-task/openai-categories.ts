@@ -2,7 +2,6 @@ import { isGpt5_5Model, isGpt5_6Model, isGpt6Model } from "../../agents/types"
 import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
 import { LATEST_MODEL_BY_FAMILY } from "@oh-my-opencode/model-core/latest-models"
 
-
 // rationale lives: each append is a delta over the model's own core preset and carries only why the
 // orchestrator chose the category, what a finished result looks like, and the harness facts a child
 // cannot derive.

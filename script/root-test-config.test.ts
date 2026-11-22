@@ -34,7 +34,6 @@ describe("root test Bun config", () => {
     }
   })
 
-
   test("#given bun 1.3.x test argv #when CI selects the dedicated config #then --config= is passed before test", () => {
     const workflow = readFileSync(workflowPath, "utf8")
     const posixShard2 = readFileSync(new URL("../.github/scripts/ci-root-shard-2.sh", import.meta.url), "utf8")
@@ -48,7 +47,6 @@ describe("root test Bun config", () => {
     expect(workflow).not.toContain("--path-ignore-patterns=")
   })
 
-
   test("#given the macOS shard-2 light config #when bun discovers a top-level script test #then it is left to the heavy half", () => {
     const output = spawnBun([
       "--config=bunfig.win2.parallel.rest.toml",
@@ -57,5 +55,4 @@ describe("root test Bun config", () => {
     ])
     expect(output).toContain("filters did not match any test files")
   })
-
 })

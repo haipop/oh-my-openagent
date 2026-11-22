@@ -508,7 +508,8 @@ function auditSkillPath(
 ): Omit<ReferenceFinding, "file" | "line"> | undefined {
   if (file.skillRoot === undefined || isTemplated(raw.reference)) return undefined
   const owner = owningSkill(content, raw.index)
-  if (owner !== undefined && OPTIONAL_EXTERNAL_SKILL_NAMES.has(owner) && isOptionalMention(content, raw.index)) return undefined
+  if (owner !== undefined && OPTIONAL_EXTERNAL_SKILL_NAMES.has(owner) && isOptionalMention(content, raw.index))
+    return undefined
   const ownerRoots = owner === undefined ? [] : (catalog.skillRoots.get(owner) ?? [])
   if (ownerRoots.length > 0) {
     if (ownerRoots.some((root) => resolvesUnder(root, raw.reference))) return undefined

@@ -219,13 +219,7 @@ describe("CI fast-path workflow wiring", () => {
     const mode = jobs["ci-mode"]
     if (!isRecord(mode)) throw new Error("CI must define ci-mode")
 
-    for (const jobName of [
-      "test",
-      "typecheck",
-      "codex-compatibility",
-      "lazycodex-published-smoke",
-      "build",
-    ]) {
+    for (const jobName of ["test", "typecheck", "codex-compatibility", "lazycodex-published-smoke", "build"]) {
       const job = jobs[jobName]
       if (!isRecord(job)) throw new Error(`CI must define ${jobName}`)
       expect(job["needs"]).toContain("ci-mode")

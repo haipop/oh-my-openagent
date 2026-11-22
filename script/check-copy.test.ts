@@ -102,7 +102,6 @@ describe("no-em-dash-copy", () => {
     expect(findEmDashCopy(data, path)).toEqual([])
     expect(findEmDashCopy(`${data}\nconsole.log("Unavailable \\u2014 retry");`, path)).toHaveLength(1)
   })
-
 })
 
 describe("require-suppression-reason", () => {

@@ -72,22 +72,22 @@ describe("skill reference audit", () => {
   })
 
   test("#given a load_skills entry with an underscore instead of a hyphen #when audited #then it is reported with the real name as the suggestion", () => {
-    expect(
-      audit("skills/main/SKILL.md", 'task(category="quick", load_skills=["git_master"])\n', ["opencode"]),
-    ).toEqual([
-      {
-        referenceClass: "skill-name",
-        reference: "git_master",
-        missingIn: ["opencode"],
-        suggestion: "git-master",
-      },
-    ])
+    expect(audit("skills/main/SKILL.md", 'task(category="quick", load_skills=["git_master"])\n', ["opencode"])).toEqual(
+      [
+        {
+          referenceClass: "skill-name",
+          reference: "git_master",
+          missingIn: ["opencode"],
+          suggestion: "git-master",
+        },
+      ],
+    )
   })
 
   test("#given a prose pointer to a skill that exists in one edition only #when the file ships to two #then only the edition that lacks it is reported", () => {
-    expect(
-      audit("skills/main/one.md", "Read the `bun` skill before your first cell.\n", ["opencode"]),
-    ).toEqual([{ referenceClass: "skill-name", reference: "bun", missingIn: ["opencode"], suggestion: undefined }])
+    expect(audit("skills/main/one.md", "Read the `bun` skill before your first cell.\n", ["opencode"])).toEqual([
+      { referenceClass: "skill-name", reference: "bun", missingIn: ["opencode"], suggestion: undefined },
+    ])
   })
 
   test("#given an optional mention #when the skill exists in some edition #then it passes, and when it exists in none #then it is reported", () => {
@@ -149,7 +149,9 @@ describe("skill reference audit", () => {
   })
 
   test("#given a path the prose places in another skill #when audited #then it resolves against that skill's root", () => {
-    expect(audit("skills/main/four.md", "Follow the `other` skill's `references/present.md`.\n", ["opencode"])).toEqual([])
+    expect(audit("skills/main/four.md", "Follow the `other` skill's `references/present.md`.\n", ["opencode"])).toEqual(
+      [],
+    )
     expect(
       audit("skills/main/five.md", "Follow the `other` skill's `references/never-written-guide.md`.\n", ["opencode"]),
     ).toEqual([
