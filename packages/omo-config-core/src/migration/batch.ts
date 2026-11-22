@@ -136,26 +136,14 @@ function transformResult(value: ReturnType<MigrationPlan["transform"]>): {
   return { diagnostics: [], document: value }
 }
 
-function executePlan(input: {
-  readonly clock: MigrationClock
-  readonly dryRun: boolean
-  readonly env: MigrationEnvironment
-  readonly fileSystem: MigrationFileSystem
-  readonly journalResumed: boolean
-  readonly onBoundary: RunMigrationsOptions["onBoundary"]
-  readonly plan: MigrationPlan
-  readonly process: MigrationProcess
-  readonly renewLock: () => void
-  readonly writeTarget: NonNullable<RunMigrationsOptions["writeTarget"]>
-}): MigrationRunResult {
-  const { env, fileSystem, journalResumed, plan } = input
+function preparePlan(plan: MigrationPlan, env: MigrationEnvironment, fileSystem: MigrationFileSystem) {
   const protectedPaths = new Set([plan.targetPath, migrationJournalPath(env), migrationLockPath(env)])
   assertSafeSourcePaths(plan.sources, protectedPaths)
   const existingSources = plan.sources.filter((source) => fileSystem.existsSync(source.path))
   const target = targetDocument(plan.targetPath, fileSystem)
   const replaceTarget = plan.mode === "replace-target"
   if (plan.shouldRun !== undefined && !plan.shouldRun(target)) {
-    return { diagnostics: [], journalResumed, status: "skipped" }
+    return undefined
   }
   if (
     !shouldRunMigration({
@@ -164,7 +152,7 @@ function executePlan(input: {
       target,
     })
   ) {
-    return { diagnostics: [], journalResumed, status: "skipped" }
+    return undefined
   }
 
   const loaded = replaceTarget ? [{ path: plan.targetPath, value: target }] : loadSources(existingSources, fileSystem)
@@ -180,6 +168,25 @@ function executePlan(input: {
   const diagnostics = [...transformed.diagnostics, ...prepared.diagnostics]
   const moves = backupMoves(existingSources, plan.id, fileSystem, protectedPaths)
   const preview = { backupMoves: moves, targetPath: plan.targetPath, transform: transformed.document }
+  return { diagnostics, moves, prepared, preview, replaceTarget }
+}
+
+function executePlan(input: {
+  readonly clock: MigrationClock
+  readonly dryRun: boolean
+  readonly env: MigrationEnvironment
+  readonly fileSystem: MigrationFileSystem
+  readonly journalResumed: boolean
+  readonly onBoundary: RunMigrationsOptions["onBoundary"]
+  readonly plan: MigrationPlan
+  readonly process: MigrationProcess
+  readonly renewLock: () => void
+  readonly writeTarget: NonNullable<RunMigrationsOptions["writeTarget"]>
+}): MigrationRunResult {
+  const { env, fileSystem, journalResumed, plan } = input
+  const preparation = preparePlan(plan, env, fileSystem)
+  if (preparation === undefined) return { diagnostics: [], journalResumed, status: "skipped" }
+  const { diagnostics, moves, prepared, preview, replaceTarget } = preparation
   if (input.dryRun) return { diagnostics, journalResumed, preview, status: "planned" }
 
   ensureBackupDirectories(moves, fileSystem)
@@ -192,7 +199,7 @@ function executePlan(input: {
     ...(targetBackupPath === undefined ? {} : { targetBackupPath }),
     targetPath: plan.targetPath,
     targetWrite: {
-      additions: transformed.document,
+      additions: preview.transform,
       ...(replaceTarget ? { mode: "replace-target" as const } : {}),
     },
     targetWritten: false,
@@ -231,6 +238,29 @@ function executePlan(input: {
     status: "migrated",
     ...(targetBackupPath === undefined ? {} : { targetBackupPath }),
   }
+}
+
+export function previewMigrations(
+  options: Pick<RunMigrationsOptions, "discover" | "fileSystem"> & { readonly env: MigrationEnvironment },
+): MigrationBatchRunResult {
+  const { env } = options
+  const fileSystem = options.fileSystem ?? DEFAULT_MIGRATION_FILE_SYSTEM
+  const assertNoPendingJournal = (): void => {
+    if (fileSystem.existsSync(migrationJournalPath(env))) {
+      throw new MigrationTransactionError(
+        "A migration is pending; apply the migration to recover it before previewing.",
+      )
+    }
+  }
+  assertNoPendingJournal()
+  const results = options.discover().map((plan): MigrationRunResult => {
+    const preparation = preparePlan(plan, env, fileSystem)
+    return preparation === undefined
+      ? { diagnostics: [], journalResumed: false, status: "skipped" }
+      : { diagnostics: preparation.diagnostics, journalResumed: false, preview: preparation.preview, status: "planned" }
+  })
+  assertNoPendingJournal()
+  return { journalResumed: false, results, status: "completed" }
 }
 
 export function runMigrations(options: RunMigrationsOptions): MigrationBatchRunResult {

@@ -16,7 +16,7 @@ function snapshot(root: string): Record<string, string> {
   return files
 }
 
-test.skipIf(process.platform === "win32")("retired public V1 run and config migrate never spawn or write", () => {
+test.skipIf(process.platform === "win32")("the retired public V1 run command never spawns or writes", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "omo-v1-cli-boundary-"))
   try {
     const env = {
@@ -57,14 +57,13 @@ test.skipIf(process.platform === "win32")("retired public V1 run and config migr
     }
 
     const cli = join(import.meta.dir, "index.ts")
-    for (const [label, args, expected] of [
-      ["run", ["run", "--agent", "Atlas", "do work"], "Use the native command directly: opencode run"],
-      ["config", ["config", "migrate", "--dry-run"], "OpenCode V1 configuration migration is retired"],
-    ] as const) {
-      const result = Bun.spawnSync([process.execPath, cli, ...args], { cwd: sandbox, env, stderr: "pipe" })
-      expect(result.exitCode).toBe(1)
-      expect(result.stderr.toString()).toContain(expected)
-    }
+    const result = Bun.spawnSync([process.execPath, cli, "run", "--agent", "Atlas", "do work"], {
+      cwd: sandbox,
+      env,
+      stderr: "pipe",
+    })
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr.toString()).toContain("Use the native command directly: opencode run")
 
     expect(readdirSync(sandbox)).not.toContain("host-spawned")
     expect(snapshot(env.XDG_CONFIG_HOME)).toEqual(before.config)
