@@ -65,7 +65,7 @@ cp -n "$package_dir/package/packages/omo-opencode/.opencode/agents/sisyphus.md" 
 
 ### 迁移旧版 OmO 配置
 
-从目标项目根目录运行本地归档里的 OmO CLI。先用 `--dry-run` 查看迁移计划，确认后再应用。应用时会备份迁移涉及的原配置，命令输出会列出备份位置。
+从目标项目根目录运行本地归档里的 OmO CLI，迁移范围覆盖用户和项目两层配置。先用 `--dry-run` 查看迁移计划，确认后再应用。命令会备份迁移涉及的原配置并输出备份位置。
 
 ```sh
 bun "$package_dir/package/dist/cli/index.js" config migrate --dry-run
@@ -74,9 +74,9 @@ bun "$package_dir/package/dist/cli/index.js" config migrate
 
 ### 写入保护、Hashline 和原生命令
 
-- 默认启用写入保护。模型用原生 `write` 覆盖已有文件前，必须在同一会话成功 `read` 该文件。
+- 默认启用写入保护。用原生 `write` 覆盖项目内的一般文件前，通常需要在同一会话成功 `read` 该文件。`.omo/` 下的文件免于这项检查。
 - 在项目的 `.omo/omo.json` 中合并下列设置可启用 Hashline。`read` 返回行锚点，原生 `edit` 按锚点编辑。锚点过期时，重新读取文件后再编辑。
-- OmO 内置斜杠命令（如 `/handoff`）和发现的技能通过 OpenCode 的原生注册表使用。可在同一个 `"[opencode]"` 配置块中用 `disabled_commands` 和 `disabled_skills` 关闭指定项。
+- OmO 内置斜杠命令（如 `/handoff`）和发现的技能通过 OpenCode 的原生注册表使用。可在同一个 `"[opencode]"` 配置块中用 `disabled_commands` 和 `disabled_skills` 关闭 OmO 注册的项目。`/goal` 由 OpenCode 宿主管理，保留在原生命令列表中。
 
 ```json
 {
