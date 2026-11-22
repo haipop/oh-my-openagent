@@ -33,8 +33,8 @@ export function getPathFromArgs(args: GuardArgs | undefined): string | undefined
   return args?.filePath ?? args?.path ?? args?.file_path
 }
 
-export function resolveInputPath(ctx: PluginInput, inputPath: string): string {
-  return normalize(isAbsolute(inputPath) ? inputPath : resolve(ctx.directory, inputPath))
+export function resolveInputPath(directory: string, inputPath: string): string {
+  return normalize(isAbsolute(inputPath) ? inputPath : resolve(directory, inputPath))
 }
 
 export function isPathInsideDirectory(pathToCheck: string, directory: string): boolean {
@@ -48,7 +48,7 @@ export function toCanonicalPath(absolutePath: string): string {
   if (existsSync(absolutePath)) {
     try {
       canonicalPath = realpathSync.native(absolutePath)
-    } catch (canonicalPathError) {
+    } catch {
       canonicalPath = absolutePath
     }
   } else {
@@ -74,25 +74,21 @@ export function isOverwriteEnabled(value: boolean | string | undefined): boolean
   return false
 }
 
-export function createWriteExistingFileGuardHook(ctx: PluginInput, options?: WriteExistingFileGuardOptions): Hooks {
+export function createWriteExistingFileGuard(options?: WriteExistingFileGuardOptions) {
   const readPermissionsBySession = new Map<string, Set<string>>()
   const sessionLastAccess = new Map<string, number>()
   const maxTrackedSessions = options?.maxTrackedSessions ?? MAX_TRACKED_SESSIONS
   const maxTrackedPathsPerSession = options?.maxTrackedPathsPerSession ?? MAX_TRACKED_PATHS_PER_SESSION
-  let canonicalSessionRoot: string | undefined
-
-  function getCanonicalSessionRoot(): string {
-    if (!canonicalSessionRoot) {
-      canonicalSessionRoot = toCanonicalPath(resolveInputPath(ctx, ctx.directory))
-    }
-
-    return canonicalSessionRoot
-  }
 
   return {
-    "tool.execute.before": async (input, output) => {
-      await handleWriteExistingFileGuardToolExecuteBefore({
-        ctx,
+    handle(
+      directory: string,
+      input: { tool?: string; sessionID?: string },
+      output: { args?: unknown },
+      getCanonicalSessionRoot = () => toCanonicalPath(directory),
+    ) {
+      return handleWriteExistingFileGuardToolExecuteBefore({
+        directory,
         input,
         output,
         readPermissionsBySession,
@@ -102,6 +98,27 @@ export function createWriteExistingFileGuardHook(ctx: PluginInput, options?: Wri
         maxTrackedPathsPerSession,
       })
     },
+    clearSession(sessionID: string) {
+      readPermissionsBySession.delete(sessionID)
+      sessionLastAccess.delete(sessionID)
+    },
+  }
+}
+
+export function createWriteExistingFileGuardHook(ctx: PluginInput, options?: WriteExistingFileGuardOptions): Hooks {
+  const guard = createWriteExistingFileGuard(options)
+  let canonicalSessionRoot: string | undefined
+
+  function getCanonicalSessionRoot(): string {
+    if (!canonicalSessionRoot) {
+      canonicalSessionRoot = toCanonicalPath(resolveInputPath(ctx.directory, ctx.directory))
+    }
+
+    return canonicalSessionRoot
+  }
+
+  return {
+    "tool.execute.before": (input, output) => guard.handle(ctx.directory, input, output, getCanonicalSessionRoot),
     event: async ({ event }: { event: { type: string; properties?: unknown } }) => {
       if (event.type !== "session.deleted") {
         return
@@ -112,8 +129,7 @@ export function createWriteExistingFileGuardHook(ctx: PluginInput, options?: Wri
         return
       }
 
-      readPermissionsBySession.delete(sessionID)
-      sessionLastAccess.delete(sessionID)
+      guard.clearSession(sessionID)
     },
   }
 }

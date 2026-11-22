@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import type { SessionContext, SessionPrompt } from "@opencode/plugin/promise/session"
 import { unsafeTestValue } from "../../../../test-support/unsafe-test-value"
 import rootModule from "../index"
@@ -15,21 +18,25 @@ type Harness = {
   operations: string[]
   promptCallbacks: PromptCallback[]
   contextCallbacks: ContextCallback[]
+  toolHooks: Map<string, (event: unknown) => Promise<void>>
   tools: Map<string, { execute: (input: unknown, context: unknown) => Promise<unknown> }>
   storedMessages: Array<{ role?: unknown; type?: unknown; metadata?: unknown }>
 }
 
-async function setupPlugin(): Promise<Harness> {
+async function setupPlugin(directory = process.cwd()): Promise<Harness> {
   const harness: Harness = {
     registrations: [],
     operations: [],
     promptCallbacks: [],
     contextCallbacks: [],
+    toolHooks: new Map(),
     tools: new Map(),
     storedMessages: [],
   }
   const context = unsafeTestValue<Parameters<typeof opencodeV2Server.setup>[0]>({
+    location: { directory },
     session: {
+      get: async () => ({ location: { directory } }),
       context: async ({ sessionID }: { sessionID: string }) => {
         if (sessionID !== "server-session") throw new Error(`unexpected session read: ${sessionID}`)
         return harness.storedMessages
@@ -43,6 +50,12 @@ async function setupPlugin(): Promise<Harness> {
       },
     },
     tool: {
+      hook: async (name: string, callback: (event: unknown) => Promise<void>) => {
+        harness.toolHooks.set(name, callback)
+        const registration = { dispose: async () => {} }
+        harness.registrations.push(registration)
+        return registration
+      },
       reload: async () => {
         harness.operations.push("tool.reload")
       },
@@ -86,7 +99,7 @@ describe("OpenCode V2 server plugin", () => {
     expect(harness.contextCallbacks).toHaveLength(1)
     expect([...harness.tools.keys()]).toEqual(["omo_status"])
     expect(harness.tools.get("omo_status")?.options).toEqual({ codemode: false })
-    expect(harness.registrations).toHaveLength(3)
+    expect(harness.registrations).toHaveLength(5)
     expect(harness.operations).toEqual(["tool.transform", "tool.reload"])
     expect(harness.registrations.every((registration) => typeof registration.dispose === "function")).toBe(true)
 
@@ -148,5 +161,38 @@ describe("OpenCode V2 server plugin", () => {
     expect(Object.keys(rootModule).sort()).toEqual(["id", "setup"])
     expect(Object.keys(rootModule)).not.toContain("server")
     expect(Object.keys(rootModule)).not.toContain("omoPlugin")
+  })
+
+  test("requires a completed native read to unlock the write and respects the disabled hook setting", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "omo-v2-write-guard-test-"))
+    try {
+      const path = "existing.txt"
+      writeFileSync(join(directory, path), "original")
+      const { toolHooks } = await setupPlugin(directory)
+      const after = toolHooks.get("execute.after")
+      const before = toolHooks.get("execute.before")
+      if (!after || !before) throw new Error("Expected both write guard hooks")
+      const read = { tool: "read", sessionID: "reader", input: { path } }
+      const write = { tool: "write", sessionID: "reader", input: { path, content: "replacement" } }
+
+      await after({ ...read, status: "error" })
+      await expect(before(write)).rejects.toThrow("File already exists")
+      await after({ ...read, status: "completed" })
+      await before(write)
+      await expect(before(write)).rejects.toThrow("File already exists")
+
+      mkdirSync(join(directory, ".omo"))
+      writeFileSync(
+        join(directory, ".omo", "omo.json"),
+        JSON.stringify({
+          "[opencode]": { disabled_hooks: ["write-existing-file-guard"] },
+        }),
+      )
+      const disabled = await setupPlugin(directory)
+      expect(disabled.toolHooks.has("execute.before")).toBe(false)
+      expect(disabled.toolHooks.has("execute.after")).toBe(false)
+    } finally {
+      rmSync(directory, { recursive: true, force: true })
+    }
   })
 })

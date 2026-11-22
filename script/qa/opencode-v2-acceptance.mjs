@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 import { spawn, spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
+import { once } from "node:events"
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -15,7 +17,7 @@ import {
 import http from "node:http"
 import net from "node:net"
 import os from "node:os"
-import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path"
+import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..")
@@ -33,6 +35,7 @@ Options:
   --opencode <binary>     OpenCode 2.3.2 binary (default: /opt/homebrew/bin/opencode)
   --mode <mode>           Run control, candidate, or all (default: all)
   --expect-red            Expect candidate checks to fail; used only to freeze a RED proof
+  --write-guard           Exercise the native read/write guard and session isolation
   --force                 Replace an existing evidence directory
   -h, --help              Show this help
 
@@ -48,6 +51,7 @@ function parseArgs(argv) {
     opencode: "/opt/homebrew/bin/opencode",
     mode: "all",
     expectRed: false,
+    writeGuard: false,
     force: false,
   }
   for (let index = 0; index < argv.length; index += 1) {
@@ -67,6 +71,7 @@ function parseArgs(argv) {
         throw new Error("--mode must be control, candidate, or all")
       }
     } else if (arg === "--expect-red") options.expectRed = true
+    else if (arg === "--write-guard") options.writeGuard = true
     else if (arg === "--force") options.force = true
     else if (arg === "-h" || arg === "--help") options.help = true
     else throw new Error(`Unknown argument: ${arg}`)
@@ -280,6 +285,36 @@ class MockOpenAI {
           sendChatSse(response, [
             chatChunk(this.call, { role: "assistant", content: "CONTROL_OK" }),
             chatChunk(this.call, {}, "stop"),
+          ])
+          return
+        }
+        const guardAction = text.match(/\bV2_GUARD_(FAILED_READ|READ|WRITE)\b/)?.[1]
+        if (guardAction) {
+          if (hasCurrentToolResult) {
+            sendChatSse(response, [
+              chatChunk(this.call, { role: "assistant", content: "WRITE_GUARD_PROBE_DONE" }),
+              chatChunk(this.call, {}, "stop"),
+            ])
+            return
+          }
+          const writing = guardAction === "WRITE"
+          const args = {
+            path: "guard-probe.txt",
+            ...(writing && { content: "UPDATED\n" }),
+          }
+          sendChatSse(response, [
+            chatChunk(this.call, {
+              role: "assistant",
+              tool_calls: [
+                {
+                  index: 0,
+                  id: `call-${this.call}`,
+                  type: "function",
+                  function: { name: writing ? "write" : "read", arguments: JSON.stringify(args) },
+                },
+              ],
+            }),
+            chatChunk(this.call, {}, "tool_calls"),
           ])
           return
         }
@@ -646,6 +681,98 @@ function toolResultJson(request) {
   return null
 }
 
+async function proveWriteGuard(options, evidence, sandbox, common, checks) {
+  const file = join(sandbox.project, "guard-probe.txt")
+  const log = join(evidence, "model-requests.jsonl")
+  const registration = join(sandbox.state, "opencode/service.json")
+  const serviceArgs = common.filter((arg) => arg !== "--standalone" && arg !== "--print-logs")
+  const original = "ORIGINAL\n"
+  writeText(file, original)
+  let reader = null
+  const server = spawn(options.opencode, ["serve", "--service", "--hostname", "127.0.0.1", "--port", "0"], {
+    cwd: sandbox.project,
+    env: sandbox.env,
+    stdio: "ignore",
+  })
+  const closed = once(server, "close")
+  try {
+    for (let attempt = 0; attempt < 120 && !existsSync(registration) && server.exitCode === null; attempt++) {
+      await Bun.sleep(100)
+    }
+    if (!existsSync(registration)) throw new Error("Isolated OpenCode service did not register")
+    assertEqual(JSON.parse(readFileSync(registration, "utf8")).pid, server.pid, "isolated service PID")
+    for (const [id, action, continuation, expectedFile, expectedResult] of [
+      ["blind", "WRITE", false, original, "File already exists. Use edit tool instead."],
+      ["failed-read", "FAILED_READ", false, original, '"error":'],
+      ["after-failed-read", "WRITE", true, original, "File already exists. Use edit tool instead."],
+      ["read", "READ", false, original, original.trim()],
+      ["other-session", "WRITE", false, original, "File already exists. Use edit tool instead."],
+      ["same-session", "WRITE", true, "UPDATED\n", "Wrote file successfully"],
+      ["read-consumed", "WRITE", true, "UPDATED\n", "File already exists. Use edit tool instead."],
+    ]) {
+      const start = summarizeRequests(log).length
+      const args = [...serviceArgs]
+      if (continuation && reader) args.push("--session", reader)
+      if (action === "FAILED_READ") chmodSync(file, 0)
+      const turn = await runOpenCode(options.opencode, [...args, `V2_GUARD_${action}`], sandbox).finally(() => {
+        if (action === "FAILED_READ") chmodSync(file, 0o600)
+      })
+      const observedPid = existsSync(registration) ? JSON.parse(readFileSync(registration, "utf8")).pid : null
+      const session = sessionId(turn)
+      if (id === "read" || id === "failed-read") reader = session
+      const actual = readFileSync(file, "utf8")
+      const currentToolResult = summarizeRequests(log)
+        .slice(start)
+        .flatMap((request) => request.toolResults)
+        .at(-1)
+      const rightSession =
+        session !== null && (action !== "WRITE" || (continuation ? session === reader : session !== reader))
+      writeText(join(evidence, `guard-${id}.stdout`), turn.stdout)
+      writeText(join(evidence, `guard-${id}.stderr`), turn.stderr)
+      assertCondition(
+        checks,
+        `candidate.write-guard.${id}`,
+        observedPid === server.pid &&
+          turn.status === 0 &&
+          rightSession &&
+          outputText(turn).includes("WRITE_GUARD_PROBE_DONE") &&
+          actual === expectedFile &&
+          currentToolResult?.includes(expectedResult) === true,
+        JSON.stringify({ status: turn.status, session, reader, observedPid, actual, currentToolResult }),
+      )
+      if (expectedFile === original && actual !== original) writeText(file, original)
+    }
+  } finally {
+    const terminated = server.exitCode === null && server.kill()
+    const [status, signal] = await closed
+    assertCondition(
+      checks,
+      "candidate.write-guard.service-stopped",
+      terminated && (status === 0 || status === 143 || signal === "SIGTERM") && !existsSync(registration),
+      `exit=${status}; signal=${signal}; service registration absent=${!existsSync(registration)}`,
+    )
+  }
+
+  const config = join(sandbox.project, ".omo/omo.json")
+  writeJson(config, { "[opencode]": { disabled_hooks: ["write-existing-file-guard"] } })
+  writeText(file, original)
+  const start = summarizeRequests(log).length
+  const turn = await runOpenCode(options.opencode, [...common, "V2_GUARD_WRITE"], sandbox)
+  const actual = readFileSync(file, "utf8")
+  const currentToolResult = summarizeRequests(log)
+    .slice(start)
+    .flatMap((request) => request.toolResults)
+    .at(-1)
+  writeText(join(evidence, "guard-disabled.stdout"), turn.stdout)
+  writeText(join(evidence, "guard-disabled.stderr"), turn.stderr)
+  assertCondition(
+    checks,
+    "candidate.write-guard.disabled",
+    turn.status === 0 && actual === "UPDATED\n" && currentToolResult?.includes("Wrote file successfully") === true,
+    JSON.stringify({ status: turn.status, actual, currentToolResult }),
+  )
+}
+
 async function candidateScenario(options, evidenceDir, runRoot, version, realBefore) {
   const evidence = join(evidenceDir, "candidate")
   mkdirSync(evidence, { recursive: true })
@@ -811,6 +938,7 @@ async function candidateScenario(options, evidenceDir, runRoot, version, realBef
         )
       }
     }
+    if (options.writeGuard) await proveWriteGuard(options, evidence, sandbox, common, checks)
     const sandboxDb = join(sandbox.data, "opencode/opencode.db")
     const sandboxCount = existsSync(sandboxDb) ? sqliteReadOnlyCount(sandboxDb, "session_v2") : null
     assertCondition(
