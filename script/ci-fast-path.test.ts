@@ -162,6 +162,7 @@ describe("CI fast-path workflow wiring", () => {
       "typecheck",
       "build",
       "codex-compatibility",
+      "linux-test-status",
       "macos-test-1-status",
       "macos-test-2-status",
       "macos-codex-status",
@@ -169,7 +170,9 @@ describe("CI fast-path workflow wiring", () => {
       const job = jobs[id]
       if (!isRecord(job)) throw new Error(`CI must define ${id}`)
       const name = String(job["name"] ?? id)
-      if (id.startsWith("macos-")) {
+      if (id === "linux-test-status") {
+        expect(job["if"]).toBe("${{ always() && !cancelled() }}")
+      } else if (id.startsWith("macos-")) {
         expect(job["if"]).toBe("${{ always() && !cancelled() && needs.ci-mode.result != 'skipped' }}")
       } else {
         expect(job["if"]).toBeUndefined()

@@ -71,6 +71,22 @@ filesystem tools already carry a version guard and expose their own write/edit i
 
 **DeepSeek Harness gains OmO's ultrawork mode.** A new private adapter package, `packages/omo-dsh`, installs into a Harness profile as a Host bundle: a prompt that contains `ultrawork` or `ulw` gets a compact `<ultrawork-mode>` bootstrap injected as a sourced user message before the step enters, and the full directive is registered as the runtime `ultrawork` skill for the model to load with the `skill` tool. The injection is durable session history, so replay, fork, and resume reconstruct it; delegated child sessions stay silent, code spans never arm the mode, and the package imports no Harness module, so a Harness upgrade cannot break it through a missing dependency. ([#1](https://github.com/haipop/oh-my-openagent/pull/1))
 
+## [5.1.81] - 2026-11-21
+## [5.1.81] - 2026-11-21
+
+### Changed
+
+- The `programming` skill's language gate now routes rendered web work (`.html`, `.css`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.astro`, or any task that ships a UI) to the `frontend` skill before the first line of UI code. It tells the agent to take the look from the frontend skill's references when there is no design direction (no named brand, reference, `DESIGN.md`, or existing styled UI to match), and to finish only after `visual-qa` passes on the rendered surface. ([#14604](https://github.com/code-yeongyu/oh-my-openagent/pull/14604), fixes [#14602](https://github.com/code-yeongyu/oh-my-openagent/issues/14602))
+
+### Fixed
+
+- Memory sync: a sign-out now retires the trust pin of the account it signs out of, so `omo account show --account <id>` no longer answers `joined` once that sign-in's keys are gone. Plain `omo account forget` (the desktop's sign-out of a CLI-item session) used to retire nothing. It now reads the stored sign-in first to find its account. A stored sign-in that cannot be read is still deleted and its pin is left; one warning line is printed only after the delete succeeds. A forget that fails on a locked store reports only that error (#12308, #12384). ([#13642](https://github.com/code-yeongyu/oh-my-openagent/pull/13642)) ([#14533](https://github.com/code-yeongyu/oh-my-openagent/pull/14533))
+- Memory sync: some sign-ins earned their pin before `omo sync` recorded their account. On a refused refresh, plain `forget`, `forget --device` and `adopt --replace`, omo now asks the service for that account, as `omo logout` already did, and retires the pin when the service names it. It asks only while a live pin exists and the access token has not expired; on a refused refresh, the token may still be valid in the 30 s before expiry, when the refresh runs. An expired token is never sent. A pin whose account stays unknown is kept, and omo prints one line naming `omo account retire-sync --account <id>` to clear it, because `omo account show` keeps answering `joined` for it (#12383, #13662). ([#13642](https://github.com/code-yeongyu/oh-my-openagent/pull/13642)) ([#14533](https://github.com/code-yeongyu/oh-my-openagent/pull/14533))
+
+### Added
+
+- `omo sync status` (and `--json`) shows this device's memory sync state: the signed-in account, whether this device has joined and whether its sync switch is on, the account's devices with their sync membership and last-seen time, pending join requests, and whether an engine is running on this machine. It writes no sync state, prints no key material, and each section reports its own failure instead of failing the command. ([#14437](https://github.com/code-yeongyu/oh-my-openagent/pull/14437), fixes [#14435](https://github.com/code-yeongyu/oh-my-openagent/issues/14435)) ([#14533](https://github.com/code-yeongyu/oh-my-openagent/pull/14533))
+
 ## [5.1.80] - 2026-11-21
 
 ### Fixed
