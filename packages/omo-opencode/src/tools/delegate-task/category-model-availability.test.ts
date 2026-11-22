@@ -4,8 +4,6 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { validatePluginConfig } from "../../config/validate"
 import { loadOmoConfig, resolveModelReferences } from "@oh-my-opencode/omo-config-core"
-import { mapOmoConfigAgents } from "@oh-my-opencode/senpi-task"
-import { createTaskChildPlanner } from "../../../../omo-senpi/src/components/task/planner"
 import type { CategoryConfig } from "../../config/schema"
 import * as connectedProvidersCache from "../../shared/connected-providers-cache"
 import { unsafeTestValue } from "../../../../../test-support/unsafe-test-value"
@@ -60,7 +58,7 @@ function createExecutorContext(category: CategoryConfig, availableModelIDs: stri
 }
 
 describe("category canonical model availability", () => {
-  for (const runtime of ["opencode", "senpi"] as const) {
+  for (const runtime of ["opencode"] as const) {
     for (const [target, catalog] of [
       ["agent", false],
       ["agent", true],
@@ -115,24 +113,6 @@ describe("category canonical model availability", () => {
                 )
                 actual.push(result.categoryModel?.modelID ?? "missing")
               }
-            }
-          } else {
-            const loaded = loadOmoConfig({ cwd: join(home, "project"), env, harness: "senpi" })
-            const config = resolveModelReferences(loaded.config).view
-            const models = ["a", "b", "c"].map((id) => ({ provider: "test-provider", id }))
-            const planner = createTaskChildPlanner(config, mapOmoConfigAgents(config), () => ({
-              getAvailable: () => models,
-              find: (provider, id) => models.find((model) => model.provider === provider && model.id === id),
-            }))
-            for (let i = 0; i < 4; i++) {
-              const result = planner({
-                prompt: "fixture",
-                parent_session_id: "parent",
-                depth: 0,
-                ...(target === "agent" ? { subagent_type: name } : { category: name }),
-              })
-              if (result.kind !== "resolved") throw new Error(JSON.stringify(result))
-              actual.push(result.plan.resolved_model?.model_id ?? "missing")
             }
           }
           expect(actual).toEqual(["a", "b", "c", "a"])

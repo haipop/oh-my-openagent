@@ -1,12 +1,10 @@
 import { expect, test } from "bun:test"
 import { existsSync, readFileSync } from "node:fs"
 import { join, relative, resolve, sep } from "node:path"
-import { getSkillOutputManifest as senpiSkillManifest } from "../packages/omo-senpi/plugin/scripts/sync-skills.mjs"
 import { getSkillOutputManifest as codexSkillManifest } from "../packages/omo-codex/plugin/scripts/sync-skills.mjs"
 
 const trackedRoots = [
   "packages/shared-skills/skills",
-  "packages/omo-senpi/skills",
   "packages/omo-codex/plugin/components",
   "packages/prompts-core/prompts",
   "docs",
@@ -14,23 +12,21 @@ const trackedRoots = [
   "packages/skills-loader-core/src",
 ] as const
 
-// Guidance the senpi and codex editions ship to the model. The OpenCode edition keeps its own
+// Guidance the codex edition ships to the model. The OpenCode edition keeps its own
 // `browser_automation_engine` providers, so its sources are exempt from the omowright rule below.
 const omowrightGuidanceRoots = [
   "packages/shared-skills/skills",
-  "packages/omo-senpi/skills",
-  "packages/omo-senpi/src/components/ultrawork",
   "packages/omo-codex/plugin/components",
   "packages/prompts-core/prompts/ultrawork",
 ] as const
 
 test("ships no retired browser tool instructions", async () => {
-  // Given: tracked sources plus the actual payloads produced by both owning generators.
+  // Given: tracked sources plus the actual payload produced by the Codex owning generator.
   const cwd = resolve(import.meta.dir, "..")
   const patterns = ["agent-browser", "agent_browser", "npx playwright", "bunx playwright", "playwright install"]
-  // Browser work in the senpi and codex editions ships through omowright (attached engine over
+  // Browser work in the codex edition ships through omowright (attached engine over
   // BrowserSkill, owned engine over CDP); the kernel WebView and hand-written playwright scripts it
-  // replaced must not come back into the guidance those editions ship.
+  // replaced must not come back into the guidance that edition ships.
   const omowrightPatterns = [
     "playwright-core",
     "playwright-cli",
@@ -47,7 +43,7 @@ test("ships no retired browser tool instructions", async () => {
   expect(tracked.exitCode).toBe(0)
   const files = new Set(tracked.stdout.toString().split("\0").filter(Boolean))
   const payloadFiles = new Set<string>()
-  const manifests = await Promise.all([senpiSkillManifest(), codexSkillManifest()])
+  const manifests = [await codexSkillManifest()]
 
   for (const { root, names } of manifests) {
     const generator = relative(cwd, join(root, "..", "scripts", "sync-skills.mjs"))

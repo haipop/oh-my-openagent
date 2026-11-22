@@ -162,17 +162,15 @@ describe("CI fast-path workflow wiring", () => {
       "typecheck",
       "build",
       "codex-compatibility",
-      "senpi-compatibility",
       "macos-test-1-status",
       "macos-test-2-status",
       "macos-codex-status",
-      "macos-senpi-status",
     ]) {
       const job = jobs[id]
       if (!isRecord(job)) throw new Error(`CI must define ${id}`)
       const name = String(job["name"] ?? id)
       if (id.startsWith("macos-")) {
-        expect(job["if"]).toBe("${{ always() && !cancelled() }}")
+        expect(job["if"]).toBe("${{ always() && !cancelled() && needs.ci-mode.result != 'skipped' }}")
       } else {
         expect(job["if"]).toBeUndefined()
       }
@@ -210,8 +208,6 @@ describe("CI fast-path workflow wiring", () => {
       "codex-compatibility (ubuntu-latest, full)",
       "codex-compatibility (macos-latest, platform)",
       "codex-compatibility (windows-latest, platform)",
-      "senpi-compatibility (ubuntu-latest)",
-      "senpi-compatibility (macos-latest)",
       "Review claim gate",
     ]) {
       expect(contexts).toContain(required)
@@ -223,15 +219,7 @@ describe("CI fast-path workflow wiring", () => {
     const mode = jobs["ci-mode"]
     if (!isRecord(mode)) throw new Error("CI must define ci-mode")
 
-    for (const jobName of [
-      "test",
-      "typecheck",
-      "codex-compatibility",
-      "senpi-compatibility",
-      "lazycodex-published-smoke",
-      "build",
-      "omo-ai-payload-check",
-    ]) {
+    for (const jobName of ["test", "typecheck", "codex-compatibility", "lazycodex-published-smoke", "build"]) {
       const job = jobs[jobName]
       if (!isRecord(job)) throw new Error(`CI must define ${jobName}`)
       expect(job["needs"]).toContain("ci-mode")

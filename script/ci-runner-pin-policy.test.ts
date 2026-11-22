@@ -102,7 +102,7 @@ describe("Ubuntu runner pin policy (#9928)", () => {
     const workflow = Bun.YAML.parse(readFileSync(join(WORKFLOWS_DIR, "ci.yml"), "utf8")) as {
       jobs: Record<string, Job>
     }
-    for (const id of ["macos-test-1-status", "macos-test-2-status", "macos-codex-status", "macos-senpi-status"]) {
+    for (const id of ["macos-test-1-status", "macos-test-2-status", "macos-codex-status"]) {
       expect(workflow.jobs[id]?.["runs-on"]).toBe("ubuntu-26.04")
     }
   })

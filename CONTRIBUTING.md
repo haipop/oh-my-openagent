@@ -332,7 +332,7 @@ Report suspected vulnerabilities privately, as described in [`SECURITY.md`](SECU
 
 ## QA Discipline
 
-Any change to `packages/omo-opencode` (the OpenCode side) must be QA'd with the `opencode-qa` skill. Any change to `packages/omo-codex` (the Codex Light side) must be QA'd with the `codex-qa` skill. Any change to `packages/omo-senpi` or `packages/senpi-task` (the Senpi side) must be QA'd with the `senpi-qa` skill. Record QA evidence under `.omo/evidence/<date>-<slug>/`; live Senpi QA records it under `.omo/evidence/omo-senpi-adapter/<slug>/`, resolved by `.agents/skills/senpi-qa/scripts/resolve-evidence-dir.mjs`. Evidence stays local: `.omo/evidence/` is gitignored and `script/tracked-evidence-paths-audit.test.ts` fails when any evidence path is tracked, so summarize the captures in the PR's QA & Evidence section instead of committing them.
+Any change to `packages/omo-opencode` (the OpenCode side) must be QA'd with the `opencode-qa` skill. Any change to `packages/omo-codex` (the Codex Light side) must be QA'd with the `codex-qa` skill. Record QA evidence under `.omo/evidence/<date>-<slug>/`. Evidence stays local: `.omo/evidence/` is gitignored and `script/tracked-evidence-paths-audit.test.ts` fails when any evidence path is tracked, so summarize the captures in the PR's QA & Evidence section instead of committing them.
 
 "It typechecks" or "`bun test` is green" is not QA. You must drive the real harness and record the observed behavior.
 

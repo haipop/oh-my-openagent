@@ -189,7 +189,6 @@ describe("full-matrix classification", () => {
       ["a script named like a doc", "script/agents.ts"],
       ["a doc-like name with an unknown extension", "packages/utils/README.rst"],
       ["an unlisted .github file", ".github/CODEOWNERS"],
-      ["an in-process senpi-task runner", "packages/senpi-task/src/runners/in-process.ts"],
       ["a Codex plugin source file", "packages/omo-codex/plugin/src/index.ts"],
       ["an omo-opencode hook", "packages/omo-opencode/src/hooks/session-start.ts"],
     ])("#then %s runs heavy validation on ubuntu only", (_name, changedPath) => {
@@ -360,7 +359,6 @@ describe("full-matrix classification", () => {
       ["the Desktop engine release", "script/desktop-engine-release.ts"],
       ["the signed keychain helper", "packages/omo-opencode/src/cli/service-auth/keychain-helper/build.ts"],
       ["a QA script named for an OS", "script/qa/computer/pool/macos-vm-ops.ts"],
-      ["basename contains windows", "packages/senpi-task/src/runners/rpc-process.windows.test.ts"],
       ["powershell script", "script/qa/run-smoke.ps1"],
       ["ci workflow", ".github/workflows/ci.yml"],
       ["classifier itself", "script/ci-fast-path.mjs"],
@@ -437,30 +435,27 @@ describe("full-matrix workflow wiring", () => {
   })
 
   describe("#given the OS matrix jobs", () => {
-    test.each(["test", "codex-compatibility", "senpi-compatibility"])(
-      "#then every heavy step in %s is ubuntu-first",
-      (jobName) => {
-        // given
-        const heavySteps = jobSteps(jobName).filter((step) => String(step["if"] ?? "").includes("run_heavy"))
+    test.each(["test", "codex-compatibility"])("#then every heavy step in %s is ubuntu-first", (jobName) => {
+      // given
+      const heavySteps = jobSteps(jobName).filter((step) => String(step["if"] ?? "").includes("run_heavy"))
 
-        // then
-        expect(heavySteps.length).toBeGreaterThan(0)
-        for (const step of heavySteps) {
-          const condition = String(step["if"])
-          const ubuntuFirst =
-            condition.includes(UBUNTU_OR_FULL_MATRIX) ||
-            // A step already pinned to ubuntu can never reach a non-ubuntu leg.
-            condition.includes("matrix.os == 'ubuntu-latest' &&") ||
-            condition.endsWith("matrix.os == 'ubuntu-latest'")
-          expect({ step: step["name"] ?? step["uses"], ubuntuFirst }).toEqual({
-            step: step["name"] ?? step["uses"],
-            ubuntuFirst: true,
-          })
-        }
-      },
-    )
+      // then
+      expect(heavySteps.length).toBeGreaterThan(0)
+      for (const step of heavySteps) {
+        const condition = String(step["if"])
+        const ubuntuFirst =
+          condition.includes(UBUNTU_OR_FULL_MATRIX) ||
+          // A step already pinned to ubuntu can never reach a non-ubuntu leg.
+          condition.includes("matrix.os == 'ubuntu-latest' &&") ||
+          condition.endsWith("matrix.os == 'ubuntu-latest'")
+        expect({ step: step["name"] ?? step["uses"], ubuntuFirst }).toEqual({
+          step: step["name"] ?? step["uses"],
+          ubuntuFirst: true,
+        })
+      }
+    })
 
-    test.each(["test", "codex-compatibility", "senpi-compatibility"])(
+    test.each(["test", "codex-compatibility"])(
       "#then checkout and summary steps in %s stay unconditional",
       (jobName) => {
         // given

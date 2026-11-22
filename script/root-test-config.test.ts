@@ -34,13 +34,6 @@ describe("root test Bun config", () => {
     }
   })
 
-  test("#given the dedicated Senpi compatibility job #when root tests run #then omo-senpi is excluded", () => {
-    expect(existsSync(rootConfigPath)).toBe(true)
-    if (!existsSync(rootConfigPath)) return
-
-    expect(quotedPatterns(readFileSync(rootConfigPath, "utf8"))).toContain("packages/omo-senpi/**")
-  })
-
   test("#given bun 1.3.x test argv #when CI selects the dedicated config #then --config= is passed before test", () => {
     const workflow = readFileSync(workflowPath, "utf8")
     const posixShard2 = readFileSync(new URL("../.github/scripts/ci-root-shard-2.sh", import.meta.url), "utf8")
@@ -54,38 +47,11 @@ describe("root test Bun config", () => {
     expect(workflow).not.toContain("--path-ignore-patterns=")
   })
 
-  test("#given bunfig.root.toml #when bun loads it via --config= #then Senpi tests are ignored", () => {
-    const output = spawnBun([
-      "--config=bunfig.root.toml",
-      "test",
-      "packages/omo-senpi/src/components/memory/status.test.ts",
-    ])
-    expect(output).toContain("filters did not match any test files")
-  })
-
-  test("#given the Windows shard-2 remainder config #when bun discovers an rpc-host test #then it is left to the rpc-host invocation", () => {
-    const output = spawnBun([
-      "--config=bunfig.win2.parallel.windows.toml",
-      "test",
-      "./packages/senpi-task/src/runners/rpc-host/close.test.ts",
-    ])
-    expect(output).toContain("filters did not match any test files")
-  })
-
   test("#given the macOS shard-2 light config #when bun discovers a top-level script test #then it is left to the heavy half", () => {
     const output = spawnBun([
       "--config=bunfig.win2.parallel.rest.toml",
       "test",
       "script/ci-root-test-partition.test.ts",
-    ])
-    expect(output).toContain("filters did not match any test files")
-  })
-
-  test("#given the Windows rpc-host invocation config #when bun discovers the quarantined durable-json test #then it is left to the serial quarantine", () => {
-    const output = spawnBun([
-      "--config=bunfig.win2.parallel.toml",
-      "test",
-      "./packages/senpi-task/src/runners/rpc-host/durable-json.test.ts",
     ])
     expect(output).toContain("filters did not match any test files")
   })

@@ -187,7 +187,7 @@ describe("#given the dev push runs that now carry macOS/Windows coverage", () =>
 })
 
 describe("#given the OS matrix jobs that report required contexts", () => {
-  test.each(["test", "codex-compatibility", "senpi-compatibility"])(
+  test.each(["test", "codex-compatibility"])(
     "#then %s allocates a macOS or Windows runner only for the full matrix",
     (name) => {
       const runsOn = String(job("ci.yml", name)["runs-on"])
@@ -223,7 +223,7 @@ describe("#given the fork branch only validates macOS", () => {
     expect(triggers.push).toEqual({ branches: [forkBranch] })
     expect(triggers.pull_request).toEqual({ branches: [forkBranch] })
     expect(triggers.merge_group).toEqual({ types: ["checks_requested"] })
-    const suites = ["core", "codex", "senpi", "desktop"]
+    const suites = ["core", "codex", "desktop"]
     const validation = job(file, "test")
     expect(validation["strategy"]).toMatchObject({ matrix: { suite: suites } })
     expect(validation["runs-on"]).toBe("macos-15")
@@ -261,7 +261,7 @@ describe("#given the fork branch only validates macOS", () => {
       }
       expect(evaluate(job("ci.yml", name)["if"], { github: push })).toBe(true)
     }
-    for (const name of ["macos-test-1-status", "macos-test-2-status", "macos-codex-status", "macos-senpi-status"]) {
+    for (const name of ["macos-test-1-status", "macos-test-2-status", "macos-codex-status"]) {
       expect(
         evaluate(job("ci.yml", name)["if"], {
           github: forkMerge,

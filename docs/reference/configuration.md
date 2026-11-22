@@ -427,7 +427,7 @@ Capability data comes from provider runtime metadata first. OmO also ships bundl
 
 #### Agent Provider Chains
 
-The main agent has no chain of its own: it runs on your session model (Claude Opus 5.5 or GPT 5.6 Sol recommended). The four curated agents resolve through these chains. This is the Senpi (OmO Native) table (`packages/senpi-task/src/agents/builtin/fallback-chains.ts`). The OpenCode edition mirrors it without `anthropic-subscription`, and with `openai` ahead of `chatgpt-subscription`.
+The main agent has no chain of its own: it runs on your session model (Claude Opus 5.5 or GPT 5.6 Sol recommended). The four curated agents resolve through these chains. This is the retired Senpi harness table; the OpenCode edition mirrors it without `anthropic-subscription`, and with `openai` ahead of `chatgpt-subscription`.
 
 | Agent | Default Model | Provider Priority |
 | --- | --- | --- |
@@ -454,7 +454,7 @@ Each harness ships its own hardcoded chain per category. A rung reads `providers
 | `unspecified-high` | `anthropic\|anthropic-api\|github-copilot\|opencode/claude-opus-5-5 (medium)` → `zai-coding-plan\|opencode-go/glm-5.3 (max)` → `kimi-for-coding\|moonshotai\|opencode-go/kimi-k3.1-pro (max)` → `opencode/kimi-k3 (max)` |
 | `writing` | `google\|google-vertex\|opencode/gemini-4-argon (low)` → `anthropic\|anthropic-api\|github-copilot\|opencode/claude-opus-5-5 (low)` → `anthropic\|anthropic-api\|github-copilot\|opencode/claude-opus-4-6 (max)` |
 
-**Senpi (OmO Native)** (`packages/senpi-task/src/category/fallback-chains.ts`):
+**Retired Senpi harness**:
 
 | Category | Provider Priority |
 | --- | --- |

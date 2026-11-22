@@ -47,6 +47,8 @@
         "script/qa/computer/pool/xorg-uinput-probe.ts",
         // run by path as the computer-use v3 corpus replay driver
         "script/qa/computer/replay.ts",
+        // run by path (`bun script/qa/cu-eval/bench.mjs --fake-engine ...`) by desktop-bench.yml head-vs-work comparisons
+        "script/qa/cu-eval/bench.mjs",
         // run by path as the live GNOME Wayland window-input QA (docs/guide/computer-use.md)
         "script/qa/desktop/gnome.ts",
         "script/qa/desktop/hyprland.ts",
@@ -55,7 +57,6 @@
         "script/qa/desktop/linux/expect-sabotage.ts",
         "script/qa/desktop/windows.ts",
         "script/qa/desktop/windows/expect-sabotage.ts",
-        "script/qa/python-kernel-warmup.mjs",
         "script/release-announce.ts",
         "script/release-desktop-engine-target.ts",
         "script/release-latest-flag.ts",
@@ -89,11 +90,8 @@
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/ci-fast-path.d.mts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/fixtures/senpi-hooks-state-error-runner.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/fixtures/senpi-hooks-state-legacy-reader.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/fixtures/senpi-hooks-state-mode-runner.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/fixtures/vendored-lsp-build-owner.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
@@ -109,45 +107,25 @@
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/published-install-smoke.d.mts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/desktop/macos.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/desktop/macos/scenarios-input.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/desktop/macos/scenarios-safety.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/member-boot-profile.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item2-admission.mjs",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item2-eval.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item2-invalid.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item2-measure-env.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item2-measure.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item2.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-denials.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-harness.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-kernel-cell.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-pool-stale.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-real.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-revive.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-scope-producer.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6-scope.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item6.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
-        "script/qa/omp-item9.ts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
         "script/qa/web-terminal-redaction.d.mts",
         // pre-existing at origin dev 4686e425b5: a file nothing imports or runs
@@ -213,17 +191,11 @@
     // pre-existing at origin dev 4686e425b5: unused export(s) PACKAGES, multiarch, which
     "script/qa/desktop/linux/provision.ts": ["PACKAGES", "multiarch", "which"],
     // pre-existing at origin dev 4686e425b5: unused export(s) isRecord, sandboxEnvironment, createSandbox, agentArgs, selfTestSandbox, selfTestBinary
-    "script/qa/desktop/macos/agent.ts": ["isRecord", "sandboxEnvironment", "createSandbox", "agentArgs", "selfTestSandbox", "selfTestBinary"],
     // pre-existing at origin dev 4686e425b5: unused export(s) quitTextEdit, openTextEdit, textEditText, textEditSelection, openKeySink, closeKeySink, countCanaryDialogs
-    "script/qa/desktop/macos/fixtures.ts": ["quitTextEdit", "openTextEdit", "textEditText", "textEditSelection", "openKeySink", "closeKeySink", "countCanaryDialogs"],
     // pre-existing at origin dev 4686e425b5: unused export(s) focusSnapshot, sameJson, launcherPermissions, topmostAt
-    "script/qa/desktop/macos/observer.ts": ["focusSnapshot", "sameJson", "launcherPermissions", "topmostAt"],
     // pre-existing at origin dev 4686e425b5: unused export(s) default
-    "script/qa/desktop/macos/provider.ts": ["default"],
     // pre-existing at origin dev 4686e425b5: unused export(s) SCENARIOS, isScenarioName, onWindow, warmUp, clickCode, keyLands
-    "script/qa/desktop/macos/scenario.ts": ["SCENARIOS", "isScenarioName", "onWindow", "warmUp", "clickCode", "keyLands"],
     // pre-existing at origin dev 4686e425b5: unused export(s) tccDiagnostic
-    "script/qa/desktop/macos/tcc.ts": ["tccDiagnostic"],
     // pre-existing at origin dev 4686e425b5: unused export(s) INVALID_STOP_CHORD
     "script/qa/desktop/windows/scenarios-guard.ts": ["INVALID_STOP_CHORD"],
     // pre-existing at origin dev 4686e425b5: unused export(s) GOVERNED_SURFACES

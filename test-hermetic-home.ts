@@ -305,12 +305,13 @@ async function exitedBy(pid: number, deadline: number): Promise<boolean> {
   return true
 }
 
+// No repository code starts task hosts anymore: the senpi engine package was removed with the host
+// adapter. The rpc-host-daemon existence guard in stopRunTaskHosts returns before this loader runs; a
+// registry that does appear means something started a host the repo can no longer stop, and this names it.
 async function loadTaskHostEngine(): Promise<TaskHostEngine> {
-  const engine = await import("@code-yeongyu/senpi")
-  return {
-    listHostEndpoints: (agentDir) => engine.listHostEndpoints(agentDir),
-    stopHost: (options) => engine.stopHost(options),
-  }
+  throw new Error(
+    "the senpi engine package is no longer a repository dependency; a task-host registry exists but nothing in this repo can stop its hosts",
+  )
 }
 
 /** Starts the engine import at setup; a failure surfaces only if teardown finds hosts to stop. */

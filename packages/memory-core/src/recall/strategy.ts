@@ -11,7 +11,6 @@
 //     LARGE_CORPUS_MIN_DOCUMENTS notes. It takes precedence over bm25 because its bm25 half already
 //     carries the CJK bigrams.
 //
-// The thresholds come from recall-ranker-bench.mjs (packages/omo-senpi/scripts/qa).
 
 import { CJK_CLASS } from "./bm25"
 import { normalizedHaystack } from "./haystack"

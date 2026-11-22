@@ -220,7 +220,7 @@ The text of one command is limited to 1,000,000 characters and 3,000,000 bytes o
 
 An interactive `omo` start (a TUI session started by the `omo` launcher) runs `omo remote bootstrap` in
 the background, once per process, in its own process with a 10-minute deadline
-(`packages/omo-senpi/src/components/device-service/runner.ts`). It does not run under CI or in task
+. It does not run under CI or in task
 children, and `device_service.enabled: false` in `omo.json` turns it off. When you are signed in, it
 connects to a running device service at the pinned version or newer; only when none runs, or the
 running one is older, does it acquire the pinned version from

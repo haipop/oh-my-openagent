@@ -48,9 +48,6 @@ describe("no-em-dash-copy", () => {
     "packages/shared-skills/upstreams/copy.ts",
     "packages/lsp-daemon/src/proxy.ts",
     "packages/lsp-tools-mcp/src/index.ts",
-    "packages/omo-senpi/plugin/extensions/omo.js",
-    "packages/omo-senpi/plugin/runtime/agent-toolkit-sdk/sdk.js",
-    "packages/omo-senpi/src/components/ultrawork/generated-directive.ts",
     "packages/omo-codex/plugin/components/ultrawork/src/directive-content.ts",
     "docs/copy.md",
     "script/copy.ts",
@@ -76,7 +73,6 @@ describe("no-em-dash-copy", () => {
     "packages/shared-skills/skills/browser/scripts/browser-install.mjs",
     "packages/shared-skills/skills/programming/scripts/typescript/check-no-excuse-rules.ts",
     "packages/omo-codex/plugin/scripts/sync-skills.mjs",
-    "packages/omo-senpi/plugin/scripts/sync-skills.mjs",
   ])("checks %s", (filename) => {
     expect(isProductSource(filename)).toBe(true)
   })
@@ -103,16 +99,6 @@ describe("no-em-dash-copy", () => {
     const path =
       "packages/shared-skills/skills/programming/scripts/typescript/oxc/lint/oxlint-plugin/no-em-dash-copy.js"
     const data = 'const EM_DASH = "\\u2014";'
-    expect(findEmDashCopy(data, path)).toEqual([])
-    expect(findEmDashCopy(`${data}\nconsole.log("Unavailable \\u2014 retry");`, path)).toHaveLength(1)
-  })
-
-  test("allows Senpi sync heading matcher data but checks other shipped copy", () => {
-    const path = "packages/omo-senpi/plugin/scripts/sync-skills.mjs"
-    const data = [
-      'const before = "## ABSOLUTE RULE: YOU ARE AN ORCHESTRATOR \\u2014 NEVER THE IMPLEMENTER";',
-      'const after = "## ABSOLUTE RULE (root session): YOU ARE AN ORCHESTRATOR \\u2014 NEVER THE IMPLEMENTER";',
-    ].join("\n")
     expect(findEmDashCopy(data, path)).toEqual([])
     expect(findEmDashCopy(`${data}\nconsole.log("Unavailable \\u2014 retry");`, path)).toHaveLength(1)
   })

@@ -28,14 +28,7 @@ import {
 // destructuring; variable/const-folded module specifiers; Reflect.get(Bun, "connect").
 // This is a regression guard, not a complete data-flow or evasion detector.
 const ALLOWLIST: AllowlistEntry[] = [
-  {
-    file: "packages/omo-senpi/plugin/runtime/bunshin-ts/sdk.js",
-    call: "t.connect()",
-    count: 1,
-    reason:
-      'no TLS and no remote host: `t` is the SDK\'s relay transport, whose connect() opens the local device service through node:net createConnection({ path: <stateDir>/<socket> }) or, on Windows, { host: "127.0.0.1", port } (vendor/bunshin-ts-relay/index.js:766); the bundle imports no node:tls/https/http2 and has no wss URL (#12258, senpi#3078).',
-  },
-  ...["omo-codex", "omo-senpi"].flatMap((edition) =>
+  ...["omo-codex"].flatMap((edition) =>
     ["https", "tls"].map((module) => ({
       file: `packages/${edition}/plugin/skills/browser/runtime/omowright/index.js`,
       call: `__require("${module}")`,
@@ -60,13 +53,6 @@ const ALLOWLIST: AllowlistEntry[] = [
   },
   {
     file: "packages/omo-codex/plugin/skills/browser/runtime/omowright/index.js",
-    call: "tls.connect(options)",
-    count: 1,
-    reason:
-      "bundled ws@8.21.3 WebSocket client: host and servername come from new URL(address).hostname (ws/lib/websocket.js:703-758,1083-1090); verified on Bun 1.4.2 in omowright#40",
-  },
-  {
-    file: "packages/omo-senpi/plugin/skills/browser/runtime/omowright/index.js",
     call: "tls.connect(options)",
     count: 1,
     reason:

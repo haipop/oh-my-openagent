@@ -14,14 +14,6 @@ import type {
   TelemetryTransportFactory,
 } from "@oh-my-opencode/telemetry-core"
 import { isolateTelemetryEnv } from "../../../../test-support/telemetry-env.test-helpers"
-import { FakeExtensionAPI } from "../../../omo-senpi/test-support/fake-extension-api"
-import { recordSenpiDailyActive } from "../../../omo-senpi/src/components/telemetry/index"
-import { createOmoNativeSessionComponent } from "../../../omo-senpi/src/components/telemetry/omo-native-session"
-import {
-  createEnabledEnv,
-  createSilentLogger,
-  withTempAgentDir,
-} from "../../../omo-senpi/src/components/telemetry/telemetry.test-support"
 import * as codexPostHog from "../../../omo-codex/src/telemetry/posthog"
 import { trackCodexInstallTelemetry } from "../../../omo-codex/src/install/codex-install-telemetry"
 import * as codexPluginPostHog from "../../../omo-codex/plugin/components/telemetry/src/posthog"
@@ -81,45 +73,6 @@ function hostLeaks(messages: readonly TelemetryCaptureMessage[]): string[] {
 }
 
 const SENDERS: readonly (readonly [string, (dir: string, recorder: Recorder) => Promise<void>])[] = [
-  [
-    "OmO Native events (session_start, with the chained legacy ping)",
-    async (_dir, recorder) => {
-      await withTempAgentDir(async (agentDir) => {
-        mkdirSync(agentDir, { recursive: true })
-        writeFileSync(join(agentDir, "models.json"), JSON.stringify({ providers: {} }))
-        writeFileSync(join(agentDir, "settings.json"), "{}")
-        const pi = new FakeExtensionAPI()
-        createOmoNativeSessionComponent({
-          env: createEnabledEnv(agentDir),
-          hashSessionId: (raw) => `hashed:${raw}`,
-          isConfigEnabled: () => true,
-          now: NOW,
-          osProvider: SENTINEL_OS,
-          transportFactory: recorder.factory,
-        }).register(pi, { config: pi, logger: createSilentLogger() })
-        await pi.dispatch(
-          "session_start",
-          { type: "session_start", reason: "startup" },
-          { cwd: "/repo", sessionManager: { getSessionId: () => "host-identity" } },
-        )
-      })
-    },
-  ],
-  [
-    "omo_senpi_daily_active",
-    async (dir, recorder) => {
-      await withTempAgentDir(async (agentDir) => {
-        await recordSenpiDailyActive({
-          env: createEnabledEnv(agentDir),
-          now: NOW,
-          osProvider: SENTINEL_OS,
-          stateDir: dir,
-          timeoutMs: 1_000,
-          transportFactory: recorder.factory,
-        })
-      })
-    },
-  ],
   [
     "omo_codex_daily_active (installer)",
     async (_dir, recorder) => {

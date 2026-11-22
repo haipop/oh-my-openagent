@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [core, codex, senpi, desktop]
+        suite: [core, codex, desktop]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -56,9 +56,6 @@ jobs:
         run: |
           temp_dir=$(cd "$RUNNER_TEMP" && pwd -P)
           TMPDIR="$temp_dir" bun run test:codex
-      - name: Test Senpi
-        if: matrix.suite == 'senpi'
-        run: bun run test:senpi
       - name: Build desktop engine
         if: matrix.suite == 'desktop'
         run: cargo build --release --locked -p senpi-desktop-engine

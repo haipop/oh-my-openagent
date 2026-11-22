@@ -1,8 +1,8 @@
-<!-- sources: packages/senpi-task/src/tools/task/description.ts, packages/senpi-task/src/agents/builtin/index.ts, packages/senpi-task/src/category/builtins.ts, packages/omo-senpi/skills/ulw-plan/SKILL.md, packages/shared-skills/skills/ulw-execute/SKILL.md, packages/omo-senpi/skills/mass-ulw/SKILL.md, packages/omo-senpi/skills/ulw-loop/SKILL.md, packages/omo-senpi/skills/hyperplan/SKILL.md, packages/omo-senpi/skills/ultrawork/SKILL.md, packages/omo-senpi/src/components/ulw-execute-continuation/index.ts, packages/omo-senpi/src/components/ulw-execute-continuation/boulder-eligibility.ts, packages/omo-senpi/src/components/memory/AGENTS.md, packages/omo-config-core/src/schema/agent.ts -->
+<!-- sources: packages/shared-skills/skills/ulw-execute/SKILL.md, packages/omo-config-core/src/schema/agent.ts -->
 
 # Orchestration System Guide
 
-omo-senpi turns one coding session into a coordinated team by separating planning from execution. The main agent (the session you're typing into) does the thinking and the orchestration; everything else is delegated through the `task` tool.
+OmO turns one coding session into a coordinated team by separating planning from execution. The main agent (the session you're typing into) does the thinking and the orchestration; everything else is delegated through the `task` tool.
 
 ---
 
@@ -61,7 +61,7 @@ flowchart TB
 
 ### The main agent
 
-The main agent is whatever model your session is using. It carries the ultrawork directive, the planning skill, and the execution skill; there's no separate "planner agent" or "executor agent" to switch to. Tuned prompt presets exist for the common frontier models, and the planning and execution prompts are written to work across families. See [Agent-Model Matching](./agent-model-matching.md) for the model-specific notes.
+The main agent is whatever model your session is using. It carries the ultrawork directive, the planning skill, and the execution skill; there's no separate "planner agent" or "executor agent" to switch to. Tuned prompt presets exist for the common frontier models, and the planning and execution prompts are written to work across families.
 
 ### Delegation through `task`
 
@@ -319,7 +319,6 @@ Then `/ulw-execute` runs against the written scope instead of treating the task 
 
 - [Overview](./overview.md)
 - [Team Mode](./team-mode.md)
-- [Agent-Model Matching](./agent-model-matching.md)
 - [Features Reference](../reference/features.md)
 - [Configuration Reference](../reference/configuration.md)
 - [Manifesto](../manifesto.md)

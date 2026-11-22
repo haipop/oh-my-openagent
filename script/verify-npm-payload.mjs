@@ -9,7 +9,6 @@ import { parseNpmPackPaths } from "./npm-pack-paths.mjs"
 
 const FORBIDDEN_RULES = [
   { name: "nested node_modules", matches: (path) => path.includes("node_modules/") },
-  { name: "senpi payload", matches: (path) => path.startsWith("packages/omo-senpi/") },
   { name: "retired workflow-selector component", matches: (path) => path.includes("components/workflow-selector/") },
 ]
 

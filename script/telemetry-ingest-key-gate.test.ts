@@ -8,7 +8,6 @@ import { fileURLToPath } from "node:url"
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 const BUILD_DIRS = [".github", "script"]
-const BUILD_DEFINE_FILE = "packages/omo-senpi/plugin/scripts/build-extension-core.mjs"
 const KEY = "OMO_TELEMETRY_INGEST_KEY"
 const SELF = "script/telemetry-ingest-key-gate.test.ts"
 
@@ -45,14 +44,5 @@ describe("telemetry ingest key gate", () => {
       }
     }
     expect(offenders).toEqual([])
-  })
-
-  test("#given the plugin build #then no ingest key define is supplied", async () => {
-    const text = await readFile(join(REPOSITORY_ROOT, BUILD_DEFINE_FILE), "utf8")
-    const keyLines = text
-      .split("\n")
-      .filter((line) => line.includes(KEY))
-      .map((line) => line.trim())
-    expect(keyLines).toEqual([])
   })
 })

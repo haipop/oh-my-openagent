@@ -218,15 +218,7 @@ window and 4 under a 1-hour window. The per-session configuration also used less
 memory in both cases (237.5 against 279.7 MB RSS by default, 235.7 against 263.9 MB
 with the 1-hour window).
 
-Reproduce with the QA driver (about 35 minutes; it runs in a sandbox agent dir and
-leaves the real one untouched):
-
-```bash
-node packages/omo-senpi/scripts/qa/task-host-e2e-shard-cost.mjs \
-  --bin <omo binary with per-session hosts> \
-  --before-bin <omo binary of the previous release> \
-  --out <evidence dir>
-```
+The original benchmark was captured with the retired Senpi host-adapter QA driver in an isolated agent directory. That driver no longer ships with this branch.
 
 ## Where it lives
 
@@ -545,6 +537,3 @@ handed off to; `omo daemon stop` (or wait for its idle exit), then `run`.
 the `config-reload` builtin spawns a filesystem-watch worker per session
 (tracked upstream as senpi#1794); with that builtin disabled the increment is 0.
 It is linear, not flat; size a long-lived host from those numbers.
-
-See also: [omob dev binary](./omob-dev-binary.md), [omo.json](./omo-json.md),
-[senpi-task guide](../guide/senpi-task.md).

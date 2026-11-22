@@ -14,9 +14,7 @@
 | Installing a host plugin from this branch | [docs/guide/install.md](guide/install.md) |
 | Installing the plugin | [docs/guide/installation.md](guide/installation.md) |
 | How agents collaborate | [docs/guide/orchestration.md](guide/orchestration.md) |
-| Picking the right model per agent | [docs/guide/agent-model-matching.md](guide/agent-model-matching.md) |
 | Team Mode (opt-in multi-agent) | [docs/guide/team-mode.md](guide/team-mode.md) |
-| Senpi task delegation and teams | [docs/guide/senpi-task.md](guide/senpi-task.md) |
 | Desktop computer use setup and safety | [docs/guide/computer-use.md](guide/computer-use.md) |
 | Temporary BTW side conversations | [docs/guide/btw.md](guide/btw.md) |
 | Workflows (mass ulw) for users, omo.dev/docs/workflows | [docs/guide/workflows.md](guide/workflows.md) |

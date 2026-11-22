@@ -6,18 +6,8 @@ import ts from "@typescript/typescript6"
 const MESSAGE = "No em dashes in product copy. Use a period, comma, colon, or parentheses instead."
 
 // These embedded directives and runtime bundles are generated from source outside this check's scope.
-const GENERATED_SOURCES = new Set([
-  "packages/omo-codex/plugin/components/ultrawork/src/directive-content.ts",
-  "packages/omo-senpi/src/components/ultrawork/generated-directive.ts",
-])
-const SHIPPED_SKILL_SYNC_SCRIPTS = new Set([
-  "packages/omo-codex/plugin/scripts/sync-skills.mjs",
-  "packages/omo-senpi/plugin/scripts/sync-skills.mjs",
-])
-const SENPI_SYNC_HEADING_MATCHERS = new Set([
-  "## ABSOLUTE RULE: YOU ARE AN ORCHESTRATOR — NEVER THE IMPLEMENTER",
-  "## ABSOLUTE RULE (root session): YOU ARE AN ORCHESTRATOR — NEVER THE IMPLEMENTER",
-])
+const GENERATED_SOURCES = new Set(["packages/omo-codex/plugin/components/ultrawork/src/directive-content.ts"])
+const SHIPPED_SKILL_SYNC_SCRIPTS = new Set(["packages/omo-codex/plugin/scripts/sync-skills.mjs"])
 
 export function isProductSource(path: string): boolean {
   return (
@@ -34,7 +24,6 @@ export function isProductSource(path: string): boolean {
     !/\.(?:test|spec|testkit|gen|generated)\.|\.d\.[cm]?ts$/.test(path) &&
     !/(?:^|\/)testUtils\.[cm]?[jt]sx?$/.test(path) &&
     !/^packages\/(?:lsp-daemon|lsp-tools-mcp)\//.test(path) &&
-    !/^packages\/omo-senpi\/plugin\/(?:extensions|runtime)\//.test(path) &&
     !GENERATED_SOURCES.has(path)
   )
 }
@@ -44,13 +33,6 @@ export function findEmDashCopy(content: string, path: string): { line: number; c
   const source = ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true)
   const hits: { line: number; column: number }[] = []
   const visit = (node: ts.Node): void => {
-    // These skill parsers use the character as data, not as display copy.
-    if (
-      path === "packages/omo-senpi/plugin/scripts/sync-skills.mjs" &&
-      ts.isStringLiteralLike(node) &&
-      SENPI_SYNC_HEADING_MATCHERS.has(node.text)
-    )
-      return
     if (
       path === "packages/shared-skills/skills/ulw-research/scripts/entities.mjs" &&
       ts.isPropertyAssignment(node) &&

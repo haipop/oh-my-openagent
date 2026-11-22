@@ -308,40 +308,8 @@ describe("partition tiling", () => {
     const owned = groupScopes(testFastGroups())
 
     // then — the canonical tiling is whole packages on both sides, compared verbatim
-    expect(sorted(owned)).toEqual(["packages/memory-core/**", "packages/omo-opencode/**", "packages/omo-senpi/**"])
+    expect(sorted(owned)).toEqual(["packages/memory-core/**", "packages/omo-opencode/**"])
     expect(sorted(ignored)).toEqual(sorted(owned))
-  })
-
-  it("#given a win2 ignore narrowed below a package a group runs whole #when the tiling is checked #then the overlap outside that subtree is reported", () => {
-    // given — win2 hides only src/, so packages/omo-senpi/test/** runs in BOTH groups
-    const base = readFileSync(new URL("../bunfig.toml", import.meta.url), "utf8")
-    const win2 = readFileSync(new URL("../bunfig.win2.toml", import.meta.url), "utf8").replace(
-      '"packages/omo-senpi/**"',
-      '"packages/omo-senpi/src/**"',
-    )
-
-    // when
-    const ignored = ignoredScopes(base, win2)
-
-    // then
-    expect(ignored).toContain("packages/omo-senpi/src/**")
-    expect(sorted(ignored)).not.toEqual(sorted(groupScopes(testFastGroups())))
-  })
-
-  it("#given a group argument narrowed below the package win2 hides whole #when the tiling is checked #then the uncovered subtree is reported", () => {
-    // given — the senpi group runs only src/, so packages/omo-senpi/test/** runs NOWHERE
-    const base = readFileSync(new URL("../bunfig.toml", import.meta.url), "utf8")
-    const win2 = readFileSync(new URL("../bunfig.win2.toml", import.meta.url), "utf8")
-    const narrowed = testFastGroups().map((group) =>
-      group.name === "senpi" ? { ...group, args: ["test", "packages/omo-senpi/src"] } : group,
-    )
-
-    // when
-    const owned = groupScopes(narrowed)
-
-    // then
-    expect(owned).toContain("packages/omo-senpi/src/**")
-    expect(sorted(owned)).not.toEqual(sorted(ignoredScopes(base, win2)))
   })
 
   it("#given every base ignore is unconditional #when win2 is read #then it keeps all of them", () => {
@@ -459,14 +427,14 @@ describe("spawnInheritingStdio", () => {
       () => {},
       spawner,
     )({
-      name: "senpi",
-      args: ["test", "packages/omo-senpi"],
+      name: "root-rest",
+      args: ["test", "--config=bunfig.win2.parallel.toml"],
     })
 
     // then
     const call = calls[0]
     expect(calls.length).toBe(1)
-    expect(call?.args).toEqual(["test", "packages/omo-senpi"])
+    expect(call?.args).toEqual(["test", "--config=bunfig.win2.parallel.toml"])
     expect(call?.options.env?.[REENTRY_ENV_VAR]).toBe("1")
     const spawnEnv = call?.options.env ?? {}
     const pathKey = Object.keys(spawnEnv).find((key) => key.toUpperCase() === "PATH") ?? "PATH"
@@ -532,7 +500,7 @@ describe("spawnInheritingStdio", () => {
       () => {},
       spawner,
     )({
-      name: "senpi",
+      name: "root-rest",
       args: ["test"],
     })
     expect(added.map((child) => child.pid)).toEqual([4242])
@@ -564,14 +532,14 @@ describe("main entry re-entry guard", () => {
     // then
     expect(exitCode).toBe(1)
     expect(stderr).toContain("re-entry blocked")
-    expect(stdout).not.toContain("running 3 groups")
+    expect(stdout).not.toContain("running 2 groups")
   })
 })
 
 describe("runTestFast", () => {
   const capturingLogger = (lines: string[]) => (line: string) => void lines.push(line)
 
-  it("#given three fixed test groups #when the runner starts #then every group is launched before any exit is released", async () => {
+  it("#given two fixed test groups #when the runner starts #then every group is launched before any exit is released", async () => {
     // given
     const order: string[] = []
     const spawnGroup = async (group: TestFastGroup) => {
@@ -585,8 +553,8 @@ describe("runTestFast", () => {
     const exit = await runTestFast(spawnGroup, capturingLogger([]))
 
     // then
-    expect(testFastGroups().length).toBe(3)
-    expect(order.indexOf("start:senpi")).toBeLessThan(order.indexOf("exit:opencode-memory"))
+    expect(testFastGroups().length).toBe(2)
+    expect(order.indexOf("start:root-rest")).toBeLessThan(order.indexOf("exit:opencode-memory"))
     expect(exit).toBe(0)
   })
 
@@ -625,7 +593,7 @@ describe("runTestFast", () => {
 
     // then
     expect(failure).toBe(spawnFailure)
-    expect(shutdownAt).toEqual(["opencode-memory,senpi"])
+    expect(shutdownAt).toEqual(["opencode-memory"])
   })
 
   it("#given every group exits normally #when the run completes #then no shutdown is triggered", async () => {
@@ -699,7 +667,7 @@ describe("runTestFast", () => {
     // then
     expect(lines).toEqual([
       `[test-fast] serial quarantine first: ${ROOT_TEST_SERIAL_QUARANTINE_PATHS.length} files`,
-      "[test-fast] running 3 groups in parallel: opencode-memory, root-rest, senpi",
+      "[test-fast] running 2 groups in parallel: opencode-memory, root-rest",
     ])
     expect(stdoutWrites.join("")).not.toContain("[test-fast]")
   })

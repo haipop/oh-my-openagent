@@ -410,7 +410,7 @@ A model profile is a named, ordered model chain you pick by lane (Daily / Obsess
 
 This is not the `profiles` key. `profiles.<name>` is a config-layer overlay activated by `OMO_PROFILE` (see [Profile activation](#profile-activation)): it changes which configuration is loaded. `model_profiles` and `model_profile` are ordinary base keys inside that configuration: they change which model the main session starts on. A `profiles.<name>` layer may set `model_profile` like any other key, which is the one way the two meet.
 
-Four builtin lanes ship (`packages/omo-senpi/src/components/model-profile/builtin-profiles.ts`). Each rung lists every provider that serves the model, so a Copilot-only or gateway-only setup still resolves:
+Four builtin lanes ship. Each rung lists every provider that serves the model, so a Copilot-only or gateway-only setup still resolves:
 
 | Id | Display name | Chain |
 |----|--------------|-------|
@@ -425,7 +425,7 @@ profile can replace the candidate order and reasoning. Provider-qualified user
 candidates stay on the named provider; an unavailable one advances only to the
 next user-listed candidate, while a bare model id may match any provider.
 
-What happens at session start (`packages/omo-senpi/src/components/model-profile/index.ts`, `resolve.ts`) in OmO Desktop and headless sessions. The interactive TUI does not apply `model_profile` yet; it keeps the model it started with.
+What happens at session start in OmO Desktop and headless sessions. The interactive TUI does not apply `model_profile` yet; it keeps the model it started with.
 
 - `model_profile` unset: Daily · Normal is applied on a fresh session. When none of its rungs resolves on the connected providers, the first of Daily · Heavy, Obsessive · Normal and Obsessive · Heavy that does is applied instead (a ChatGPT-only setup starts on Obsessive · Normal); when none resolves, the notice names Daily · Normal and the current model stays. The apply is not written back to config. Builtin rungs are served only by their ranked providers, so a gateway aggregator's copy of a model (for example OpenGateway's `anthropic/claude-opus-5-5`) is never picked. A saved `model_profile: "recommended"` (retired) starts this same default with one log line and is never reported as unknown, unless your own `model_profiles` defines `recommended`.
 - A literal `provider/model`: that exact model is looked up in the live registry and applied.
@@ -633,7 +633,7 @@ OpenGateway has a built-in unlimited provider concurrency default, so it does no
 
 `global_concurrency` caps how many tasks run at once per senpi process, across all model and provider lanes combined. It applies only to the senpi engine; OpenCode `background_task` is unaffected (parity is a follow-up). The cap is per process, not cross-process or machine-wide: two senpi processes each get their own budget. A task spills to a later entry in its fallback chain whenever admission cannot seat it in the preferred model's lane — the per-model/provider/default lane limit is reached or its queue is occupied (the common case), or this global cap is full — even though the preferred model never failed. That later entry can be a DIFFERENT provider, with different pricing and different data handling. If that matters to you, remove cross-provider entries from your fallback chains or use single-model chains. No new storage or telemetry is introduced by this setting.
 
-`state_dir` defaults to `<agent dir>/projects/<folder>-<path hash>/senpi-task` when unset, so task state never lands in the project's `git status`; a project that already has a `.omo/senpi-task` directory from an earlier release keeps using it (`packages/senpi-task/src/store/project-state-directory.ts`). Completion delivery is not configurable: every child completion is batched with any other ready notifications and steered into the parent's running turn at the next tool-call boundary; see the completion routing table in [`packages/senpi-task/AGENTS.md`](../../packages/senpi-task/AGENTS.md).
+`state_dir` defaults to `<agent dir>/projects/<folder>-<path hash>/senpi-task` when unset, so task state never lands in the project's `git status`; a project that already has a `.omo/senpi-task` directory from an earlier release keeps using it. Completion delivery is not configurable: every child completion is batched with any other ready notifications and steered into the parent's running turn at the next tool-call boundary.
 
 ### `teams`
 

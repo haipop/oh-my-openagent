@@ -44,7 +44,6 @@ const parts = [
   ["shard2a", "root-tests-posix-2a"],
   ["shard2b", "root-tests-posix-2b"],
   ["codex", "codex-platform-tests"],
-  ["senpi", "senpi-tests-posix"],
 ] as const
 
 describe("combined macOS CI execution contract (#9974)", () => {
@@ -101,7 +100,6 @@ describe("combined macOS CI execution contract (#9974)", () => {
     expect(steps.find((step) => step.id === "codex-platform-tests")?.run).toBe(
       "bash .github/scripts/ci-codex-platform-build.sh\nbash .github/scripts/ci-codex-platform-node.sh\nbun test packages/omo-opencode/src/cli/cli-installer.platform.test.ts\n",
     )
-    expect(steps.find((step) => step.id === "senpi-tests-posix")?.run).toBe("bash .github/scripts/ci-senpi-posix.sh")
     expect(script("ci-codex-platform-build.sh").trim().split("\n").slice(2)).toEqual([
       "bun run build:codex-install",
       "bun run build:git-bash-mcp",
@@ -126,7 +124,6 @@ describe("combined macOS CI execution contract (#9974)", () => {
     ["macos-test-1-status", "test", "lsp", "shard1"],
     ["macos-test-2-status", "test", "lsp", "shard2a", "shard2b"],
     ["macos-codex-status", "codex-compatibility", "codex"],
-    ["macos-senpi-status", "senpi-compatibility", "senpi"],
   ])(
     "#given %s #when its status is published #then Ubuntu judges only the corresponding part",
     (id, name, ...outputs) => {
@@ -135,7 +132,7 @@ describe("combined macOS CI execution contract (#9974)", () => {
       expect(status.name).toBe(name)
       expect(status["runs-on"]).toBe("ubuntu-26.04")
       expect(status.needs).toEqual(["ci-mode", "macos-combined"])
-      expect(status.if).toBe("${{ always() && !cancelled() }}")
+      expect(status.if).toBe("${{ always() && !cancelled() && needs.ci-mode.result != 'skipped' }}")
       const judge = status.steps.find((step) => step.run?.endsWith("bash .github/scripts/ci-macos-status.sh"))
       expect(judge?.env).toEqual({
         LEG_OS: "${{ matrix.os }}",
