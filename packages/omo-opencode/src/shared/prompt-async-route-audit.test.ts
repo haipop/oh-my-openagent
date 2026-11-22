@@ -251,6 +251,7 @@ async function parseSnippet(contents: string): Promise<ts.SourceFile> {
 
 function detectRawPromptInSourceFile(sourceFile: ts.SourceFile): boolean {
   let detected = false
+  let nativeCommandPromptSeen = false
 
   const visit = (node: ts.Node): void => {
     if (detected) {
@@ -258,6 +259,15 @@ function detectRawPromptInSourceFile(sourceFile: ts.SourceFile): boolean {
     }
 
     const isRawPromptAccess = isRawPromptPropertyAccess(node) && !isTypeofPromptCheck(node)
+    if (
+      isRawPromptAccess &&
+      !nativeCommandPromptSeen &&
+      sourceFile.fileName === path.join(SOURCE_ROOT, "opencode-v2", "native-commands-skills.ts") &&
+      isAwaitedV2UserCommandDelivery(node)
+    ) {
+      nativeCommandPromptSeen = true
+      return
+    }
     if (isRawPromptAccess || isPromptBindingPattern(node) || isReflectApplyPromptCall(node)) {
       detected = true
       return
@@ -268,6 +278,16 @@ function detectRawPromptInSourceFile(sourceFile: ts.SourceFile): boolean {
 
   visit(sourceFile)
   return detected
+}
+
+function isAwaitedV2UserCommandDelivery(node: ts.Node): boolean {
+  const call = node.parent
+  if (!ts.isCallExpression(call) || call.expression !== node || !ts.isAwaitExpression(call.parent)) return false
+  const statement = call.parent.parent
+  const method = statement.parent.parent
+  return (
+    ts.isExpressionStatement(statement) && ts.isMethodDeclaration(method) && getPropertyName(method.name) === "execute"
+  )
 }
 
 async function detectRawPromptInSnippet(contents: string): Promise<boolean> {
@@ -407,7 +427,7 @@ await dispatchInternalPrompt(options)
     expect(offenders).toEqual([3])
   })
 
-  test("#given production TypeScript sources #when prompt routes are audited #then only the shared gate may call raw OpenCode prompt APIs", async () => {
+  test("#given production TypeScript sources #when prompt routes are audited #then internal prompts cannot bypass the shared gate", async () => {
     // given
     const files = [...(await listSourceFiles(SOURCE_ROOT)), ...(await listPackageSourceFiles())]
     const candidates = await Promise.all(
