@@ -60,6 +60,7 @@
         "type": "string",
         "enum": [
           "goal",
+          "handoff",
           "refactor",
           "ulw-execute",
           "stop-continuation",

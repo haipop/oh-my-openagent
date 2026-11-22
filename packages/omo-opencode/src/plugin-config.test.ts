@@ -57,4 +57,19 @@ describe("plugin config", () => {
 
     expect(config.agents?.oracle).toMatchObject({ model: "user/model", prompt: "user prompt", temperature: 0.4 })
   })
+
+  it("#given a mixed disabled command list #when loading #then handoff survives pruning", () => {
+    const root = mkdtempSync(join(tmpdir(), "omo-plugin-config-"))
+    temporaryDirectories.push(root)
+    const project = join(root, "project")
+    homeDirectory = process.env.HOME
+    process.env.HOME = root
+    writeOmoConfig(join(project, ".omo", "omo.jsonc"), {
+      "[opencode]": { disabled_commands: ["handoff", "refactor", "unknown-command"] },
+    })
+
+    const config = loadPluginConfig(project, { command: "run" })
+
+    expect(config.disabled_commands).toEqual(["handoff", "refactor"])
+  })
 })

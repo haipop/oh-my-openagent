@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import type { CommandDefinition } from "@opencode/plugin/promise/command"
 import type { SessionContext, SessionPrompt } from "@opencode/plugin/promise/session"
 import { unsafeTestValue } from "../../../../test-support/unsafe-test-value"
 import rootModule from "../index"
@@ -29,6 +30,19 @@ async function setupPlugin(): Promise<Harness> {
     storedMessages: [],
   }
   const context = unsafeTestValue<Parameters<typeof opencodeV2Server.setup>[0]>({
+    location: { directory: process.cwd() },
+    command: {
+      reload: async () => {
+        harness.operations.push("command.reload")
+      },
+      transform: async (callback: (editor: { add: (command: CommandDefinition) => void }) => void) => {
+        harness.operations.push("command.transform")
+        callback({ add: () => {} })
+        const registration = { dispose: async () => {} }
+        harness.registrations.push(registration)
+        return registration
+      },
+    },
     session: {
       context: async ({ sessionID }: { sessionID: string }) => {
         if (sessionID !== "server-session") throw new Error(`unexpected session read: ${sessionID}`)
@@ -37,6 +51,18 @@ async function setupPlugin(): Promise<Harness> {
       hook: async (_name: SessionHookName, callback: unknown) => {
         if (_name === "prompt") harness.promptCallbacks.push(callback as PromptCallback)
         if (_name === "context") harness.contextCallbacks.push(callback as ContextCallback)
+        const registration = { dispose: async () => {} }
+        harness.registrations.push(registration)
+        return registration
+      },
+    },
+    skill: {
+      reload: async () => {
+        harness.operations.push("skill.reload")
+      },
+      transform: async (callback: (editor: unknown) => void) => {
+        harness.operations.push("skill.transform")
+        callback({ add: () => {}, get: () => undefined, list: () => [], remove: () => {}, update: () => {} })
         const registration = { dispose: async () => {} }
         harness.registrations.push(registration)
         return registration
@@ -86,8 +112,15 @@ describe("OpenCode V2 server plugin", () => {
     expect(harness.contextCallbacks).toHaveLength(1)
     expect([...harness.tools.keys()]).toEqual(["omo_status"])
     expect(harness.tools.get("omo_status")?.options).toEqual({ codemode: false })
-    expect(harness.registrations).toHaveLength(3)
-    expect(harness.operations).toEqual(["tool.transform", "tool.reload"])
+    expect(harness.registrations).toHaveLength(5)
+    expect(harness.operations).toEqual([
+      "command.transform",
+      "command.reload",
+      "skill.transform",
+      "skill.reload",
+      "tool.transform",
+      "tool.reload",
+    ])
     expect(harness.registrations.every((registration) => typeof registration.dispose === "function")).toBe(true)
 
     const promptEvent = admittedPrompt("server-session", "please ulw proceed")

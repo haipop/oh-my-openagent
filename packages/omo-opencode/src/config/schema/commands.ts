@@ -2,6 +2,7 @@ import { z } from "zod"
 
 export const BuiltinCommandNameSchema = z.enum([
   "goal",
+  "handoff",
   "refactor",
   "ulw-execute",
   "stop-continuation",

@@ -29,8 +29,6 @@ export const BUILD_NODES: BuildNode[] = [
       "--format",
       "esm",
       "--external",
-      "zod",
-      "--external",
       "@opencode/plugin",
       "--external",
       "@opencode/plugin/*",
