@@ -7,8 +7,10 @@
 | 宿主 | 功能分支范围 |
 | --- | --- |
 | DeepSeek Harness | `omo-dsh` Host bundle：工作模式、角色预设、规则注入和只读状态工具。预设取决于 profile；默认 headless 不注册这些预设。 |
-| OpenCode | 目标宿主及插件 SDK 为 `2.3.2`。V2 首期仅包含 Sisyphus、当前轮的 `ulw` / `ultrawork` 指令和只读 `omo_status`；不提供 V1、OmO TUI、团队或后台代理功能。 |
-| Senpi / Codex | 保留宿主插件与共享库，不再提供基于 Pi/Senpi 的 OmO 独立 Agent。 |
+| OpenCode | 原生 V2 插件，目标宿主及插件 SDK 为 `2.3.2`。支持 Sisyphus、当前轮的 `ulw` / `ultrawork`、只读 `omo_status`、写入保护、可选 Hashline、配置迁移，以及原生命令和技能。 |
+| Codex | 保留 [OmO Codex 插件](packages/omo-codex/README.md)与共享库。 |
+
+本分支已移除 Senpi 宿主适配和基于 Pi/Senpi 的独立 Agent，保留桌面引擎及其共享组件。
 
 ## DeepSeek Harness
 
@@ -32,7 +34,7 @@ dsh plugin --profile desktop add dsh-mnemon@0.5.50
 
 ## OpenCode V2
 
-`brew install opencode` 安装的是宿主，不是 OmO。用 `opencode --version` 检查版本；本分支针对 `2.3.2`，不把 Homebrew 后续提供的版本视为已验证。
+`brew install opencode` 用于安装宿主。用 `opencode --version` 检查版本，本分支已验证 `2.3.2`。V1、OmO TUI、团队和后台代理功能均不在本分支的 OpenCode 支持范围内。
 
 从 fork 构建本地归档，勿用同名上游 npm 包替代：
 
@@ -60,6 +62,29 @@ printf '%s\n' "$package_dir/package"
 mkdir -p .opencode/agents
 cp -n "$package_dir/package/packages/omo-opencode/.opencode/agents/sisyphus.md" .opencode/agents/sisyphus.md
 ```
+
+### 迁移旧版 OmO 配置
+
+从目标项目根目录运行本地归档里的 OmO CLI。先用 `--dry-run` 查看迁移计划，确认后再应用。应用时会备份迁移涉及的原配置，命令输出会列出备份位置。
+
+```sh
+bun "$package_dir/package/dist/cli/index.js" config migrate --dry-run
+bun "$package_dir/package/dist/cli/index.js" config migrate
+```
+
+### 写入保护、Hashline 和原生命令
+
+- 默认启用写入保护。模型用原生 `write` 覆盖已有文件前，必须在同一会话成功 `read` 该文件。
+- 在项目的 `.omo/omo.json` 中合并下列设置可启用 Hashline。`read` 返回行锚点，原生 `edit` 按锚点编辑。锚点过期时，重新读取文件后再编辑。
+- OmO 内置斜杠命令（如 `/handoff`）和发现的技能通过 OpenCode 的原生注册表使用。可在同一个 `"[opencode]"` 配置块中用 `disabled_commands` 和 `disabled_skills` 关闭指定项。
+
+```json
+{
+  "[opencode]": { "hashline_edit": true }
+}
+```
+
+### 验证插件
 
 配置 OpenCode 自己的模型提供方后，从目标项目运行：
 
