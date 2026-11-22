@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import type { CommandDefinition } from "@opencode/plugin/promise/command"
 import type { SessionContext, SessionPrompt } from "@opencode/plugin/promise/session"
 import { unsafeTestValue } from "../../../../test-support/unsafe-test-value"
@@ -16,21 +19,26 @@ type Harness = {
   operations: string[]
   promptCallbacks: PromptCallback[]
   contextCallbacks: ContextCallback[]
+  toolHooks: Map<string, (event: unknown) => Promise<void>>
+  updatedTools: string[]
   tools: Map<string, { execute: (input: unknown, context: unknown) => Promise<unknown> }>
   storedMessages: Array<{ role?: unknown; type?: unknown; metadata?: unknown }>
 }
 
-async function setupPlugin(): Promise<Harness> {
+async function setupPlugin(directory?: string): Promise<Harness> {
+  const location = { directory: directory ?? mkdtempSync(join(tmpdir(), "omo-v2-entry-test-")) }
   const harness: Harness = {
     registrations: [],
     operations: [],
     promptCallbacks: [],
     contextCallbacks: [],
+    toolHooks: new Map(),
+    updatedTools: [],
     tools: new Map(),
     storedMessages: [],
   }
   const context = unsafeTestValue<Parameters<typeof opencodeV2Server.setup>[0]>({
-    location: { directory: process.cwd() },
+    location,
     command: {
       reload: async () => {
         harness.operations.push("command.reload")
@@ -44,6 +52,7 @@ async function setupPlugin(): Promise<Harness> {
       },
     },
     session: {
+      get: async () => ({ location }),
       context: async ({ sessionID }: { sessionID: string }) => {
         if (sessionID !== "server-session") throw new Error(`unexpected session read: ${sessionID}`)
         return harness.storedMessages
@@ -69,16 +78,29 @@ async function setupPlugin(): Promise<Harness> {
       },
     },
     tool: {
+      hook: async (name: string, callback: (event: unknown) => void | Promise<void>) => {
+        const previous = harness.toolHooks.get(name)
+        harness.toolHooks.set(name, async (event) => {
+          await previous?.(event)
+          await callback(event)
+        })
+        const registration = { dispose: async () => {} }
+        harness.registrations.push(registration)
+        return registration
+      },
       reload: async () => {
         harness.operations.push("tool.reload")
       },
-      transform: async (callback: (editor: { add: (tool: unknown) => void }) => void) => {
+      transform: async (
+        callback: (editor: { add: (tool: unknown) => void; update: (name: string) => void }) => void,
+      ) => {
         harness.operations.push("tool.transform")
         callback({
           add: (tool) => {
             const definition = tool as { name: string; execute: (input: unknown, context: unknown) => Promise<unknown> }
             harness.tools.set(definition.name, definition)
           },
+          update: (name) => harness.updatedTools.push(name),
         })
         const registration = { dispose: async () => {} }
         harness.registrations.push(registration)
@@ -87,7 +109,11 @@ async function setupPlugin(): Promise<Harness> {
     },
   })
 
-  await opencodeV2Server.setup(context)
+  try {
+    await opencodeV2Server.setup(context)
+  } finally {
+    if (directory === undefined) rmSync(location.directory, { recursive: true, force: true })
+  }
   return harness
 }
 
@@ -112,7 +138,7 @@ describe("OpenCode V2 server plugin", () => {
     expect(harness.contextCallbacks).toHaveLength(1)
     expect([...harness.tools.keys()]).toEqual(["omo_status"])
     expect(harness.tools.get("omo_status")?.options).toEqual({ codemode: false })
-    expect(harness.registrations).toHaveLength(5)
+    expect(harness.registrations).toHaveLength(7)
     expect(harness.operations).toEqual([
       "command.transform",
       "command.reload",
@@ -181,5 +207,53 @@ describe("OpenCode V2 server plugin", () => {
     expect(Object.keys(rootModule).sort()).toEqual(["id", "setup"])
     expect(Object.keys(rootModule)).not.toContain("server")
     expect(Object.keys(rootModule)).not.toContain("omoPlugin")
+  })
+
+  test("requires a completed native read to unlock the write and respects the disabled hook setting", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "omo-v2-write-guard-test-"))
+    try {
+      const path = "existing.txt"
+      writeFileSync(join(directory, path), "original")
+      const { toolHooks } = await setupPlugin(directory)
+      const after = toolHooks.get("execute.after")
+      const before = toolHooks.get("execute.before")
+      if (!after || !before) throw new Error("Expected both write guard hooks")
+      const read = { tool: "read", sessionID: "reader", input: { path } }
+      const write = { tool: "write", sessionID: "reader", input: { path, content: "replacement" } }
+
+      await after({ ...read, status: "error" })
+      await expect(before(write)).rejects.toThrow("File already exists")
+      await after({ ...read, status: "completed" })
+      await before(write)
+      await expect(before(write)).rejects.toThrow("File already exists")
+
+      mkdirSync(join(directory, ".omo"))
+      writeFileSync(
+        join(directory, ".omo", "omo.json"),
+        JSON.stringify({
+          "[opencode]": { disabled_hooks: ["write-existing-file-guard"] },
+        }),
+      )
+      const disabled = await setupPlugin(directory)
+      expect(disabled.toolHooks.has("execute.before")).toBe(false)
+      expect(disabled.toolHooks.has("execute.after")).toBe(false)
+
+      writeFileSync(join(directory, ".omo", "omo.json"), JSON.stringify({ "[opencode]": { hashline_edit: true } }))
+      const combined = await setupPlugin(directory)
+      expect(combined.updatedTools).toEqual(["edit"])
+      const combinedAfter = combined.toolHooks.get("execute.after")
+      const combinedBefore = combined.toolHooks.get("execute.before")
+      if (!combinedAfter || !combinedBefore) throw new Error("Expected combined tool hooks")
+      const result = { output: { type: "text" }, content: "Read file existing.txt\n1: original" }
+      await combinedAfter({ ...read, tool: "edit", status: "completed", result })
+      await expect(combinedBefore(write)).rejects.toThrow("File already exists")
+      const completedRead = { ...read, status: "completed", result }
+      await combinedAfter(completedRead)
+      expect(completedRead.result.content).toMatch(/1#[A-Z]{2}\|original/)
+      await combinedBefore(write)
+      await expect(combinedBefore(write)).rejects.toThrow("File already exists")
+    } finally {
+      rmSync(directory, { recursive: true, force: true })
+    }
   })
 })

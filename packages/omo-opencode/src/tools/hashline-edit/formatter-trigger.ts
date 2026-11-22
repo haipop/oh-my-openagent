@@ -1,6 +1,6 @@
 import path from "path"
-import { log } from "../../shared"
 import { spawn as bunSpawn } from "../../shared/bun-spawn-shim"
+import { log } from "../../shared/logger"
 
 interface FormatterConfig {
   disabled?: boolean

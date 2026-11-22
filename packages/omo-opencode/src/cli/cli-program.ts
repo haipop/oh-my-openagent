@@ -119,11 +119,11 @@ program
   .command("config")
   .description("Manage unified OMO configuration")
   .command("migrate")
-  .description("Retired OpenCode V1 configuration migration")
-  .allowUnknownOption()
-  .allowExcessArguments()
-  .action(() => {
-    const exitCode = runConfigMigrate()
+  .description("Migrate legacy configuration to unified OmO configuration")
+  .option("--dry-run", "Preview without changing configuration")
+  .option("--json", "Print a machine-readable migration report")
+  .action((options: { dryRun?: boolean; json?: boolean }) => {
+    const exitCode = runConfigMigrate(options)
     process.exit(exitCode)
   })
 

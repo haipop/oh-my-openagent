@@ -1,5 +1,4 @@
-import type { ToolContext } from "@opencode-ai/plugin/tool"
-import { publishToolMetadata } from "../../features/tool-metadata-store"
+import type { PendingToolMetadata } from "../../features/tool-metadata-store"
 import { bunFile, bunWrite } from "../../shared/bun-file-shim"
 import { applyHashlineEditsWithReport } from "./edit-operations"
 import { countLineDiffs, generateUnifiedDiff } from "./diff-utils"
@@ -8,7 +7,6 @@ import { normalizeHashlineEdits, type RawHashlineEdit } from "./normalize-edits"
 import type { HashlineEdit } from "./types"
 import { HashlineMismatchError } from "./validation"
 import { runFormattersForFile, type FormatterClient } from "./formatter-trigger"
-import type { PluginContext } from "../../plugin/types"
 
 interface HashlineEditArgs {
   filePath: string
@@ -17,14 +15,10 @@ interface HashlineEditArgs {
   rename?: string
 }
 
-type ToolContextWithCallID = ToolContext & {
-  callID?: string
-  callId?: string
-  call_id?: string
-}
-
-type ToolContextWithMetadata = ToolContextWithCallID & {
-  metadata?: (value: unknown) => void
+interface HashlineEditRuntime {
+  directory: string
+  publish: (info: PendingToolMetadata) => unknown
+  formatterClient?: FormatterClient
 }
 
 function canCreateFromMissingFile(edits: HashlineEdit[]): boolean {
@@ -76,13 +70,8 @@ function buildSuccessMeta(
   }
 }
 
-export async function executeHashlineEditTool(
-  args: HashlineEditArgs,
-  context: ToolContext,
-  pluginCtx?: PluginContext,
-): Promise<string> {
+export async function executeHashlineEditTool(args: HashlineEditArgs, runtime: HashlineEditRuntime): Promise<string> {
   try {
-    const metadataContext = context as ToolContextWithMetadata
     const filePath = args.filePath
     const { delete: deleteMode, rename } = args
 
@@ -129,8 +118,8 @@ export async function executeHashlineEditTool(
 
     await bunWrite(filePath, writeContent)
 
-    if (pluginCtx?.client) {
-      await runFormattersForFile(pluginCtx.client as FormatterClient, context.directory, filePath)
+    if (runtime.formatterClient) {
+      await runFormattersForFile(runtime.formatterClient, runtime.directory, filePath)
       const formattedContent = Buffer.from(await bunFile(filePath).arrayBuffer()).toString("utf8")
       if (formattedContent !== writeContent) {
         const formattedEnvelope = canonicalizeFileText(formattedContent)
@@ -141,7 +130,7 @@ export async function executeHashlineEditTool(
           applyResult.noopEdits,
           applyResult.deduplicatedEdits,
         )
-        await publishToolMetadata(metadataContext, formattedMeta)
+        await runtime.publish(formattedMeta)
         if (rename && rename !== filePath) {
           await bunWrite(rename, formattedContent)
           await bunFile(filePath).delete()
@@ -165,7 +154,7 @@ export async function executeHashlineEditTool(
       applyResult.deduplicatedEdits,
     )
 
-    await publishToolMetadata(metadataContext, meta)
+    await runtime.publish(meta)
 
     if (rename && rename !== filePath) {
       return `Moved ${filePath} to ${rename}`

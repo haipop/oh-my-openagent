@@ -182,11 +182,18 @@ function subscriptionProviderRenamePlan(targetPath: string): LegacyConfigMigrati
 
 function existingOmoConfigPath(directory: string, options: ConfigMigrationDiscoveryOptions): string | undefined {
   const fileSystem = discoveryFileSystem(options)
+  const pathOperations = hostPathOperations(options)
   for (const fileName of ["omo.jsonc", "omo.json"] as const) {
-    const path = options.pathOperations.join(directory, fileName)
+    const path = pathOperations.join(directory, fileName)
     if (fileSystem.existsSync(path)) return canonicalPath(path, options)
   }
   return undefined
+}
+
+function migrationTargetPath(root: string, options: ConfigMigrationDiscoveryOptions): string {
+  const path = hostPathOperations(options)
+  const directory = path.join(root, ".omo")
+  return existingOmoConfigPath(directory, options) ?? path.join(directory, "omo.jsonc")
 }
 
 export function createLegacyConfigMigrationPlans(
@@ -194,8 +201,7 @@ export function createLegacyConfigMigrationPlans(
 ): readonly LegacyConfigMigrationPlan[] {
   const timestamp = backupTimestamp(options.backupTimestamp)
   const [openCodeGroup, configJsoncGroup] = discoverLegacyConfigGroups(options)
-  const pathOperations = hostPathOperations(options)
-  const userTargetPath = pathOperations.join(options.homeDir, ".omo", "omo.jsonc")
+  const userTargetPath = migrationTargetPath(options.homeDir, options)
   const userSources = openCodeGroup.sources.filter((source) => source.projectRoot === undefined)
   const projectSources = new Map<string, DiscoveredLegacyConfigSource[]>()
   for (const source of openCodeGroup.sources) {
@@ -213,7 +219,7 @@ export function createLegacyConfigMigrationPlans(
     projectInputs.push({
       scopes: [{ kind: "project", projectRoot }],
       sources,
-      targetPath: pathOperations.join(projectRoot, ".omo", "omo.jsonc"),
+      targetPath: migrationTargetPath(projectRoot, options),
     })
   }
   const openCodeInputs: OpenCodePlanInput[] = [...(userInput === undefined ? [] : [userInput]), ...projectInputs]

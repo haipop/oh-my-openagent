@@ -1,6 +1,5 @@
-import type { PluginInput } from "@opencode-ai/plugin"
 import { existsSync } from "fs"
-import { log } from "../../shared"
+import { log } from "../../shared/logger"
 import { MAX_TRACKED_PATHS_PER_SESSION } from "./hook"
 import {
   asRecord,
@@ -86,7 +85,7 @@ export function isOmoWorkspacePath(canonicalPath: string): boolean {
 }
 
 export async function handleWriteExistingFileGuardToolExecuteBefore(params: {
-  ctx: PluginInput
+  directory: string
   input: { tool?: string; sessionID?: string }
   output: { args?: unknown }
   readPermissionsBySession: Map<string, Set<string>>
@@ -96,7 +95,7 @@ export async function handleWriteExistingFileGuardToolExecuteBefore(params: {
   maxTrackedPathsPerSession?: number
 }): Promise<void> {
   const {
-    ctx,
+    directory,
     input,
     output,
     readPermissionsBySession,
@@ -117,7 +116,7 @@ export async function handleWriteExistingFileGuardToolExecuteBefore(params: {
     return
   }
 
-  const resolvedPath = resolveInputPath(ctx, filePath)
+  const resolvedPath = resolveInputPath(directory, filePath)
   const canonicalSessionRoot = getCanonicalSessionRoot()
   const canonicalPath = toCanonicalPath(resolvedPath)
   if (!isPathInsideDirectory(canonicalPath, canonicalSessionRoot)) {

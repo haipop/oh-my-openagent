@@ -59,6 +59,7 @@ export async function registerNativeCommandsAndSkills(
   })
   await context.command.transform((editor) => {
     for (const command of Object.values(commands)) {
+      if (command.name === "goal") continue
       editor.add(createNativeCommand(context, command))
     }
   })

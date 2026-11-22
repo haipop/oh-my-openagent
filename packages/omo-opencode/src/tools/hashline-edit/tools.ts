@@ -1,15 +1,9 @@
-import { tool, type ToolContext, type ToolDefinition } from "@opencode-ai/plugin/tool"
+import { tool, type ToolDefinition } from "@opencode-ai/plugin/tool"
+import { publishToolMetadata } from "../../features/tool-metadata-store"
 import { executeHashlineEditTool } from "./hashline-edit-executor"
+import type { FormatterClient } from "./formatter-trigger"
 import { HASHLINE_EDIT_DESCRIPTION } from "./tool-description"
-import type { RawHashlineEdit } from "./normalize-edits"
 import type { PluginContext } from "../../plugin/types"
-
-interface HashlineEditArgs {
-  filePath: string
-  edits: RawHashlineEdit[]
-  delete?: boolean
-  rename?: string
-}
 
 export function createHashlineEditTool(ctx?: PluginContext): ToolDefinition {
   return tool({
@@ -33,6 +27,11 @@ export function createHashlineEditTool(ctx?: PluginContext): ToolDefinition {
         )
         .describe("Array of edit operations to apply (empty when delete=true)"),
     },
-    execute: async (args: HashlineEditArgs, context: ToolContext) => executeHashlineEditTool(args, context, ctx),
+    execute: (args, context) =>
+      executeHashlineEditTool(args, {
+        directory: context.directory,
+        publish: (metadata) => publishToolMetadata(context, metadata),
+        formatterClient: ctx?.client as FormatterClient | undefined,
+      }),
   })
 }

@@ -4,7 +4,7 @@
 
 Commander.js CLI. Entry: `index.ts` → `runCli()` in `cli-program.ts`; runtime commands are registered by `runtime-commands.ts`.
 
-The only active installer is `install --platform=codex` (including interactive Clack mode and `--no-tui`). OpenCode V1, `both`, `native`, and `native-dev` requests are rejected before probing or writes. The public V1 `run` command and OpenCode `config migrate` command remain as explicit no-write rejections so legacy scripts fail fast instead of loading the V1 SDK.
+The only active installer is `install --platform=codex` (including interactive Clack mode and `--no-tui`). OpenCode V1, `both`, `native`, and `native-dev` requests are rejected before probing or writes. The public V1 `run` command remains a no-write rejection. The explicit `config migrate` command migrates legacy settings to unified OmO configuration without loading the V1 SDK.
 
 ## COMMANDS
 
@@ -14,7 +14,7 @@ The only active installer is `install --platform=codex` (including interactive C
 | `cleanup` / `uninstall` | Remove managed Codex Light state |
 | `run` | Retired V1 launcher boundary; directs users to native `opencode run` |
 | `doctor` | Read-only OpenCode diagnostics or Codex diagnostics when `--platform=codex` is selected |
-| `config migrate` | Retired OpenCode migration boundary; performs no writes |
+| `config migrate` | Apply legacy configuration migration; `--dry-run` is read-only and `--json` emits a machine-readable report |
 | `version` | Print package version |
 | `mcp` | OAuth management |
 | service/account commands | Service-auth surfaces owned by the separate service-auth lane |
@@ -37,7 +37,7 @@ cli/
 ├── tui-installer.ts             # Interactive Codex installer
 ├── install-codex/               # Adapter over canonical omo-codex installer
 ├── doctor/                      # Read-only diagnostics
-├── config-migrate.ts            # No-write rejection
+├── config-migrate.ts            # Explicit configuration preview and migration
 ├── config-manager/              # Read-only/config utility exports
 ├── worktree-sweep/
 ├── mcp-oauth/

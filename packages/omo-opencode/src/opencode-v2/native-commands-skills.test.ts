@@ -27,6 +27,7 @@ type Harness = {
 }
 
 const temporaryDirectories: string[] = []
+const nativeGoal: CommandDefinition = { name: "goal", execute: async () => {} }
 
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) {
@@ -41,7 +42,7 @@ function createFixture(): { context: Context; harness: Harness } {
   mkdirSync(project, { recursive: true })
 
   const harness: Harness = {
-    commands: new Map(),
+    commands: new Map([["goal", nativeGoal]]),
     operations: [],
     prompts: [],
     registrations: [],
@@ -112,7 +113,7 @@ describe("OpenCode V2 native commands and skills", () => {
     await registerNativeCommandsAndSkills(context, config)
 
     expect(harness.commands.has("handoff")).toBe(true)
-    expect(harness.commands.has("goal")).toBe(true)
+    expect(harness.commands.get("goal")).toBe(nativeGoal)
     expect(harness.skills.has("debugging")).toBe(true)
     expect(harness.skills.has("init-deep")).toBe(true)
     expect(harness.operations).toEqual(["command.transform", "command.reload", "skill.transform", "skill.reload"])
@@ -149,14 +150,14 @@ describe("OpenCode V2 native commands and skills", () => {
   test("#given disabled names #when registering #then matching built-ins are omitted", async () => {
     const { context, harness } = createFixture()
     const config: OhMyOpenCodeConfig = {
-      disabled_commands: ["handoff"],
+      disabled_commands: ["handoff", "goal"],
       disabled_skills: ["DeBuGgInG", "unknown-skill"],
     }
 
     await registerNativeCommandsAndSkills(context, config)
 
     expect(harness.commands.has("handoff")).toBe(false)
-    expect(harness.commands.has("goal")).toBe(true)
+    expect(harness.commands.get("goal")).toBe(nativeGoal)
     expect(harness.skills.has("debugging")).toBe(false)
     expect(harness.skills.has("init-deep")).toBe(true)
   })
