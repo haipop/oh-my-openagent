@@ -77,7 +77,7 @@
         "oxlint": "1.89.0",
         "picocolors": "^1.1.1",
         "picomatch": "^4.0.7",
-        "posthog-node": "^5.52.4",
+        "posthog-node": "5.52.4",
         "puppeteer-core": "^25.11.0",
         "typescript": "^7.0.2",
       },
@@ -486,7 +486,7 @@
         "@opentelemetry/api-logs": "0.223.0",
         "@opentelemetry/context-async-hooks": "2.12.0",
         "@opentelemetry/core": "2.12.0",
-        "posthog-node": "^5.52.4",
+        "posthog-node": "5.52.4",
       },
     },
     "packages/thread-address-core": {
@@ -1829,7 +1829,7 @@
 
     "postcss-selector-parser": ["postcss-selector-parser@7.2.1", "https://registry.npmmirror.com/postcss-selector-parser/-/postcss-selector-parser-7.2.1.tgz", { "dependencies": { "util-deprecate": "^1.0.2" } }, "sha512-GwxlMgTTXwIom+ebC7an3k6RaJDwklRQQnfiXsLPGicu8FYV/k/+1/9YY2OU2+r938H2t4X0TDxoif+HP2rjzQ=="],
 
-    "posthog-node": ["posthog-node@5.74.0", "https://registry.npmmirror.com/posthog-node/-/posthog-node-5.74.0.tgz", { "dependencies": { "@posthog/core": "^1.68.0" }, "peerDependencies": { "@opentelemetry/api": "^1.2.0", "@react-email/render": "^2.1.0", "rxjs": "^7.0.0" }, "optionalPeers": ["@opentelemetry/api", "@react-email/render", "rxjs"] }, "sha512-lAnGzPVobruQ7rZe45kzcXKZAcCK3J+1dMNS3WOOdx9mnM4ECRc2WRxBdS1ncBO/h/vDtHIEmcuIr/LUxxze5w=="],
+    "posthog-node": ["posthog-node@5.52.4", "https://registry.npmmirror.com/posthog-node/-/posthog-node-5.52.4.tgz", { "dependencies": { "@posthog/core": "^1.54.2" }, "peerDependencies": { "rxjs": "^7.0.0" }, "optionalPeers": ["rxjs"] }, "sha512-P3p4OouGQfw/ouv+Px4gcVWLNwYsFB4JPyksYmxv7QRX4niwp1/C9XjQSUyl0nt+KoQnK14zFDfONHWVthwKDA=="],
 
     "powershell-utils": ["powershell-utils@0.2.1", "https://registry.npmmirror.com/powershell-utils/-/powershell-utils-0.2.1.tgz", {}, "sha512-C+y9x90UElAddDZmV4qOx9W53B61PO7cIqWz2dQsWlwswuq4mr8NEwytdGKboYbQlGZ3awrkTeNvcZiZNHnQ8A=="],
 

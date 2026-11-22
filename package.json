@@ -254,7 +254,7 @@
     "oxlint": "1.89.0",
     "picocolors": "^1.1.1",
     "picomatch": "^4.0.7",
-    "posthog-node": "^5.52.4",
+    "posthog-node": "5.52.4",
     "puppeteer-core": "^25.11.0",
     "typescript": "^7.0.2"
   },

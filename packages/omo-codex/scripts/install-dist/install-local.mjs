@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// omo-codex-install:cb20e06d8e62b2fcc6c9551d4031a1915462e903b3366d3fd08c6609eecb5f5e:d14398d0f3015cf0492bcbbcea42b7a7be5295463439488958070751a5b5cc81
+// omo-codex-install:cb20e06d8e62b2fcc6c9551d4031a1915462e903b3366d3fd08c6609eecb5f5e:c9a54a5c857b0fa8b812e9c0d5fc5716055e5ac3ae9c5fd0e4eda3c6a3cfc905
 var __esm = (fn, res, err) => () => {
   if (fn)
     try {
@@ -673,7 +673,7 @@ function normalizeWindowsPath(path) {
 }
 var init_module_node = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/types.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/types.mjs
 var types_PostHogPersistedProperty;
 var init_types = __esm(() => {
   types_PostHogPersistedProperty = /* @__PURE__ */ function(PostHogPersistedProperty) {
@@ -715,7 +715,7 @@ var init_types = __esm(() => {
   }({});
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/string-utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/string-utils.mjs
 function safeJsonStringify(value) {
   const ancestors = [];
   return JSON.stringify(value, function(_key, replacementValue) {
@@ -741,7 +741,7 @@ function safeJsonStringify(value) {
 }
 var init_string_utils = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/type-utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/type-utils.mjs
 function isPrimitive(value) {
   return value === null || typeof value != "object";
 }
@@ -786,15 +786,28 @@ var init_type_utils = __esm(() => {
   };
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/bot-detection.mjs
-var DEFAULT_BLOCKED_UA_STRS, isBlockedUA = function(ua, customBlockedUserAgents = []) {
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/bot-detection.mjs
+function buildCacheKey(ua, custom) {
+  let customEncoded = "";
+  for (let i = 0;i < custom.length; i++) {
+    const c = custom[i];
+    customEncoded += c.length + ":" + c;
+  }
+  return ua.length + ":" + ua + "|" + custom.length + ":" + customEncoded;
+}
+var DEFAULT_BLOCKED_UA_STRS, UA_CACHE, MAX_CACHE_ENTRIES = 256, isBlockedUA = function(ua, customBlockedUserAgents = []) {
   if (!ua)
     return false;
+  const key = buildCacheKey(ua, customBlockedUserAgents);
+  const cached = UA_CACHE.get(key);
+  if (cached !== undefined)
+    return cached;
   const uaLower = ua.toLowerCase();
-  return DEFAULT_BLOCKED_UA_STRS.concat(customBlockedUserAgents).some((blockedUA) => {
-    const blockedUaLower = blockedUA.toLowerCase();
-    return uaLower.indexOf(blockedUaLower) !== -1;
-  });
+  const result = DEFAULT_BLOCKED_UA_STRS.concat(customBlockedUserAgents).some((blockedUA) => uaLower.indexOf(blockedUA.toLowerCase()) !== -1);
+  if (UA_CACHE.size >= MAX_CACHE_ENTRIES)
+    UA_CACHE.clear();
+  UA_CACHE.set(key, result);
+  return result;
 };
 var init_bot_detection = __esm(() => {
   DEFAULT_BLOCKED_UA_STRS = [
@@ -858,6 +871,7 @@ var init_bot_detection = __esm(() => {
     "sentryuptimebot",
     "uptimerobot",
     "headlesschrome",
+    "lightpanda",
     "cypress",
     "google-hoteladsverifier",
     "adsbot-google",
@@ -876,14 +890,15 @@ var init_bot_detection = __esm(() => {
     "google-inspectiontool",
     "bytespider"
   ];
+  UA_CACHE = new Map;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/browser-utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/browser-utils.mjs
 var init_browser_utils = __esm(() => {
   init_string_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/number-utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/number-utils.mjs
 function clampToRange(value, min, max, logger, fallbackValue) {
   if (min > max) {
     logger.warn("min cannot be greater than max.");
@@ -906,7 +921,7 @@ var init_number_utils = __esm(() => {
   init_type_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/bucketed-rate-limiter.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/bucketed-rate-limiter.mjs
 function resolveExceptionRateLimiterConfig(config = {}) {
   return {
     refillRate: config.exceptionRateLimiterRefillRate ?? config.__exceptionRateLimiterRefillRate ?? DEFAULT_EXCEPTION_RATE_LIMITER_REFILL_RATE,
@@ -960,7 +975,7 @@ var init_bucketed_rate_limiter = __esm(() => {
   init_number_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/vendor/uuidv7.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/vendor/uuidv7.mjs
 class UUID {
   constructor(bytes) {
     this.bytes = bytes;
@@ -1135,7 +1150,7 @@ var init_uuidv7 = __esm(() => {
   /*! LICENSE: uuidv7.mjs.LICENSE.txt */
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/promise-queue.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/promise-queue.mjs
 class PromiseQueue {
   add(promise) {
     const promiseUUID = uuidv7();
@@ -1177,7 +1192,7 @@ var init_promise_queue = __esm(() => {
   init_uuidv7();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/logger.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/logger.mjs
 function createConsole(consoleLike = console) {
   const lockedMethods = {
     log: consoleLike.log.bind(consoleLike),
@@ -1219,8 +1234,8 @@ var _createLogger = (prefix, maybeCall, consoleLike) => {
 }, passThrough = (fn) => fn();
 var init_logger = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/user-agent-utils.mjs
-var MOBILE = "Mobile", IOS = "iOS", ANDROID = "Android", TABLET = "Tablet", ANDROID_TABLET, APPLE = "Apple", APPLE_WATCH, SAFARI = "Safari", BLACKBERRY = "BlackBerry", SAMSUNG = "Samsung", SAMSUNG_BROWSER, SAMSUNG_INTERNET, CHROME = "Chrome", CHROME_OS, CHROME_IOS, INTERNET_EXPLORER = "Internet Explorer", INTERNET_EXPLORER_MOBILE, OPERA = "Opera", OPERA_MINI, EDGE = "Edge", MICROSOFT_EDGE, FIREFOX = "Firefox", FIREFOX_IOS, NINTENDO = "Nintendo", PLAYSTATION = "PlayStation", XBOX = "Xbox", ANDROID_MOBILE, MOBILE_SAFARI, WINDOWS = "Windows", WINDOWS_PHONE, GENERIC = "Generic", GENERIC_MOBILE, GENERIC_TABLET, KONQUEROR = "Konqueror", OCULUS_BROWSER = "Oculus Browser", VIVALDI = "Vivaldi", YANDEX = "Yandex", WHALE = "Whale", DUCKDUCKGO = "DuckDuckGo", PALE_MOON = "Pale Moon", WATERFOX = "Waterfox", BRAVE = "Brave", CLAUDE = "Claude", CODEX = "Codex", CHATGPT = "ChatGPT", GOOGLE_SEARCH_APP = "Google Search App", BROWSER_VERSION_REGEX_SUFFIX = "(\\d+(\\.\\d+)?)", DEFAULT_BROWSER_VERSION_REGEX, AI_APP_VERSION_REGEX, XBOX_REGEX, PLAYSTATION_REGEX, NINTENDO_REGEX, BLACKBERRY_REGEX, windowsVersionMap, versionRegexes, osMatchers;
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/user-agent-utils.mjs
+var MOBILE = "Mobile", IOS = "iOS", ANDROID = "Android", TABLET = "Tablet", ANDROID_TABLET, APPLE = "Apple", APPLE_WATCH, SAFARI = "Safari", BLACKBERRY = "BlackBerry", SAMSUNG = "Samsung", SAMSUNG_BROWSER, SAMSUNG_INTERNET, CHROME = "Chrome", CHROME_OS, CHROME_IOS, INTERNET_EXPLORER = "Internet Explorer", INTERNET_EXPLORER_MOBILE, OPERA = "Opera", OPERA_MINI, EDGE = "Edge", MICROSOFT_EDGE, FIREFOX = "Firefox", FIREFOX_IOS, NINTENDO = "Nintendo", PLAYSTATION = "PlayStation", XBOX = "Xbox", ANDROID_MOBILE, MOBILE_SAFARI, WINDOWS = "Windows", WINDOWS_PHONE, GENERIC = "Generic", GENERIC_MOBILE, GENERIC_TABLET, KONQUEROR = "Konqueror", OCULUS_BROWSER = "Oculus Browser", VIVALDI = "Vivaldi", YANDEX = "Yandex", WHALE = "Whale", DUCKDUCKGO = "DuckDuckGo", PALE_MOON = "Pale Moon", WATERFOX = "Waterfox", BRAVE = "Brave", CLAUDE = "Claude", CODEX = "Codex", CHATGPT = "ChatGPT", GOOGLE_SEARCH_APP = "Google Search App", BROWSER_VERSION_REGEX_SUFFIX = "(\\d+(\\.\\d+)?)", DEFAULT_BROWSER_VERSION_REGEX, AI_APP_VERSION_REGEX, PLAYSTATION_REGEX, NINTENDO_REGEX, BLACKBERRY_REGEX, windowsVersionMap, versionRegexes, osMatchers;
 var init_user_agent_utils = __esm(() => {
   init_string_utils();
   init_type_utils();
@@ -1237,14 +1252,13 @@ var init_user_agent_utils = __esm(() => {
   ANDROID_MOBILE = ANDROID + " " + MOBILE;
   MOBILE_SAFARI = MOBILE + " " + SAFARI;
   WINDOWS_PHONE = WINDOWS + " Phone";
-  GENERIC_MOBILE = GENERIC + " " + MOBILE.toLowerCase();
-  GENERIC_TABLET = GENERIC + " " + TABLET.toLowerCase();
-  DEFAULT_BROWSER_VERSION_REGEX = new RegExp("Version/" + BROWSER_VERSION_REGEX_SUFFIX);
-  AI_APP_VERSION_REGEX = new RegExp("(" + CLAUDE + "|" + CODEX + "|" + CHATGPT + ")\\/" + BROWSER_VERSION_REGEX_SUFFIX);
-  XBOX_REGEX = new RegExp(XBOX, "i");
-  PLAYSTATION_REGEX = new RegExp(PLAYSTATION + " \\w+", "i");
-  NINTENDO_REGEX = new RegExp(NINTENDO + " \\w+", "i");
-  BLACKBERRY_REGEX = new RegExp(BLACKBERRY + "|PlayBook|BB10", "i");
+  GENERIC_MOBILE = GENERIC + " mobile";
+  GENERIC_TABLET = GENERIC + " tablet";
+  DEFAULT_BROWSER_VERSION_REGEX = /* @__PURE__ */ new RegExp("Version/" + BROWSER_VERSION_REGEX_SUFFIX);
+  AI_APP_VERSION_REGEX = /* @__PURE__ */ new RegExp("(" + CLAUDE + "|" + CODEX + "|" + CHATGPT + ")\\/" + BROWSER_VERSION_REGEX_SUFFIX);
+  PLAYSTATION_REGEX = /* @__PURE__ */ new RegExp(PLAYSTATION + " \\w+", "i");
+  NINTENDO_REGEX = /* @__PURE__ */ new RegExp(NINTENDO + " \\w+", "i");
+  BLACKBERRY_REGEX = /* @__PURE__ */ new RegExp(BLACKBERRY + "|PlayBook|BB10", "i");
   windowsVersionMap = {
     "NT3.51": "NT 3.11",
     "NT4.0": "NT 4.0",
@@ -1260,19 +1274,19 @@ var init_user_agent_utils = __esm(() => {
   };
   versionRegexes = {
     [INTERNET_EXPLORER_MOBILE]: [
-      new RegExp("rv:" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("rv:" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [MICROSOFT_EDGE]: [
-      new RegExp(EDGE + "?\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(EDGE + "?\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [CHROME]: [
-      new RegExp("(" + CHROME + "|CrMo)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("(" + CHROME + "|CrMo)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [CHROME_IOS]: [
-      new RegExp("CriOS\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("CriOS\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     "UC Browser": [
-      new RegExp("(UCBrowser|UCWEB)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("(UCBrowser|UCWEB)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [SAFARI]: [
       DEFAULT_BROWSER_VERSION_REGEX
@@ -1281,41 +1295,41 @@ var init_user_agent_utils = __esm(() => {
       DEFAULT_BROWSER_VERSION_REGEX
     ],
     [OPERA]: [
-      new RegExp("(" + OPERA + "|OPR)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("(" + OPERA + "|OPR)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [FIREFOX]: [
-      new RegExp(FIREFOX + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(FIREFOX + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [FIREFOX_IOS]: [
-      new RegExp("FxiOS\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("FxiOS\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [KONQUEROR]: [
-      new RegExp("Konqueror[:/]?" + BROWSER_VERSION_REGEX_SUFFIX, "i")
+      /* @__PURE__ */ new RegExp("Konqueror[:/]?" + BROWSER_VERSION_REGEX_SUFFIX, "i")
     ],
     [BLACKBERRY]: [
-      new RegExp(BLACKBERRY + " " + BROWSER_VERSION_REGEX_SUFFIX),
+      /* @__PURE__ */ new RegExp(BLACKBERRY + " " + BROWSER_VERSION_REGEX_SUFFIX),
       DEFAULT_BROWSER_VERSION_REGEX
     ],
     [ANDROID_MOBILE]: [
-      new RegExp("android\\s" + BROWSER_VERSION_REGEX_SUFFIX, "i")
+      /* @__PURE__ */ new RegExp("android\\s" + BROWSER_VERSION_REGEX_SUFFIX, "i")
     ],
     [SAMSUNG_INTERNET]: [
-      new RegExp(SAMSUNG_BROWSER + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(SAMSUNG_BROWSER + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [OCULUS_BROWSER]: [
-      new RegExp("OculusBrowser\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("OculusBrowser\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [VIVALDI]: [
-      new RegExp(VIVALDI + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(VIVALDI + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [YANDEX]: [
-      new RegExp("YaBrowser\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("YaBrowser\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [WHALE]: [
-      new RegExp(WHALE + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(WHALE + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [BRAVE]: [
-      new RegExp(BRAVE + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(BRAVE + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [CLAUDE]: [
       AI_APP_VERSION_REGEX
@@ -1327,41 +1341,41 @@ var init_user_agent_utils = __esm(() => {
       AI_APP_VERSION_REGEX
     ],
     [DUCKDUCKGO]: [
-      new RegExp("(DuckDuckGo|Ddg)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("(DuckDuckGo|Ddg)\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [PALE_MOON]: [
-      new RegExp("PaleMoon\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("PaleMoon\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [WATERFOX]: [
-      new RegExp(WATERFOX + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp(WATERFOX + "\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [GOOGLE_SEARCH_APP]: [
-      new RegExp("GSA\\/" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("GSA\\/" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     [INTERNET_EXPLORER]: [
-      new RegExp("(rv:|MSIE )" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("(rv:|MSIE )" + BROWSER_VERSION_REGEX_SUFFIX)
     ],
     Mozilla: [
-      new RegExp("rv:" + BROWSER_VERSION_REGEX_SUFFIX)
+      /* @__PURE__ */ new RegExp("rv:" + BROWSER_VERSION_REGEX_SUFFIX)
     ]
   };
   osMatchers = [
     [
-      new RegExp(XBOX + "; " + XBOX + " (.*?)[);]", "i"),
+      /* @__PURE__ */ new RegExp(XBOX + "; " + XBOX + " (.*?)[);]", "i"),
       (match) => [
         XBOX,
         match && match[1] || ""
       ]
     ],
     [
-      new RegExp(NINTENDO, "i"),
+      /* @__PURE__ */ new RegExp(NINTENDO, "i"),
       [
         NINTENDO,
         ""
       ]
     ],
     [
-      new RegExp(PLAYSTATION, "i"),
+      /* @__PURE__ */ new RegExp(PLAYSTATION, "i"),
       [
         PLAYSTATION,
         ""
@@ -1375,7 +1389,7 @@ var init_user_agent_utils = __esm(() => {
       ]
     ],
     [
-      new RegExp(WINDOWS, "i"),
+      /* @__PURE__ */ new RegExp(WINDOWS, "i"),
       (_, user_agent) => {
         if (/Phone/.test(user_agent) || /WPDesktop/.test(user_agent))
           return [
@@ -1437,7 +1451,7 @@ var init_user_agent_utils = __esm(() => {
       }
     ],
     [
-      new RegExp("(" + ANDROID + " (\\d+)\\.(\\d+)\\.?(\\d+)?|" + ANDROID + ")", "i"),
+      /* @__PURE__ */ new RegExp("(" + ANDROID + " (\\d+)\\.(\\d+)\\.?(\\d+)?|" + ANDROID + ")", "i"),
       (match) => {
         if (match && match[2]) {
           const versionParts = [
@@ -1498,10 +1512,10 @@ var init_user_agent_utils = __esm(() => {
   ];
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/webview-app-utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/webview-app-utils.mjs
 var init_webview_app_utils = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/json-utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/json-utils.mjs
 function sanitizeString(value) {
   let output = "";
   for (let index = 0;index < value.length; index++) {
@@ -1549,14 +1563,14 @@ var init_json_utils = __esm(() => {
   dateToISOString = Date.prototype.toISOString;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/retry-after.mjs
-function parseRetryAfterMs(value, now = Date.now()) {
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/retry-after.mjs
+function parseRetryAfterMs(value, now = Date.now(), maxMs = MAX_RETRY_AFTER_MS) {
   if (typeof value != "string" || !value)
     return;
   const raw = value.trim();
   const trimmed = /^\d+\s*,/.test(raw) ? raw.slice(0, raw.indexOf(",")).trim() : raw;
   if (/^\d+$/.test(trimmed)) {
-    const ms = 1000 * Math.min(Number(trimmed), MAX_RETRY_AFTER_MS / 1000);
+    const ms = 1000 * Math.min(Number(trimmed), maxMs / 1000);
     return ms > 0 ? ms : undefined;
   }
   if (!/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*[ ,]/.test(trimmed))
@@ -1565,7 +1579,7 @@ function parseRetryAfterMs(value, now = Date.now()) {
   const ms = Date.parse(date) - now;
   if (!Number.isFinite(ms) || ms <= 0)
     return;
-  return Math.min(ms, MAX_RETRY_AFTER_MS);
+  return Math.min(ms, maxMs);
 }
 
 class RetryAfterWindow {
@@ -1612,7 +1626,7 @@ class RetryAfterWindow {
 var MAX_RETRY_AFTER_MS = 300000, CLOCK_STEP_TOLERANCE_MS = 5000;
 var init_retry_after = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/index.mjs
 function isValidUUID(value) {
   return typeof value == "string" && UUID_REGEX.test(value);
 }
@@ -1705,45 +1719,60 @@ var init_utils = __esm(() => {
   UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/chunk-ids.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/chunk-ids.mjs
 function getFilenameToChunkIdMap(stackParser) {
-  const chunkIdMap = globalThis._posthogChunkIds;
-  if (!chunkIdMap)
+  const posthogChunkIds = globalThis._posthogChunkIds;
+  const nativeDebugIds = globalThis._debugIds;
+  if (!posthogChunkIds && !nativeDebugIds)
     return;
-  const chunkIdKeys = Object.keys(chunkIdMap);
-  if (cachedFilenameChunkIds && chunkIdKeys.length === lastKeysCount)
+  const posthogKeys = posthogChunkIds ? Object.keys(posthogChunkIds) : [];
+  const nativeKeys = nativeDebugIds ? Object.keys(nativeDebugIds) : [];
+  if (cachedFilenameChunkIds && matchesSnapshot(posthogChunkIds, posthogKeys, lastPostHogChunkIds) && matchesSnapshot(nativeDebugIds, nativeKeys, lastNativeDebugIds))
     return cachedFilenameChunkIds;
-  lastKeysCount = chunkIdKeys.length;
-  cachedFilenameChunkIds = chunkIdKeys.reduce((acc, stackKey) => {
-    if (!parsedStackResults)
-      parsedStackResults = {};
-    const result = parsedStackResults[stackKey];
-    if (result)
-      acc[result[0]] = result[1];
-    else {
+  lastPostHogChunkIds = posthogChunkIds ? {
+    ...posthogChunkIds
+  } : undefined;
+  lastNativeDebugIds = nativeDebugIds ? {
+    ...nativeDebugIds
+  } : undefined;
+  cachedFilenameChunkIds = {};
+  parsedStackResults ??= {};
+  const addChunkIds = (keys, chunkIds) => {
+    for (const stackKey of keys) {
+      const chunkId = chunkIds[stackKey];
+      if (!chunkId)
+        continue;
+      const cachedFilename = parsedStackResults?.[stackKey];
+      if (cachedFilename) {
+        cachedFilenameChunkIds[cachedFilename] = chunkId;
+        continue;
+      }
       const parsedStack = stackParser(stackKey);
       for (let i = parsedStack.length - 1;i >= 0; i--) {
-        const stackFrame = parsedStack[i];
-        const filename = stackFrame?.filename;
-        const chunkId = chunkIdMap[stackKey];
-        if (filename && chunkId) {
-          acc[filename] = chunkId;
-          parsedStackResults[stackKey] = [
-            filename,
-            chunkId
-          ];
+        const filename = parsedStack[i]?.filename;
+        if (filename) {
+          cachedFilenameChunkIds[filename] = chunkId;
+          parsedStackResults[stackKey] = filename;
           break;
         }
       }
     }
-    return acc;
-  }, {});
+  };
+  if (nativeDebugIds)
+    addChunkIds(nativeKeys, nativeDebugIds);
+  if (posthogChunkIds)
+    addChunkIds(posthogKeys, posthogChunkIds);
   return cachedFilenameChunkIds;
 }
-var parsedStackResults, lastKeysCount, cachedFilenameChunkIds;
+function matchesSnapshot(chunkIds, keys, snapshot) {
+  if (!chunkIds || !snapshot)
+    return chunkIds === snapshot;
+  return keys.length === Object.keys(snapshot).length && keys.every((key) => chunkIds[key] === snapshot[key]);
+}
+var parsedStackResults, lastPostHogChunkIds, lastNativeDebugIds, cachedFilenameChunkIds;
 var init_chunk_ids = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/error-properties-builder.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/error-properties-builder.mjs
 class ErrorPropertiesBuilder {
   constructor(coercers, stackParser, modifiers = []) {
     this.coercers = coercers;
@@ -1973,7 +2002,7 @@ var init_error_properties_builder = __esm(() => {
   init_chunk_ids();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/base.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/base.mjs
 function isAppFilename(filename) {
   if (!filename || filename === ANONYMOUS_FILENAME)
     return false;
@@ -2011,7 +2040,7 @@ var init_base = __esm(() => {
   ];
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/safari.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/safari.mjs
 var extractSafariExtensionDetails = (func, filename) => {
   const isSafariExtension = func.indexOf("safari-extension") !== -1;
   const isSafariWebExtension = func.indexOf("safari-web-extension") !== -1;
@@ -2027,7 +2056,7 @@ var init_safari = __esm(() => {
   init_base();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/chrome.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/chrome.mjs
 var chromeRegexNoFnName, chromeRegex, chromeEvalRegex, chromeStackLineParser = (line, platform) => {
   const noFnParts = chromeRegexNoFnName.exec(line);
   if (noFnParts) {
@@ -2057,7 +2086,7 @@ var init_chrome = __esm(() => {
   chromeEvalRegex = /\((\S*)(?::(\d+))(?::(\d+))\)/;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/gecko.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/gecko.mjs
 var geckoREgex, geckoEvalRegex, geckoStackLineParser = (line, platform) => {
   const parts = geckoREgex.exec(line);
   if (parts) {
@@ -2084,17 +2113,17 @@ var init_gecko = __esm(() => {
   geckoEvalRegex = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/winjs.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/winjs.mjs
 var init_winjs = __esm(() => {
   init_base();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/opera.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/opera.mjs
 var init_opera = __esm(() => {
   init_base();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/node.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/node.mjs
 function filenameIsInApp(filename, isNative = false) {
   const isInternal = isNative || filename && !filename.startsWith("/") && !filename.match(/^[A-Z]:/) && !filename.startsWith(".") && !filename.match(/^[a-zA-Z]([a-zA-Z0-9.\-+])*:\/\//);
   return !isInternal && filename !== undefined && !filename.includes("node_modules/");
@@ -2165,12 +2194,12 @@ var FILENAME_MATCH, FULL_MATCH, PROMISE_COMBINATOR, PROMISE_INDEX, PROMISE_FRAME
 var init_node = __esm(() => {
   init_base();
   FILENAME_MATCH = /^\s*[-]{4,}$/;
-  FULL_MATCH = /at (?:async )?(?:(.+?)\s+\()?(?:(.+):(\d+):(\d+)?|([^)]+))\)?/;
+  FULL_MATCH = /at (?:async (?!\((?!.*\)\s+\()))?(?:(.+?)\s+\()?(?:(.+):(\d+):(\d+)?|([^)]+))\)?/;
   PROMISE_COMBINATOR = /^Promise\.(?:all|any)$/;
   PROMISE_INDEX = /^index \d+$/;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/parsers/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/parsers/index.mjs
 function isSameFrame(a, b) {
   return a.filename === b.filename && a.function === b.function && a.module === b.module && a.lineno === b.lineno && a.colno === b.colno;
 }
@@ -2320,12 +2349,12 @@ var init_parsers = __esm(() => {
   WEBPACK_ERROR_REGEXP = /\(error: (.*)\)/;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/dom-exception-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/dom-exception-coercer.mjs
 var init_dom_exception_coercer = __esm(() => {
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/error-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/error-coercer.mjs
 class ErrorCoercer {
   match(err) {
     return isError(err);
@@ -2367,12 +2396,12 @@ var init_error_coercer = __esm(() => {
   init_type_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/error-event-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/error-event-coercer.mjs
 var init_error_event_coercer = __esm(() => {
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/string-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/string-coercer.mjs
 class StringCoercer {
   match(input) {
     return typeof input == "string";
@@ -2405,7 +2434,7 @@ var init_string_coercer = __esm(() => {
   ERROR_TYPES_PATTERN = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/i;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/types.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/types.mjs
 var severityLevels;
 var init_types2 = __esm(() => {
   severityLevels = [
@@ -2418,25 +2447,24 @@ var init_types2 = __esm(() => {
   ];
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/utils.mjs
 function extractExceptionKeysForMessage(err, maxLength = 40) {
   const keys = Object.keys(err);
   keys.sort();
   if (!keys.length)
     return "[object has no keys]";
-  for (let i = keys.length;i > 0; i--) {
-    const serialized = keys.slice(0, i).join(", ");
-    if (!(serialized.length > maxLength)) {
-      if (i === keys.length)
-        return serialized;
-      return serialized.length <= maxLength ? serialized : `${serialized.slice(0, maxLength)}...`;
-    }
+  let serialized = "";
+  for (const key of keys) {
+    const next = serialized ? `${serialized}, ${key}` : key;
+    if (next.length > maxLength)
+      break;
+    serialized = next;
   }
-  return "";
+  return serialized;
 }
 var init_utils2 = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/object-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/object-coercer.mjs
 class ObjectCoercer {
   match(candidate) {
     return typeof candidate == "object" && candidate !== null;
@@ -2507,7 +2535,7 @@ var init_object_coercer = __esm(() => {
   init_utils2();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/event-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/event-coercer.mjs
 class EventCoercer {
   match(err) {
     return isEvent(err);
@@ -2527,7 +2555,7 @@ var init_event_coercer = __esm(() => {
   init_utils2();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/primitive-coercer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/primitive-coercer.mjs
 class PrimitiveCoercer {
   match(candidate) {
     return isPrimitive(candidate);
@@ -2545,12 +2573,12 @@ var init_primitive_coercer = __esm(() => {
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/promise-rejection-event.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/promise-rejection-event.mjs
 var init_promise_rejection_event = __esm(() => {
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/coercers/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/coercers/index.mjs
 var init_coercers = __esm(() => {
   init_dom_exception_coercer();
   init_error_coercer();
@@ -2562,7 +2590,7 @@ var init_coercers = __esm(() => {
   init_promise_rejection_event();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/utils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/utils.mjs
 class ReduceableCache {
   constructor(_maxSize) {
     this._maxSize = _maxSize;
@@ -2589,7 +2617,7 @@ class ReduceableCache {
 }
 var init_utils3 = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/exception-steps.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/exception-steps.mjs
 var EXCEPTION_STEP_INTERNAL_FIELDS, RESERVED_EXCEPTION_STEP_KEYS;
 var init_exception_steps = __esm(() => {
   init_utils();
@@ -2603,14 +2631,19 @@ var init_exception_steps = __esm(() => {
   ]);
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/release.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/release.mjs
 function getInjectedReleaseId() {
+  if ("u" > typeof process) {
+    const fromEnvironment = process.env.POSTHOG_RELEASE_ID?.trim();
+    if (fromEnvironment)
+      return fromEnvironment;
+  }
   const injected = globalThis._posthogReleaseId;
   return typeof injected == "string" && injected.length > 0 ? injected : undefined;
 }
 var init_release = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/error-tracking/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/error-tracking/index.mjs
 var init_error_tracking = __esm(() => {
   init_error_properties_builder();
   init_parsers();
@@ -2620,13 +2653,16 @@ var init_error_tracking = __esm(() => {
   init_release();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/cookie.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/cookie.mjs
 var init_cookie = __esm(() => {
   init_utils();
   init_uuidv7();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/featureFlagUtils.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/event-options.mjs
+var init_event_options = () => {};
+
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/featureFlagUtils.mjs
 function getFlagDetailFromFlagAndPayload(key, value, payload) {
   return {
     key,
@@ -2636,7 +2672,7 @@ function getFlagDetailFromFlagAndPayload(key, value, payload) {
     metadata: {
       id: undefined,
       version: undefined,
-      payload: payload ? JSON.stringify(payload) : undefined,
+      payload: payload !== undefined ? JSON.stringify(payload) : undefined,
       description: undefined
     }
   };
@@ -2675,7 +2711,7 @@ var normalizeFlagsResponse = (flagsResponse) => {
   const safeFlags = flags ?? {};
   return Object.fromEntries(Object.keys(safeFlags).filter((flag) => {
     const details = safeFlags[flag];
-    return details.enabled && details.metadata && details.metadata.payload !== undefined;
+    return !details.failed && details.enabled && details.metadata && details.metadata.payload !== undefined;
   }).map((flag) => {
     const payload = safeFlags[flag].metadata?.payload;
     return [
@@ -2683,7 +2719,7 @@ var normalizeFlagsResponse = (flagsResponse) => {
       payload ? parsePayload(payload) : undefined
     ];
   }));
-}, getFeatureFlagValue = (detail) => detail === undefined ? undefined : detail.variant ?? detail.enabled, parsePayload = (response) => {
+}, getFeatureFlagValue = (detail) => detail === undefined || detail.failed === true ? undefined : detail.variant ?? detail.enabled, parsePayload = (response) => {
   if (typeof response != "string")
     return response;
   try {
@@ -2725,6 +2761,8 @@ var init_featureFlagUtils = __esm(() => {
     "epik",
     "qclid",
     "sccid",
+    "oppref",
+    "bfcid",
     "irclid",
     "_kx"
   ];
@@ -2755,7 +2793,7 @@ var init_featureFlagUtils = __esm(() => {
   ];
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/eventemitter.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/eventemitter.mjs
 class SimpleEventEmitter {
   constructor() {
     this.events = {};
@@ -2778,7 +2816,7 @@ class SimpleEventEmitter {
 }
 var init_eventemitter = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/gzip.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/gzip.mjs
 function isGzipSupported() {
   return "CompressionStream" in globalThis && "TextEncoder" in globalThis && "Response" in globalThis && typeof Response.prototype.blob == "function";
 }
@@ -2827,25 +2865,30 @@ var NATIVE_GZIP_VALIDATION_ERROR = "NativeGzipValidationError", GZIP_MAGIC_FIRST
   return (4294967295 ^ crc) >>> 0;
 }, throwNativeGzipValidationError = (reason) => {
   throw createNamedError(NATIVE_GZIP_VALIDATION_ERROR, `Native gzip produced invalid output: ${reason}`);
-}, validateNativeGzip = async (compressed, inputBytes) => {
+}, CRC_VALIDATED_COMPRESSIONS_BEFORE_TRUST = 3, crcValidatedCompressions = 0, crcMismatchSeen = false, validateNativeGzip = async (compressed, inputBytes) => {
   if (compressed.size < 18)
     throwNativeGzipValidationError("too-short");
   const header = new Uint8Array(await compressed.slice(0, 10).arrayBuffer());
   if (!hasGzipMagic(header) || header[2] !== GZIP_DEFLATE_METHOD)
     throwNativeGzipValidationError("invalid-header");
   const trailer = new DataView(await compressed.slice(compressed.size - 8).arrayBuffer());
-  if (trailer.getUint32(0, true) !== crc32(inputBytes))
-    throwNativeGzipValidationError("invalid-crc");
   const inputSize = inputBytes.length >>> 0;
   if (trailer.getUint32(4, true) !== inputSize)
     throwNativeGzipValidationError("invalid-size");
+  if (crcMismatchSeen || crcValidatedCompressions < CRC_VALIDATED_COMPRESSIONS_BEFORE_TRUST) {
+    if (trailer.getUint32(0, true) !== crc32(inputBytes)) {
+      crcMismatchSeen = true;
+      throwNativeGzipValidationError("invalid-crc");
+    }
+    crcValidatedCompressions++;
+  }
 };
 var init_gzip = __esm(() => {
   init_types();
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/posthog-core-stateless.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/posthog-core-stateless.mjs
 async function logFlushError(err) {
   if (err instanceof PostHogFetchHttpError) {
     let text = "";
@@ -2913,7 +2956,16 @@ class PostHogCoreStateless {
     ], createDefaultStackParser());
   }
   getEvaluationRuntime() {}
-  constructor(apiKey, options = {}) {
+  getFlagsResponseFormat() {
+    return {
+      version: 2,
+      read: (body) => normalizeFlagsResponse(body)
+    };
+  }
+  get apiKey() {
+    return this.projectToken;
+  }
+  constructor(projectToken, options = {}) {
     this.flushPromise = null;
     this.pendingFlushPromise = null;
     this.flushPromises = new Set;
@@ -2922,13 +2974,13 @@ class PostHogCoreStateless {
     this.promiseQueue = new PromiseQueue;
     this._events = new SimpleEventEmitter;
     this._isInitialized = false;
-    const normalizedApiKey = typeof apiKey == "string" ? apiKey.trim() : "";
+    const normalizedProjectToken = typeof projectToken == "string" ? projectToken.trim() : "";
     const normalizedHost = typeof options.host == "string" ? options.host.trim() : "";
-    const missingApiKey = !normalizedApiKey;
+    const missingProjectToken = !normalizedProjectToken;
     this._logger = createLogger("[PostHog]", this.logMsgIfDebug.bind(this));
-    if (missingApiKey)
-      this._logger.error("You must pass your PostHog project's api key. The client will be disabled.");
-    this.apiKey = normalizedApiKey;
+    if (missingProjectToken)
+      this._logger.error("You must pass your PostHog project token. The client will be disabled.");
+    this.projectToken = normalizedProjectToken;
     this.host = removeTrailingSlash(normalizedHost || "https://us.i.posthog.com");
     this.flushAt = options.flushAt ? Math.max(options.flushAt, 1) : 20;
     this.maxBatchSize = Math.max(this.flushAt, options.maxBatchSize ?? 100);
@@ -2947,7 +2999,7 @@ class PostHogCoreStateless {
     this.featureFlagsRequestMaxRetries = options.featureFlagsRequestMaxRetries ?? 1;
     this.remoteConfigRequestTimeoutMs = options.remoteConfigRequestTimeoutMs ?? 3000;
     this.disableGeoip = options.disableGeoip ?? true;
-    this.disabled = (options.disabled ?? false) || missingApiKey;
+    this.disabled = (options.disabled ?? false) || missingProjectToken;
     this.historicalMigration = options?.historicalMigration ?? false;
     this._initPromise = Promise.resolve();
     this._isInitialized = true;
@@ -2992,7 +3044,7 @@ class PostHogCoreStateless {
   debug(enabled = true) {
     this.removeDebugCallback?.();
     if (enabled) {
-      const removeDebugCallback = this.on("*", (event, payload) => this._logger.info(event, payload));
+      const removeDebugCallback = this.on("*", (event, payload) => this._logger.info(event, this.describeDebugPayload(payload)));
       this.removeDebugCallback = () => {
         removeDebugCallback();
         this.removeDebugCallback = undefined;
@@ -3002,15 +3054,15 @@ class PostHogCoreStateless {
   get isDebug() {
     return !!this.removeDebugCallback;
   }
+  describeDebugPayload(payload) {
+    return payload;
+  }
   get isDisabled() {
     return this.disabled;
   }
   buildPayload(payload) {
     const userProperties = payload.properties || {};
-    let properties = {
-      ...userProperties,
-      ...this.getCommonEventProperties()
-    };
+    let properties = this.mergeCommonEventProperties(userProperties);
     applyCallerFeatureFlagOverrides(properties, userProperties);
     if (payload.event === "$feature_flag_called" && properties.$feature_flag_has_experiment === false && this.isMinimalFlagCalledEventsEnabled())
       properties = minimizeFlagCalledEventProperties(properties);
@@ -3018,6 +3070,12 @@ class PostHogCoreStateless {
       distinct_id: payload.distinct_id,
       event: payload.event,
       properties
+    };
+  }
+  mergeCommonEventProperties(properties) {
+    return {
+      ...properties,
+      ...this.getCommonEventProperties()
     };
   }
   isMinimalFlagCalledEventsEnabled() {
@@ -3127,7 +3185,7 @@ class PostHogCoreStateless {
       host = "https://us-assets.i.posthog.com";
     else if (host === "https://eu.i.posthog.com")
       host = "https://eu-assets.i.posthog.com";
-    const url = `${host}/array/${this.apiKey}/config`;
+    const url = `${host}/array/${this.projectToken}/config`;
     const fetchOptions = {
       method: "GET",
       headers: {
@@ -3147,10 +3205,11 @@ class PostHogCoreStateless {
   }
   async getFlags(distinctId, groups = {}, personProperties = {}, groupProperties = {}, extraPayload = {}, fetchConfig = false) {
     await this._initPromise;
+    const responseFormat = this.getFlagsResponseFormat();
     const configParam = fetchConfig ? "&config=true" : "";
-    const url = `${this.host}/flags/?v=2${configParam}`;
+    const url = `${this.host}/flags/?v=${responseFormat.version}${configParam}`;
     const requestData = {
-      token: this.apiKey,
+      token: this.projectToken,
       distinct_id: distinctId,
       groups,
       person_properties: personProperties,
@@ -3181,7 +3240,7 @@ class PostHogCoreStateless {
       retryCheck: isRetryableFlagsFetchError
     }, this.featureFlagsRequestTimeoutMs).then((response) => ({
       success: true,
-      response: normalizeFlagsResponse(response)
+      response: responseFormat.read(response)
     })).catch((error) => {
       this._events.emit("error", error);
       return {
@@ -3310,7 +3369,7 @@ class PostHogCoreStateless {
       this._logger.info("Loading surveys is disabled.");
       return [];
     }
-    const url = `${this.host}/api/surveys/?token=${this.apiKey}`;
+    const url = `${this.host}/api/surveys/?token=${this.projectToken}`;
     const fetchOptions = {
       method: "GET",
       headers: {
@@ -3558,7 +3617,7 @@ class PostHogCoreStateless {
   }
   async sendBatch(batchMessages, retryOptions, route = DEFAULT_QUEUE_ROUTE) {
     const data = {
-      api_key: this.apiKey,
+      api_key: this.projectToken,
       batch: batchMessages.map((message) => {
         if (!message)
           return message;
@@ -3609,6 +3668,9 @@ class PostHogCoreStateless {
       throw firstError;
     this._events.emit("flush", sentMessages);
   }
+  shouldRetainBatchOnError(error) {
+    return error instanceof PostHogFetchNetworkError;
+  }
   async _flushRoute(route, sentMessages) {
     const queueKey = this.persistedQueueKeyForRoute(route);
     let queue = this.getPersistedProperty(queueKey) || [];
@@ -3652,7 +3714,7 @@ class PostHogCoreStateless {
           this._logger.warn(`Received 413 when sending batch of size ${batchMessages.length}, reducing batch size to ${this.maxBatchSize}`);
           continue;
         }
-        if (!(err instanceof PostHogFetchNetworkError))
+        if (!this.shouldRetainBatchOnError(err))
           await persistQueueChange();
         this._events.emit("error", err);
         throw err;
@@ -3686,7 +3748,7 @@ class PostHogCoreStateless {
         measuredLocally: true
       };
     }
-    const url = auth === "bearer" ? `${this.host}/i/v1/${path}` : `${this.host}/i/v1/${path}?token=${encodeURIComponent(this.apiKey)}`;
+    const url = auth === "bearer" ? `${this.host}/i/v1/${path}` : `${this.host}/i/v1/${path}?token=${encodeURIComponent(this.projectToken)}`;
     const gzippedPayload = this.disableCompression ? null : await this.compressPayload(serialized);
     const body = gzippedPayload || serialized;
     const fetchOptions = {
@@ -3695,7 +3757,7 @@ class PostHogCoreStateless {
         ...this.getCustomHeaders(),
         "Content-Type": "application/json",
         ...auth === "bearer" && {
-          Authorization: `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.projectToken}`
         },
         ...gzippedPayload !== null && {
           "Content-Encoding": "gzip"
@@ -3978,7 +4040,7 @@ var init_posthog_core_stateless = __esm(() => {
   };
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/posthog-core.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/posthog-core.mjs
 var init_posthog_core = __esm(() => {
   init_featureFlagUtils();
   init_types();
@@ -3987,12 +4049,24 @@ var init_posthog_core = __esm(() => {
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/tracing-headers.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/privacy.mjs
+var init_privacy = () => {};
+
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/tracing-headers.mjs
 var init_tracing_headers = __esm(() => {
   init_type_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/featureFlagLocalEvaluation.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/featureFlagLocalEvaluation.mjs
+function readContextValue(read) {
+  try {
+    return read();
+  } catch (e) {
+    if (e instanceof InconclusiveMatchError)
+      throw new InconclusiveMatchError(e.message, "missing_context");
+    throw e;
+  }
+}
 function isTruthyOrFalsyPropertyValue(value) {
   if (typeof value == "boolean")
     return true;
@@ -4145,12 +4219,112 @@ function exactMatchString(value) {
   }
   return serializeJsonValue(value);
 }
-function isValidRegex(regex) {
-  try {
-    new RegExp(regex);
+function getPortableRegexClasses(pattern) {
+  const classes = [];
+  let classStart = -1;
+  let previousToken = "";
+  for (let index = 0;index < pattern.length; index++) {
+    const character = pattern[index];
+    if (character.charCodeAt(0) > 127)
+      return null;
+    if (character === "\\") {
+      const escaped = pattern[++index];
+      if (escaped === undefined)
+        break;
+      if (escaped === "x") {
+        if (!/^[\da-f]{2}$/i.test(pattern.slice(index + 1, index + 3)))
+          return null;
+        index += 2;
+      } else if (!"dDsSwWbBfnrtv".includes(escaped) && !LITERAL_ESCAPED_PUNCTUATION.test(escaped))
+        return null;
+      if (classStart === -1 && "bB".includes(escaped))
+        return null;
+      previousToken = "literal";
+      continue;
+    }
+    if (character === "[") {
+      if (classStart !== -1)
+        return null;
+      classStart = index;
+    } else if (character === "]" && classStart !== -1) {
+      const contentStart = classStart + (pattern[classStart + 1] === "^" ? 2 : 1);
+      if (index === contentStart)
+        return null;
+      classes.push(pattern.slice(classStart, index + 1));
+      classStart = -1;
+      previousToken = "literal";
+      continue;
+    } else if (classStart !== -1) {
+      if ([
+        "&&",
+        "--",
+        "~~"
+      ].includes(pattern.slice(index, index + 2)))
+        return null;
+      continue;
+    } else if (character === "(" && pattern[index + 1] === "?") {
+      if (pattern[index + 2] !== ":")
+        return null;
+      index += 2;
+    } else if (character === "{") {
+      const repetition = /^\{(\d+)(?:,(\d*))?\}/.exec(pattern.slice(index));
+      if (!repetition || [
+        "",
+        "|",
+        "("
+      ].includes(previousToken) || repetition.slice(1).some((count) => Number(count) > 4294967295))
+        return null;
+    } else if ("*+?}".includes(character) && (pattern[index + 1] === "+" || pattern[index + 1] === "{"))
+      return null;
+    if ("*+?{".includes(character) && [
+      "^",
+      "$",
+      "empty group"
+    ].includes(previousToken))
+      return null;
+    previousToken = character === ")" && [
+      "(",
+      "empty group"
+    ].includes(previousToken) ? "empty group" : character;
+  }
+  return classes;
+}
+function regexRequiresServerEvaluation(message) {
+  const error = new InconclusiveMatchError(message);
+  Object.defineProperty(error, Symbol.for("posthog.requiresServerRegexEvaluation"), {
+    value: true
+  });
+  return error;
+}
+function matchFeatureFlagRegex(pattern, value) {
+  if (pattern === "")
     return true;
+  const characterClasses = getPortableRegexClasses(pattern);
+  if (characterClasses === null)
+    throw regexRequiresServerEvaluation("Regex syntax requires server evaluation");
+  let regex;
+  try {
+    regex = new RegExp(pattern);
+  } catch (error) {
+    if (error instanceof SyntaxError)
+      return null;
+    throw regexRequiresServerEvaluation("Regex compilation requires server evaluation");
+  }
+  for (const characterClass of characterClasses)
+    try {
+      new RegExp(characterClass, "u");
+    } catch {
+      throw regexRequiresServerEvaluation("Regex character class syntax requires server evaluation");
+    }
+  for (let index = 0;index < value.length; index++) {
+    const character = value[index];
+    if (character.charCodeAt(0) > 127 || character === "\r")
+      throw regexRequiresServerEvaluation("Regex matching for Unicode or carriage returns requires server evaluation");
+  }
+  try {
+    return regex.test(value);
   } catch {
-    return false;
+    throw regexRequiresServerEvaluation("Regex execution requires server evaluation");
   }
 }
 function asciiLowercase(value) {
@@ -4301,15 +4475,95 @@ function relativeDateParseForFeatureFlagMatching(value) {
   else if (interval === "w")
     parsedDt.setUTCDate(parsedDt.getUTCDate() - 7 * number);
   else if (interval === "m")
-    parsedDt.setUTCMonth(parsedDt.getUTCMonth() - number);
+    subtractUTCMonths(parsedDt, number);
   else {
     if (interval !== "y")
       return null;
-    parsedDt.setUTCFullYear(parsedDt.getUTCFullYear() - number);
+    subtractUTCYears(parsedDt, number);
   }
   return parsedDt;
 }
+function subtractUTCMonths(date, months) {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  let day = date.getUTCDate();
+  for (let step = 1;step <= months && day > 28; step++) {
+    const lastDayOfMonth = new Date(Date.UTC(year, month - step + 1, 0)).getUTCDate();
+    day = Math.min(day, lastDayOfMonth);
+  }
+  date.setUTCFullYear(year, month - months, day);
+}
+function subtractUTCYears(date, years) {
+  const month = date.getUTCMonth();
+  const day = years > 0 && month === 1 && date.getUTCDate() === 29 ? 28 : date.getUTCDate();
+  date.setUTCFullYear(date.getUTCFullYear() - years, month, day);
+}
+function parseDateFilter(value) {
+  if (typeof value == "boolean")
+    throw new InconclusiveMatchError("Date operations cannot be performed on boolean values");
+  return relativeDateParseForFeatureFlagMatching(String(value)) ?? convertToDateTime(value);
+}
+function assertFeatureFlagFilterSupported(property, options = {}) {
+  const value = property.value;
+  const parsingPolicy = options.semverParsingPolicy ?? "strict";
+  switch (property.operator || "exact") {
+    case "exact":
+    case "is_not":
+      for (const item of Array.isArray(value) ? value : [
+        value
+      ])
+        exactMatchString(item);
+      return;
+    case "is_set":
+    case "is_not_set":
+    case "icontains":
+    case "not_icontains":
+    case "starts_with":
+    case "not_starts_with":
+    case "ends_with":
+    case "not_ends_with":
+    case "regex":
+    case "not_regex":
+    case "gt":
+    case "gte":
+    case "lt":
+    case "lte":
+      return;
+    case "is_date_after":
+    case "is_date_before":
+      parseDateFilter(value);
+      return;
+    case "semver_eq":
+    case "semver_neq":
+    case "semver_gt":
+    case "semver_gte":
+    case "semver_lt":
+    case "semver_lte":
+      parseFeatureFlagSemver(String(value), parsingPolicy);
+      return;
+    case "semver_tilde":
+      computeTildeBounds(String(value), parsingPolicy);
+      return;
+    case "semver_caret":
+      computeCaretBounds(String(value), parsingPolicy);
+      return;
+    case "semver_wildcard":
+      computeWildcardBounds(String(value), parsingPolicy);
+      return;
+    default:
+      throw new InconclusiveMatchError(`Unknown operator: ${property.operator}`);
+  }
+}
 function matchFeatureFlagProperty(property, propertyValues, options = {}) {
+  try {
+    return matchPropertyValue(property, propertyValues, options);
+  } catch (e) {
+    if (e instanceof InconclusiveMatchError && e.reason === "missing_context")
+      assertFeatureFlagFilterSupported(property, options);
+    throw e;
+  }
+}
+function matchPropertyValue(property, propertyValues, options) {
   const key = property.key;
   const value = property.value;
   const operator = property.operator || "exact";
@@ -4321,26 +4575,31 @@ function matchFeatureFlagProperty(property, propertyValues, options = {}) {
     else if (operator === "is_set")
       return true;
   } else
-    throw new InconclusiveMatchError(`Property ${key} not found in propertyValues`);
+    throw new InconclusiveMatchError(`Property ${key} not found in propertyValues`, "missing_context");
   const overrideValue = propertyValues[key];
   if (overrideValue === undefined) {
     options.warnFunction?.(`Property ${key} cannot have a value of undefined with the ${operator} operator`);
-    return operator === "is_not";
+    throw new InconclusiveMatchError(`Property ${key} is undefined in propertyValues`);
   }
-  if (overrideValue === null && !NULL_VALUES_ALLOWED_OPERATORS.includes(operator) && operator !== "exact" && operator !== "is_not") {
+  if (overrideValue === null && !NULL_VALUES_ALLOWED_OPERATORS.includes(operator)) {
     options.warnFunction?.(`Property ${key} cannot have a value of null with the ${operator} operator`);
     return false;
   }
   const computeExactMatch = (target, actual) => {
-    if (isTruthyOrFalsyPropertyValue(target)) {
-      assertJsonRepresentable(actual);
+    if (options.propertyMatchingVersion !== 2 && isTruthyOrFalsyPropertyValue(target) || Array.isArray(target) && target.length === 0) {
+      readContextValue(() => assertJsonRepresentable(actual));
       return isTruthyPropertyValue(target) === isTruthyPropertyValue(actual);
     }
+    if (options.propertyMatchingVersion === 2 && typeof actual == "number" && isTruthyOrFalsyPropertyValue(target)) {
+      readContextValue(() => assertJsonRepresentable(actual));
+      return false;
+    }
     if (Array.isArray(target)) {
-      const actualString = exactMatchString(actual).toLowerCase();
+      const actualString = readContextValue(() => exactMatchString(actual)).toLowerCase();
       return target.some((item) => exactMatchString(item).toLowerCase() === actualString);
     }
-    return exactMatchString(target).toLowerCase() === exactMatchString(actual).toLowerCase();
+    const targetString = exactMatchString(target).toLowerCase();
+    return targetString === readContextValue(() => exactMatchString(actual)).toLowerCase();
   };
   const compare = (lhs, rhs, comparisonOperator) => {
     if (comparisonOperator === "gt")
@@ -4352,6 +4611,15 @@ function matchFeatureFlagProperty(property, propertyValues, options = {}) {
     if (comparisonOperator === "lte")
       return lhs <= rhs;
     throw new Error(`Invalid operator: ${comparisonOperator}`);
+  };
+  const parseContextSemver = () => readContextValue(() => parseFeatureFlagSemver(String(overrideValue), parsingPolicy));
+  const compareContextSemverToFilter = () => {
+    const filterParsed = parseFeatureFlagSemver(String(value), parsingPolicy);
+    return compareSemverTuples(parseContextSemver(), filterParsed);
+  };
+  const isContextSemverWithin = ({ lower, upper }) => {
+    const overrideParsed = parseContextSemver();
+    return compareSemverTuples(overrideParsed, lower) >= 0 && compareSemverTuples(overrideParsed, upper) < 0;
   };
   switch (operator) {
     case "exact":
@@ -4373,9 +4641,12 @@ function matchFeatureFlagProperty(property, propertyValues, options = {}) {
     case "not_ends_with":
       return !asciiLowercase(overrideValue).endsWith(asciiLowercase(value));
     case "regex":
-      return isValidRegex(String(value)) && String(overrideValue).match(String(value)) !== null;
-    case "not_regex":
-      return isValidRegex(String(value)) && String(overrideValue).match(String(value)) === null;
+    case "not_regex": {
+      const matched = matchFeatureFlagRegex(String(value), String(overrideValue));
+      if (matched === null)
+        return false;
+      return operator === "regex" ? matched : !matched;
+    }
     case "gt":
     case "gte":
     case "lt":
@@ -4388,41 +4659,28 @@ function matchFeatureFlagProperty(property, propertyValues, options = {}) {
     }
     case "is_date_after":
     case "is_date_before": {
-      if (typeof value == "boolean")
-        throw new InconclusiveMatchError("Date operations cannot be performed on boolean values");
-      let parsedDate = relativeDateParseForFeatureFlagMatching(String(value));
-      if (parsedDate == null)
-        parsedDate = convertToDateTime(value);
-      const overrideDate = convertToDateTime(overrideValue);
+      const parsedDate = parseDateFilter(value);
+      const overrideDate = readContextValue(() => convertToDateTime(overrideValue));
       return operator === "is_date_before" ? overrideDate < parsedDate : overrideDate > parsedDate;
     }
     case "semver_eq":
-      return compareSemverTuples(parseFeatureFlagSemver(String(overrideValue), parsingPolicy), parseFeatureFlagSemver(String(value), parsingPolicy)) === 0;
+      return compareContextSemverToFilter() === 0;
     case "semver_neq":
-      return compareSemverTuples(parseFeatureFlagSemver(String(overrideValue), parsingPolicy), parseFeatureFlagSemver(String(value), parsingPolicy)) !== 0;
+      return compareContextSemverToFilter() !== 0;
     case "semver_gt":
-      return compareSemverTuples(parseFeatureFlagSemver(String(overrideValue), parsingPolicy), parseFeatureFlagSemver(String(value), parsingPolicy)) > 0;
+      return compareContextSemverToFilter() > 0;
     case "semver_gte":
-      return compareSemverTuples(parseFeatureFlagSemver(String(overrideValue), parsingPolicy), parseFeatureFlagSemver(String(value), parsingPolicy)) >= 0;
+      return compareContextSemverToFilter() >= 0;
     case "semver_lt":
-      return compareSemverTuples(parseFeatureFlagSemver(String(overrideValue), parsingPolicy), parseFeatureFlagSemver(String(value), parsingPolicy)) < 0;
+      return compareContextSemverToFilter() < 0;
     case "semver_lte":
-      return compareSemverTuples(parseFeatureFlagSemver(String(overrideValue), parsingPolicy), parseFeatureFlagSemver(String(value), parsingPolicy)) <= 0;
-    case "semver_tilde": {
-      const overrideParsed = parseFeatureFlagSemver(String(overrideValue), parsingPolicy);
-      const { lower, upper } = computeTildeBounds(String(value), parsingPolicy);
-      return compareSemverTuples(overrideParsed, lower) >= 0 && compareSemverTuples(overrideParsed, upper) < 0;
-    }
-    case "semver_caret": {
-      const overrideParsed = parseFeatureFlagSemver(String(overrideValue), parsingPolicy);
-      const { lower, upper } = computeCaretBounds(String(value), parsingPolicy);
-      return compareSemverTuples(overrideParsed, lower) >= 0 && compareSemverTuples(overrideParsed, upper) < 0;
-    }
-    case "semver_wildcard": {
-      const overrideParsed = parseFeatureFlagSemver(String(overrideValue), parsingPolicy);
-      const { lower, upper } = computeWildcardBounds(String(value), parsingPolicy);
-      return compareSemverTuples(overrideParsed, lower) >= 0 && compareSemverTuples(overrideParsed, upper) < 0;
-    }
+      return compareContextSemverToFilter() <= 0;
+    case "semver_tilde":
+      return isContextSemverWithin(computeTildeBounds(String(value), parsingPolicy));
+    case "semver_caret":
+      return isContextSemverWithin(computeCaretBounds(String(value), parsingPolicy));
+    case "semver_wildcard":
+      return isContextSemverWithin(computeWildcardBounds(String(value), parsingPolicy));
     default:
       throw new InconclusiveMatchError(`Unknown operator: ${operator}`);
   }
@@ -4434,8 +4692,8 @@ async function hashSHA1(text) {
   const hashBuffer = await subtle.digest("SHA-1", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(hashBuffer)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
-async function getFeatureFlagHash(key, bucketingValue, salt = "") {
-  const hashString = await hashSHA1(`${key}.${bucketingValue}${salt}`);
+async function getFeatureFlagHash(key, bucketingValue, salt = "", separator = ".") {
+  const hashString = await hashSHA1(`${key}${separator}${bucketingValue}${salt}`);
   return parseInt(hashString.slice(0, 15), 16) / LONG_SCALE;
 }
 function getFeatureFlagVariantLookupTable(variants) {
@@ -4463,23 +4721,33 @@ function resolveFeatureFlagPayload(payloads, flagValue) {
   const payload = payloads[payloadKey] || null;
   return payload == null ? null : parsePayload(payload);
 }
-var NULL_VALUES_ALLOWED_OPERATORS, LONG_SCALE = 1152921504606847000, InconclusiveMatchError;
+var NULL_VALUES_ALLOWED_OPERATORS, LONG_SCALE = 1152921504606847000, InconclusiveMatchError, LITERAL_ESCAPED_PUNCTUATION;
 var init_featureFlagLocalEvaluation = __esm(() => {
   init_featureFlagUtils();
   NULL_VALUES_ALLOWED_OPERATORS = [
+    "exact",
     "is_not",
-    "is_set"
+    "icontains",
+    "not_icontains",
+    "starts_with",
+    "not_starts_with",
+    "ends_with",
+    "not_ends_with",
+    "regex",
+    "not_regex"
   ];
   InconclusiveMatchError = class InconclusiveMatchError extends Error {
-    constructor(message) {
+    constructor(message, reason = "unsupported_definition") {
       super(message);
       this.name = this.constructor.name;
+      this.reason = reason;
       Object.setPrototypeOf(this, InconclusiveMatchError.prototype);
     }
   };
+  LITERAL_ESCAPED_PUNCTUATION = /[\x20-\x2f:;=?@\x5b-\x60\x7b-\x7e]/;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/otlp-any-value.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/otlp-any-value.mjs
 function newState() {
   return {
     ancestors: new WeakSet,
@@ -4660,7 +4928,7 @@ var init_otlp_any_value = __esm(() => {
   propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/otlp-resource.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/otlp-resource.mjs
 function buildOtlpResourceAttributes(config, sdkName, sdkVersion) {
   return {
     ...assignUserAttributes({}, config.resourceAttributes),
@@ -4731,43 +4999,15 @@ var init_otlp_resource = __esm(() => {
   };
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/logs/logs-utils.mjs
-var OTLP_SEVERITY_MAP, DEFAULT_OTLP_SEVERITY;
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/logs/logs-utils.mjs
 var init_logs_utils = __esm(() => {
   init_utils();
   init_json_utils();
   init_otlp_any_value();
   init_otlp_resource();
-  OTLP_SEVERITY_MAP = {
-    trace: {
-      text: "TRACE",
-      number: 1
-    },
-    debug: {
-      text: "DEBUG",
-      number: 5
-    },
-    info: {
-      text: "INFO",
-      number: 9
-    },
-    warn: {
-      text: "WARN",
-      number: 13
-    },
-    error: {
-      text: "ERROR",
-      number: 17
-    },
-    fatal: {
-      text: "FATAL",
-      number: 21
-    }
-  };
-  DEFAULT_OTLP_SEVERITY = OTLP_SEVERITY_MAP.info;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/flush-timer.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/flush-timer.mjs
 class FlushTimer {
   constructor(_onFire) {
     this._onFire = _onFire;
@@ -4800,7 +5040,7 @@ var init_flush_timer = __esm(() => {
   init_utils();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/utils/backoff.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/utils/backoff.mjs
 function drawJitter() {
   return 1 - JITTER + Math.random() * JITTER * 2;
 }
@@ -4813,7 +5053,7 @@ function backoffDelayMs(baseMs, failures, jitter, maxMs) {
 var MAX_FLUSH_BACKOFF_EXPONENT = 6, MAX_FLUSH_BACKOFF_MS = 30000, JITTER = 0.25, NO_JITTER = 1;
 var init_backoff = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/logs/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/logs/index.mjs
 var init_logs = __esm(() => {
   init_logs_utils();
   init_types();
@@ -4823,427 +5063,7 @@ var init_logs = __esm(() => {
   init_backoff();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/metrics/metrics-utils.mjs
-function msToUnixNano(ms) {
-  return String(ms) + "000000";
-}
-function seriesKey(type, name, unit, attributes) {
-  let attrsKey = "";
-  if (attributes) {
-    const keys = Object.keys(attributes).sort();
-    attrsKey = keys.map((k) => `${JSON.stringify(k)}:${JSON.stringify(attributes[k])}`).join(",");
-  }
-  return `${type}\x00${name}\x00${unit ?? ""}\x00${attrsKey}`;
-}
-function bucketIndexFor(value, bounds) {
-  for (let i = 0;i < bounds.length; i++)
-    if (value <= bounds[i])
-      return i;
-  return bounds.length;
-}
-function buildMetricsResourceAttributes(config, scopeName, scopeVersion) {
-  return buildOtlpResourceAttributes(config, scopeName, scopeVersion);
-}
-function buildOtlpMetricsPayload(metrics, resourceAttributes, scopeName, scopeVersion) {
-  return {
-    resourceMetrics: [
-      {
-        resource: {
-          attributes: toOtlpResourceKeyValueList(resourceAttributes)
-        },
-        scopeMetrics: [
-          {
-            scope: {
-              name: scopeName,
-              version: scopeVersion
-            },
-            metrics
-          }
-        ]
-      }
-    ]
-  };
-}
-var DEFAULT_HISTOGRAM_BOUNDS;
-var init_metrics_utils = __esm(() => {
-  init_otlp_resource();
-  DEFAULT_HISTOGRAM_BOUNDS = [
-    0,
-    5,
-    10,
-    25,
-    50,
-    75,
-    100,
-    250,
-    500,
-    750,
-    1000,
-    2500,
-    5000,
-    7500,
-    1e4
-  ];
-});
-
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/metrics/config.mjs
-function resolveMetricsConfig(config) {
-  const resourceAttributes = config?.resourceAttributes;
-  return {
-    serviceName: resourceAttributes?.["service.name"] ?? config?.serviceName,
-    serviceVersion: resourceAttributes?.["service.version"] ?? config?.serviceVersion,
-    environment: resourceAttributes?.["deployment.environment"] ?? config?.environment,
-    resourceAttributes,
-    beforeSend: config?.beforeSend,
-    flushIntervalMs: config?.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS,
-    maxSeriesPerFlush: config?.maxSeriesPerFlush ?? DEFAULT_MAX_SERIES_PER_FLUSH
-  };
-}
-var DEFAULT_FLUSH_INTERVAL_MS = 1e4, DEFAULT_MAX_SERIES_PER_FLUSH = 1000;
-var init_config = () => {};
-
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/metrics/index.mjs
-class PostHogMetrics {
-  constructor(_instance, _config, _logger) {
-    this._instance = _instance;
-    this._config = _config;
-    this._logger = _logger;
-    this._series = new Map;
-    this._flushTimer = new FlushTimer(() => this.flush().catch((e) => {
-      this._logger.error("Metrics flush failed:", e);
-    }));
-    this._flushPromise = null;
-    this._seriesCapWarned = false;
-    this._typeByName = new Map;
-    this._typeCollisionWarned = new Set;
-    this._retryAfter = new RetryAfterWindow;
-    this._consecutiveFlushFailures = 0;
-    this._flushJitter = NO_JITTER;
-    this._generation = 0;
-  }
-  count(name, value = 1, options) {
-    this._capture({
-      name,
-      type: "count",
-      value,
-      unit: options?.unit,
-      attributes: options?.attributes
-    });
-  }
-  gauge(name, value, options) {
-    this._capture({
-      name,
-      type: "gauge",
-      value,
-      unit: options?.unit,
-      attributes: options?.attributes
-    });
-  }
-  histogram(name, value, options) {
-    this._capture({
-      name,
-      type: "histogram",
-      value,
-      unit: options?.unit,
-      attributes: options?.attributes
-    });
-  }
-  flush() {
-    const prev = this._flushPromise;
-    const run = async () => {
-      if (prev)
-        await prev.catch(() => {});
-      await this._doFlush();
-    };
-    const p = run().finally(() => {
-      if (this._flushPromise === p)
-        this._flushPromise = null;
-    });
-    this._flushPromise = p;
-    return p;
-  }
-  drainWindow() {
-    if (this._series.size === 0)
-      return null;
-    const window = this._series;
-    this._series = new Map;
-    this._seriesCapWarned = false;
-    this._typeByName = new Map;
-    this._typeCollisionWarned = new Set;
-    return this._buildPayload(window);
-  }
-  reset() {
-    this._generation++;
-    this._retryAfter.reset();
-    this._consecutiveFlushFailures = 0;
-    this._flushJitter = NO_JITTER;
-    this._flushTimer.clear();
-    this._series = new Map;
-    this._flushPromise = null;
-    this._seriesCapWarned = false;
-    this._typeByName = new Map;
-    this._typeCollisionWarned = new Set;
-  }
-  _capture(sample) {
-    if (this._instance.isDisabled || this._instance.optedOut)
-      return;
-    const filtered = this._runBeforeSend(sample);
-    if (filtered === null)
-      return;
-    if (!filtered.name || typeof filtered.name != "string")
-      return void this._logger.warn("Dropping metric with empty name");
-    if (typeof filtered.value != "number" || !Number.isFinite(filtered.value))
-      return void this._logger.warn(`Dropping metric '${filtered.name}': value must be a finite number`);
-    if (filtered.type === "count" && filtered.value < 0)
-      return void this._logger.warn(`Dropping count '${filtered.name}': counters are monotonic, value must be >= 0`);
-    let attributes;
-    let key;
-    try {
-      attributes = filtered.attributes ? {
-        ...filtered.attributes
-      } : undefined;
-      key = seriesKey(filtered.type, filtered.name, filtered.unit, attributes);
-    } catch (e) {
-      this._logger.warn(`Dropping metric '${filtered.name}': attributes could not be serialized`, e);
-      return;
-    }
-    let state = this._series.get(key);
-    if (!state) {
-      if (!this._admitNewSeries())
-        return;
-      state = {
-        name: filtered.name,
-        type: filtered.type,
-        unit: filtered.unit,
-        attributes,
-        windowStartMs: Date.now()
-      };
-      this._series.set(key, state);
-    }
-    const seenType = this._typeByName.get(filtered.name);
-    if (seenType === undefined)
-      this._typeByName.set(filtered.name, filtered.type);
-    else if (seenType !== filtered.type && !this._typeCollisionWarned.has(filtered.name)) {
-      this._typeCollisionWarned.add(filtered.name);
-      this._logger.warn(`Metric name '${filtered.name}' is already used as a ${seenType}; recording it as a ${filtered.type} too will blend both series in charts. Use a distinct name.`);
-    }
-    this._fold(state, filtered.value);
-    this._armFlushTimer();
-  }
-  _admitNewSeries() {
-    if (this._series.size < this._config.maxSeriesPerFlush)
-      return true;
-    if (!this._seriesCapWarned) {
-      this._seriesCapWarned = true;
-      this._logger.warn(`Metric series cap reached (${this._config.maxSeriesPerFlush} per flush window); dropping new series until the next flush. Reduce attribute cardinality.`);
-    }
-    return false;
-  }
-  _fold(state, value) {
-    switch (state.type) {
-      case "count":
-        state.total = (state.total ?? 0) + value;
-        break;
-      case "gauge":
-        state.last = value;
-        break;
-      case "histogram": {
-        if (!state.hist)
-          state.hist = {
-            count: 0,
-            sum: 0,
-            min: value,
-            max: value,
-            bucketCounts: new Array(DEFAULT_HISTOGRAM_BOUNDS.length + 1).fill(0)
-          };
-        const hist = state.hist;
-        hist.count += 1;
-        hist.sum += value;
-        hist.min = Math.min(hist.min, value);
-        hist.max = Math.max(hist.max, value);
-        hist.bucketCounts[bucketIndexFor(value, DEFAULT_HISTOGRAM_BOUNDS)] += 1;
-        break;
-      }
-    }
-  }
-  _runBeforeSend(sample) {
-    const beforeSend = this._config.beforeSend;
-    if (!beforeSend)
-      return sample;
-    const fns = isArray(beforeSend) ? beforeSend : [
-      beforeSend
-    ];
-    let result = sample;
-    for (const fn of fns)
-      try {
-        const next = fn(result);
-        if (!next) {
-          this._logger.info("Metric was rejected in beforeSend function");
-          return null;
-        }
-        result = next;
-      } catch (e) {
-        this._logger.error("Error in beforeSend function for metric:", e);
-        return null;
-      }
-    return result;
-  }
-  _armFlushTimer() {
-    if (this._flushTimer.pending)
-      return;
-    this._flushTimer.arm(this._nextFlushDelay());
-  }
-  _nextFlushDelay() {
-    return Math.max(backoffDelayMs(this._config.flushIntervalMs, this._consecutiveFlushFailures, this._flushJitter, MAX_FLUSH_BACKOFF_MS), this._retryAfter.remainingMs());
-  }
-  async _doFlush() {
-    this._flushTimer.clear();
-    if (this._series.size === 0)
-      return;
-    const window = this._series;
-    this._series = new Map;
-    this._seriesCapWarned = false;
-    this._typeByName = new Map;
-    this._typeCollisionWarned = new Set;
-    const generation = this._generation;
-    const outcome = await this._instance._sendMetricsBatch(this._buildPayload(window));
-    if (generation !== this._generation)
-      return;
-    this._retryAfter.record(outcome);
-    if (outcome.kind === "retry-later") {
-      this._consecutiveFlushFailures++;
-      this._flushJitter = drawJitter();
-    } else {
-      this._consecutiveFlushFailures = 0;
-      this._flushJitter = NO_JITTER;
-    }
-    if (this._flushTimer.pending)
-      this._flushTimer.arm(this._nextFlushDelay());
-    switch (outcome.kind) {
-      case "ok":
-        return;
-      case "retry-later":
-        this._mergeWindowBack(window);
-        this._flushTimer.armNoEarlierThan(this._nextFlushDelay());
-        return;
-      case "too-large":
-        this._logger.warn("Metrics batch exceeded the server size limit and was dropped");
-        return;
-      case "fatal":
-        this._logger.error("Failed to send metrics batch:", outcome.error);
-        return;
-    }
-  }
-  _buildPayload(window) {
-    return buildOtlpMetricsPayload(this._buildMetrics(window), buildMetricsResourceAttributes(this._config, this._instance.getLibraryId(), this._instance.getLibraryVersion()), this._instance.getLibraryId(), this._instance.getLibraryVersion());
-  }
-  _buildMetrics(window) {
-    const nowNano = msToUnixNano(Date.now());
-    const byMetric = new Map;
-    for (const state of window.values()) {
-      const metricKey = seriesKey(state.type, state.name, state.unit, undefined);
-      let metric = byMetric.get(metricKey);
-      if (!metric) {
-        metric = {
-          name: state.name,
-          ...state.unit && {
-            unit: state.unit
-          }
-        };
-        if (state.type === "count")
-          metric.sum = {
-            aggregationTemporality: OTLP_TEMPORALITY_DELTA,
-            isMonotonic: true,
-            dataPoints: []
-          };
-        else if (state.type === "gauge")
-          metric.gauge = {
-            dataPoints: []
-          };
-        else
-          metric.histogram = {
-            aggregationTemporality: OTLP_TEMPORALITY_DELTA,
-            dataPoints: []
-          };
-        byMetric.set(metricKey, metric);
-      }
-      const attributes = toOtlpKeyValueList(state.attributes ?? {}, this._logger);
-      const startNano = msToUnixNano(state.windowStartMs);
-      if (state.type === "count") {
-        const dp = {
-          attributes,
-          startTimeUnixNano: startNano,
-          timeUnixNano: nowNano,
-          asDouble: state.total ?? 0
-        };
-        metric.sum.dataPoints.push(dp);
-      } else if (state.type === "gauge") {
-        const dp = {
-          attributes,
-          timeUnixNano: nowNano,
-          asDouble: state.last ?? 0
-        };
-        metric.gauge.dataPoints.push(dp);
-      } else if (state.hist) {
-        const dp = {
-          attributes,
-          startTimeUnixNano: startNano,
-          timeUnixNano: nowNano,
-          count: state.hist.count,
-          sum: state.hist.sum,
-          min: state.hist.min,
-          max: state.hist.max,
-          bucketCounts: state.hist.bucketCounts,
-          explicitBounds: DEFAULT_HISTOGRAM_BOUNDS
-        };
-        metric.histogram.dataPoints.push(dp);
-      }
-    }
-    return Array.from(byMetric.values());
-  }
-  _mergeWindowBack(window) {
-    for (const [key, old] of window) {
-      const current = this._series.get(key);
-      if (!current) {
-        if (this._admitNewSeries())
-          this._series.set(key, old);
-        continue;
-      }
-      current.windowStartMs = Math.min(current.windowStartMs, old.windowStartMs);
-      switch (current.type) {
-        case "count":
-          current.total = (current.total ?? 0) + (old.total ?? 0);
-          break;
-        case "gauge":
-          break;
-        case "histogram":
-          if (old.hist)
-            if (current.hist) {
-              current.hist.count += old.hist.count;
-              current.hist.sum += old.hist.sum;
-              current.hist.min = Math.min(current.hist.min, old.hist.min);
-              current.hist.max = Math.max(current.hist.max, old.hist.max);
-              for (let i = 0;i < current.hist.bucketCounts.length; i++)
-                current.hist.bucketCounts[i] += old.hist.bucketCounts[i];
-            } else
-              current.hist = old.hist;
-          break;
-      }
-    }
-  }
-}
-var OTLP_TEMPORALITY_DELTA = 1;
-var init_metrics = __esm(() => {
-  init_utils();
-  init_flush_timer();
-  init_retry_after();
-  init_backoff();
-  init_otlp_any_value();
-  init_metrics_utils();
-  init_config();
-});
-
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/ids.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/ids.mjs
 function getRandomBytes(byteLength) {
   const bytes = new Uint8Array(byteLength);
   const cryptoLike = globalThis.crypto;
@@ -5281,16 +5101,15 @@ function isValidTraceId(value) {
 function isValidSpanId(value) {
   return isValidHexId(value, SPAN_ID_HEX, INVALID_SPAN_ID);
 }
-var TRACE_ID_BYTES = 16, SPAN_ID_BYTES = 8, TRACE_ID_HEX, SPAN_ID_HEX, INVALID_TRACE_ID, INVALID_SPAN_ID, HEX_RE;
+var TRACE_ID_BYTES = 16, SPAN_ID_BYTES = 8, TRACE_ID_HEX, SPAN_ID_HEX, INVALID_SPAN_ID = "0000000000000000", INVALID_TRACE_ID, HEX_RE;
 var init_ids = __esm(() => {
   TRACE_ID_HEX = 2 * TRACE_ID_BYTES;
   SPAN_ID_HEX = 2 * SPAN_ID_BYTES;
-  INVALID_TRACE_ID = "0".repeat(TRACE_ID_HEX);
-  INVALID_SPAN_ID = "0".repeat(SPAN_ID_HEX);
+  INVALID_TRACE_ID = INVALID_SPAN_ID + INVALID_SPAN_ID;
   HEX_RE = /^[0-9a-f]+$/;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/traceparent.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/traceparent.mjs
 function parseTraceparent(value) {
   const fields = matchTraceparent(value);
   return fields && {
@@ -5367,7 +5186,541 @@ var init_traceparent = __esm(() => {
   TRACEPARENT_RE = /^([0-9a-f]{2})-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})(-.*)?$/;
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/sanitize.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/metrics/metrics-utils.mjs
+function msToUnixNano(ms) {
+  return String(ms) + "000000";
+}
+function seriesKey(type, name, unit, attributes) {
+  let attrsKey = "";
+  if (attributes) {
+    const keys = Object.keys(attributes).sort();
+    attrsKey = keys.map((k) => `${JSON.stringify(k)}:${JSON.stringify(attributes[k])}`).join(",");
+  }
+  return `${type}\x00${name}\x00${unit ?? ""}\x00${attrsKey}`;
+}
+function bucketIndexFor(value, bounds) {
+  for (let i = 0;i < bounds.length; i++)
+    if (value <= bounds[i])
+      return i;
+  return bounds.length;
+}
+function buildMetricsResourceAttributes(config, scopeName, scopeVersion) {
+  return buildOtlpResourceAttributes(config, scopeName, scopeVersion);
+}
+function buildOtlpMetricsPayload(metrics, resourceAttributes, scopeName, scopeVersion) {
+  return {
+    resourceMetrics: [
+      {
+        resource: {
+          attributes: toOtlpResourceKeyValueList(resourceAttributes)
+        },
+        scopeMetrics: [
+          {
+            scope: {
+              name: scopeName,
+              version: scopeVersion
+            },
+            metrics
+          }
+        ]
+      }
+    ]
+  };
+}
+var DEFAULT_HISTOGRAM_BOUNDS;
+var init_metrics_utils = __esm(() => {
+  init_otlp_resource();
+  DEFAULT_HISTOGRAM_BOUNDS = [
+    0,
+    5,
+    10,
+    25,
+    50,
+    75,
+    100,
+    250,
+    500,
+    750,
+    1000,
+    2500,
+    5000,
+    7500,
+    1e4
+  ];
+});
+
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/metrics/config.mjs
+function resolveMetricsConfig(config) {
+  const resourceAttributes = config?.resourceAttributes;
+  return {
+    serviceName: resourceAttributes?.["service.name"] ?? config?.serviceName,
+    serviceVersion: resourceAttributes?.["service.version"] ?? config?.serviceVersion,
+    environment: resourceAttributes?.["deployment.environment"] ?? config?.environment,
+    resourceAttributes,
+    beforeSend: config?.beforeSend,
+    flushIntervalMs: config?.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS,
+    maxSeriesPerFlush: config?.maxSeriesPerFlush ?? DEFAULT_MAX_SERIES_PER_FLUSH
+  };
+}
+var DEFAULT_FLUSH_INTERVAL_MS = 1e4, DEFAULT_MAX_SERIES_PER_FLUSH = 1000;
+var init_config = () => {};
+
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/metrics/index.mjs
+class PostHogMetrics {
+  constructor(_instance, _config, _logger) {
+    this._instance = _instance;
+    this._config = _config;
+    this._logger = _logger;
+    this._series = new Map;
+    this._flushTimer = new FlushTimer(() => this.flush().catch((e) => {
+      this._logger.error("Metrics flush failed:", e);
+    }));
+    this._flushPromise = null;
+    this._queuedFlush = null;
+    this._seriesCapWarned = false;
+    this._typeByName = new Map;
+    this._typeCollisionWarned = new Set;
+    this._boundsByHistogram = new Map;
+    this._boundsConflictWarned = new Set;
+    this._boundsCapWarned = false;
+    this._retryAfter = new RetryAfterWindow;
+    this._consecutiveFlushFailures = 0;
+    this._flushJitter = NO_JITTER;
+    this._generation = 0;
+  }
+  count(name, value = 1, options) {
+    this._capture({
+      name,
+      type: "count",
+      value,
+      unit: options?.unit,
+      attributes: options?.attributes
+    });
+  }
+  gauge(name, value, options) {
+    this._capture({
+      name,
+      type: "gauge",
+      value,
+      unit: options?.unit,
+      attributes: options?.attributes
+    });
+  }
+  histogram(name, value, options) {
+    this._capture({
+      name,
+      type: "histogram",
+      value,
+      unit: options?.unit,
+      attributes: options?.attributes,
+      bounds: isArray(options?.bounds) ? options.bounds.slice() : options?.bounds
+    });
+  }
+  flush() {
+    const prev = this._flushPromise;
+    const run = async () => {
+      if (prev)
+        await prev.catch(() => {});
+      await this._doFlush();
+    };
+    const p = run().finally(() => {
+      if (this._flushPromise === p)
+        this._flushPromise = null;
+    });
+    this._flushPromise = p;
+    return p;
+  }
+  flushCoalesced() {
+    if (this._isBackingOff())
+      return this._flushPromise ?? Promise.resolve();
+    if (!this._queuedFlush)
+      this._queuedFlush = (this._flushPromise ?? Promise.resolve()).catch(() => {}).then(() => {
+        this._queuedFlush = null;
+        return this._isBackingOff() ? undefined : this.flush();
+      });
+    return this._queuedFlush;
+  }
+  _isBackingOff() {
+    return this._consecutiveFlushFailures > 0 || this._retryAfter.remainingMs() > 0;
+  }
+  drainWindow() {
+    if (this._series.size === 0)
+      return null;
+    const window = this._series;
+    this._startWindow();
+    return this._buildPayload(window);
+  }
+  reset() {
+    this._generation++;
+    this._retryAfter.reset();
+    this._consecutiveFlushFailures = 0;
+    this._flushJitter = NO_JITTER;
+    this._flushTimer.clear();
+    this._flushPromise = null;
+    this._queuedFlush = null;
+    this._startWindow();
+    this._boundsByHistogram = new Map;
+    this._boundsCapWarned = false;
+  }
+  _startWindow() {
+    this._series = new Map;
+    this._seriesCapWarned = false;
+    this._typeByName = new Map;
+    this._typeCollisionWarned = new Set;
+    this._boundsConflictWarned = new Set;
+  }
+  _capture(sample) {
+    if (this._instance.isDisabled || this._instance.optedOut)
+      return;
+    const filtered = this._runBeforeSend(sample);
+    if (filtered === null)
+      return;
+    if (!filtered.name || typeof filtered.name != "string")
+      return void this._logger.warn("Dropping metric with empty name");
+    if (typeof filtered.value != "number" || !Number.isFinite(filtered.value))
+      return void this._logger.warn(`Dropping metric '${filtered.name}': value must be a finite number`);
+    if (filtered.type !== "count" && filtered.type !== "gauge" && filtered.type !== "histogram")
+      return void this._logger.warn(`Dropping metric '${filtered.name}': unknown type '${String(filtered.type)}'`);
+    if (filtered.type === "count" && filtered.value < 0)
+      return void this._logger.warn(`Dropping count '${filtered.name}': counters are monotonic, value must be >= 0`);
+    let attributes;
+    let key;
+    try {
+      attributes = filtered.attributes ? {
+        ...filtered.attributes
+      } : undefined;
+      key = seriesKey(filtered.type, filtered.name, filtered.unit, attributes);
+    } catch (e) {
+      this._logger.warn(`Dropping metric '${filtered.name}': attributes could not be serialized`, e);
+      return;
+    }
+    let state = this._series.get(key);
+    if (!state && !this._admitNewSeries())
+      return;
+    let bounds;
+    if (filtered.type === "histogram") {
+      bounds = this._histogramBounds(filtered.name, filtered.unit, filtered.bounds);
+      if (!bounds)
+        return;
+    }
+    if (!state) {
+      state = {
+        name: filtered.name,
+        type: filtered.type,
+        unit: filtered.unit,
+        attributes,
+        windowStartMs: Date.now(),
+        hist: bounds && emptyHistogram(bounds)
+      };
+      this._series.set(key, state);
+    }
+    const seenType = this._typeByName.get(filtered.name);
+    if (seenType === undefined)
+      this._typeByName.set(filtered.name, filtered.type);
+    else if (seenType !== filtered.type && !this._typeCollisionWarned.has(filtered.name)) {
+      this._typeCollisionWarned.add(filtered.name);
+      this._logger.warn(`Metric name '${filtered.name}' is already used as a ${seenType}; recording it as a ${filtered.type} too will blend both series in charts. Use a distinct name.`);
+    }
+    this._fold(state, filtered.value);
+    const traceContext = this._activeTraceContext();
+    if (traceContext)
+      state.exemplar = {
+        ...traceContext,
+        value: filtered.value,
+        timeMs: Date.now()
+      };
+    this._armFlushTimer();
+  }
+  _activeTraceContext() {
+    try {
+      const parsed = parseTraceparent(this._instance.getActiveSpan?.()?.traceparent());
+      if (parsed && parsed.flags === TRACE_FLAGS_SAMPLED)
+        return {
+          traceId: parsed.traceId,
+          spanId: parsed.spanId
+        };
+    } catch {}
+  }
+  _admitNewSeries() {
+    if (this._series.size < this._config.maxSeriesPerFlush)
+      return true;
+    if (!this._seriesCapWarned) {
+      this._seriesCapWarned = true;
+      this._logger.warn(`Metric series cap reached (${this._config.maxSeriesPerFlush} per flush window); dropping new series until the next flush. Reduce attribute cardinality.`);
+    }
+    return false;
+  }
+  _histogramBounds(name, unit, requested) {
+    if (requested !== undefined && !isValidBounds(requested))
+      return void this._logger.warn(`Dropping histogram '${name}': bounds must be a non-empty array of finite, strictly increasing numbers`);
+    const histogramKey = seriesKey("histogram", name, unit, undefined);
+    const fixed = this._boundsByHistogram.get(histogramKey);
+    if (fixed) {
+      this._warnOnBoundsConflict(name, histogramKey, fixed, requested);
+      return fixed;
+    }
+    if (this._boundsByHistogram.size >= this._config.maxSeriesPerFlush) {
+      if (!this._boundsCapWarned) {
+        this._boundsCapWarned = true;
+        this._logger.warn(`Histogram bounds limit reached (${this._config.maxSeriesPerFlush} distinct histograms); new histograms that pass custom bounds are dropped. Reduce histogram name cardinality.`);
+      }
+      if (requested && !sameBounds(requested, DEFAULT_HISTOGRAM_BOUNDS))
+        return;
+      return DEFAULT_HISTOGRAM_BOUNDS;
+    }
+    const bounds = requested ? requested.slice() : DEFAULT_HISTOGRAM_BOUNDS;
+    this._boundsByHistogram.set(histogramKey, bounds);
+    return bounds;
+  }
+  _warnOnBoundsConflict(name, histogramKey, fixed, requested) {
+    if (sameBounds(fixed, requested ?? DEFAULT_HISTOGRAM_BOUNDS) || this._boundsConflictWarned.has(histogramKey))
+      return;
+    this._boundsConflictWarned.add(histogramKey);
+    this._logger.warn(`Histogram '${name}' already uses the bounds [${fixed.join(", ")}]; samples that pass different bounds are recorded in those buckets.`);
+  }
+  _fold(state, value) {
+    switch (state.type) {
+      case "count":
+        state.total = (state.total ?? 0) + value;
+        break;
+      case "gauge":
+        state.last = value;
+        break;
+      case "histogram": {
+        const hist = state.hist;
+        hist.count += 1;
+        hist.sum += value;
+        hist.min = Math.min(hist.min, value);
+        hist.max = Math.max(hist.max, value);
+        hist.bucketCounts[bucketIndexFor(value, hist.bounds)] += 1;
+        break;
+      }
+    }
+  }
+  _runBeforeSend(sample) {
+    const beforeSend = this._config.beforeSend;
+    if (!beforeSend)
+      return sample;
+    const fns = isArray(beforeSend) ? beforeSend : [
+      beforeSend
+    ];
+    let result = sample;
+    for (const fn of fns)
+      try {
+        const next = fn(result);
+        if (!next) {
+          this._logger.info("Metric was rejected in beforeSend function");
+          return null;
+        }
+        result = next;
+      } catch (e) {
+        this._logger.error("Error in beforeSend function for metric:", e);
+        return null;
+      }
+    return result;
+  }
+  _armFlushTimer() {
+    if (this._flushTimer.pending)
+      return;
+    this._flushTimer.arm(this._nextFlushDelay());
+  }
+  _nextFlushDelay() {
+    return Math.max(backoffDelayMs(this._config.flushIntervalMs, this._consecutiveFlushFailures, this._flushJitter, MAX_FLUSH_BACKOFF_MS), this._retryAfter.remainingMs());
+  }
+  async _doFlush() {
+    this._flushTimer.clear();
+    if (this._series.size === 0)
+      return;
+    const window = this._series;
+    this._startWindow();
+    const generation = this._generation;
+    const outcome = await this._instance._sendMetricsBatch(this._buildPayload(window));
+    if (generation !== this._generation)
+      return;
+    this._retryAfter.record(outcome);
+    if (outcome.kind === "retry-later") {
+      this._consecutiveFlushFailures++;
+      this._flushJitter = drawJitter();
+    } else {
+      this._consecutiveFlushFailures = 0;
+      this._flushJitter = NO_JITTER;
+    }
+    if (this._flushTimer.pending)
+      this._flushTimer.arm(this._nextFlushDelay());
+    switch (outcome.kind) {
+      case "ok":
+        return;
+      case "retry-later":
+        this._mergeWindowBack(window);
+        this._flushTimer.armNoEarlierThan(this._nextFlushDelay());
+        return;
+      case "too-large":
+        this._logger.warn("Metrics batch exceeded the server size limit and was dropped");
+        return;
+      case "fatal":
+        this._logger.error("Failed to send metrics batch:", outcome.error);
+        return;
+    }
+  }
+  _buildPayload(window) {
+    return buildOtlpMetricsPayload(this._buildMetrics(window), buildMetricsResourceAttributes(this._config, this._instance.getLibraryId(), this._instance.getLibraryVersion()), this._instance.getLibraryId(), this._instance.getLibraryVersion());
+  }
+  _buildMetrics(window) {
+    const nowNano = msToUnixNano(Date.now());
+    const byMetric = new Map;
+    for (const state of window.values()) {
+      const metricKey = seriesKey(state.type, state.name, state.unit, undefined);
+      let metric = byMetric.get(metricKey);
+      if (!metric) {
+        metric = {
+          name: state.name,
+          ...state.unit && {
+            unit: state.unit
+          }
+        };
+        if (state.type === "count")
+          metric.sum = {
+            aggregationTemporality: OTLP_TEMPORALITY_DELTA,
+            isMonotonic: true,
+            dataPoints: []
+          };
+        else if (state.type === "gauge")
+          metric.gauge = {
+            dataPoints: []
+          };
+        else
+          metric.histogram = {
+            aggregationTemporality: OTLP_TEMPORALITY_DELTA,
+            dataPoints: []
+          };
+        byMetric.set(metricKey, metric);
+      }
+      const attributes = toOtlpKeyValueList(state.attributes ?? {}, this._logger);
+      const startNano = msToUnixNano(state.windowStartMs);
+      const exemplars = toOtlpExemplars(state.exemplar);
+      if (state.type === "count") {
+        const dp = {
+          attributes,
+          startTimeUnixNano: startNano,
+          timeUnixNano: nowNano,
+          asDouble: state.total ?? 0,
+          ...exemplars
+        };
+        metric.sum.dataPoints.push(dp);
+      } else if (state.type === "gauge") {
+        const dp = {
+          attributes,
+          timeUnixNano: nowNano,
+          asDouble: state.last ?? 0,
+          ...exemplars
+        };
+        metric.gauge.dataPoints.push(dp);
+      } else {
+        const hist = state.hist;
+        const dp = {
+          attributes,
+          startTimeUnixNano: startNano,
+          timeUnixNano: nowNano,
+          count: hist.count,
+          sum: hist.sum,
+          min: hist.min,
+          max: hist.max,
+          bucketCounts: hist.bucketCounts,
+          explicitBounds: hist.bounds,
+          ...exemplars
+        };
+        metric.histogram.dataPoints.push(dp);
+      }
+    }
+    return Array.from(byMetric.values());
+  }
+  _mergeWindowBack(window) {
+    for (const [key, old] of window) {
+      const current = this._series.get(key);
+      if (!current) {
+        if (this._admitNewSeries())
+          this._series.set(key, old);
+        continue;
+      }
+      current.windowStartMs = Math.min(current.windowStartMs, old.windowStartMs);
+      current.exemplar = current.exemplar ?? old.exemplar;
+      switch (current.type) {
+        case "count":
+          current.total = (current.total ?? 0) + (old.total ?? 0);
+          break;
+        case "gauge":
+          break;
+        case "histogram": {
+          const hist = current.hist;
+          const oldHist = old.hist;
+          hist.count += oldHist.count;
+          hist.sum += oldHist.sum;
+          hist.min = Math.min(hist.min, oldHist.min);
+          hist.max = Math.max(hist.max, oldHist.max);
+          for (let i = 0;i < hist.bucketCounts.length; i++)
+            hist.bucketCounts[i] += oldHist.bucketCounts[i];
+          break;
+        }
+      }
+    }
+  }
+}
+function isValidBounds(bounds) {
+  if (!isArray(bounds) || bounds.length === 0)
+    return false;
+  for (let i = 0;i < bounds.length; i++)
+    if (!Number.isFinite(bounds[i]) || i > 0 && bounds[i] <= bounds[i - 1])
+      return false;
+  return true;
+}
+function sameBounds(a, b) {
+  if (a === b)
+    return true;
+  if (a.length !== b.length)
+    return false;
+  for (let i = 0;i < a.length; i++)
+    if (a[i] !== b[i])
+      return false;
+  return true;
+}
+function emptyHistogram(bounds) {
+  return {
+    bounds,
+    count: 0,
+    sum: 0,
+    min: 1 / 0,
+    max: -1 / 0,
+    bucketCounts: new Array(bounds.length + 1).fill(0)
+  };
+}
+function toOtlpExemplars(exemplar) {
+  if (!exemplar)
+    return {};
+  return {
+    exemplars: [
+      {
+        filteredAttributes: [],
+        timeUnixNano: msToUnixNano(exemplar.timeMs),
+        asDouble: exemplar.value,
+        traceId: exemplar.traceId,
+        spanId: exemplar.spanId
+      }
+    ]
+  };
+}
+var OTLP_TEMPORALITY_DELTA = 1;
+var init_metrics = __esm(() => {
+  init_utils();
+  init_flush_timer();
+  init_retry_after();
+  init_backoff();
+  init_otlp_any_value();
+  init_traceparent();
+  init_metrics_utils();
+  init_config();
+});
+
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/sanitize.mjs
 function sanitizeName(name, label, maxLength, logger) {
   if (typeof name == "string" && name.trim())
     return name.length > maxLength ? name.slice(0, maxLength) : name;
@@ -5418,7 +5771,7 @@ function resolveSuppliedTime(value, derived, label, logger) {
 var FALLBACK_SPAN_NAME = "unknown", MAX_TIMESTAMP_MS = 9223372036854, MIN_TIMESTAMP_MS = 0, DEEP_BACKDATE_WARNING_MS = 86400000;
 var init_sanitize = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/span.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/span.mjs
 function monotonicNow() {
   const perf = globalThis.performance;
   return typeof perf?.now == "function" ? perf.now() : undefined;
@@ -5559,6 +5912,12 @@ class PostHogSpan {
   }
   traceparent() {
     return formatTraceparent(this._traceId, this._spanId, this._traceFlags);
+  }
+  get traceId() {
+    return this._traceId;
+  }
+  get spanId() {
+    return this._spanId;
   }
   tracestate() {
     return this._traceState ?? null;
@@ -5703,6 +6062,12 @@ class NoopSpan {
     return this;
   }
   traceparent() {
+    return null;
+  }
+  get traceId() {
+    return null;
+  }
+  get spanId() {
     return null;
   }
   tracestate() {
@@ -5915,13 +6280,19 @@ var init_span = __esm(() => {
     traceparent() {
       return this._traceparent;
     }
+    get traceId() {
+      return this._traceparent.split("-")[1] ?? null;
+    }
+    get spanId() {
+      return this._traceparent.split("-")[2] ?? null;
+    }
     tracestate() {
       return this._tracestate ?? null;
     }
   };
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/otlp.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/otlp.mjs
 function spanFlags(record) {
   const traceFlags = parseInt(record.traceFlags, 16);
   const w3c = Number.isFinite(traceFlags) ? 255 & traceFlags : TRACE_FLAGS_SAMPLED2;
@@ -6041,7 +6412,7 @@ var init_otlp = __esm(() => {
   };
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/index.mjs
 function clockNow() {
   return monotonicNow() ?? Date.now();
 }
@@ -6135,7 +6506,8 @@ class PostHogTraces {
       this._logger.debug("Ignoring an unusable span parent");
     }
     const parent = this._resolveParent(explicitParent, options);
-    this._evictAgedSpans();
+    if (this._liveSpans.size >= this._config.maxLiveSpans)
+      this._evictAgedSpans();
     if (this._liveSpans.size >= this._config.maxLiveSpans) {
       this._recordDrop(1, `the live-span limit (${this._config.maxLiveSpans}) was reached — spans are being started and never ended`);
       return inertSpan(options, this._contextManager.active());
@@ -6607,7 +6979,7 @@ var init_traces = __esm(() => {
   init_backoff();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/context.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/context.mjs
 class SyncSpanContextManager {
   active() {
     return this._active;
@@ -6624,7 +6996,7 @@ class SyncSpanContextManager {
 }
 var init_context = () => {};
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/traces/config.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/traces/config.mjs
 function positiveInteger2(value, fallback) {
   return typeof value == "number" && Number.isInteger(value) && value >= 1 ? value : fallback;
 }
@@ -6688,12 +7060,12 @@ var init_config2 = __esm(() => {
   ];
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/surveys/validation.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/surveys/validation.mjs
 var init_validation = __esm(() => {
   init_types();
 });
 
-// node_modules/.bun/@posthog+core@1.55.0/node_modules/@posthog/core/dist/index.mjs
+// node_modules/.bun/@posthog+core@1.69.2/node_modules/@posthog/core/dist/index.mjs
 var init_dist = __esm(() => {
   init_error_tracking();
   init_featureFlagUtils();
@@ -6712,8 +7084,10 @@ var init_dist = __esm(() => {
   init_validation();
   init_utils();
   init_cookie();
+  init_event_options();
   init_posthog_core();
   init_posthog_core_stateless();
+  init_privacy();
   init_tracing_headers();
   init_types();
 });
